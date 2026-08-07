@@ -163,8 +163,15 @@ export default class SpringEaseExtension extends Extension {
                 for (const name of [MAGIC_LAMP_MINIMIZE, MAGIC_LAMP_UNMINIMIZE]) {
                     const effect = actor.get_effect(name);
                     const timeline = effect?.timerId;
-                    if (timeline && timeline.set_progress_mode)
+                    if (timeline && timeline.set_progress_mode) {
                         timeline.set_progress_mode(Clutter.AnimationMode.EASE_OUT_CUBIC);
+                        // Stretch the timeline a touch so the deceleration reads
+                        // more (native magic-lamp is quite fast). 1.3 ≈ noticeable
+                        // but not slow; tune here.
+                        const orig = timeline.get_duration();
+                        if (orig > 0)
+                            timeline.set_duration(Math.round(orig * 1.3));
+                    }
                 }
             } catch (e) {}
             return GLib.SOURCE_REMOVE;
