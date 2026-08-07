@@ -13,7 +13,7 @@ jobs:
 
       - name: Validate metadata.json
         run: |
-          jq -e '.uuid and .name and .shell-version and .settings-schema' metadata.json
+          jq -e 'has("uuid") and has("name") and has("shell-version") and has("settings-schema")' metadata.json
 
       - name: Install glib-compile-schemas
         run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev-bin
