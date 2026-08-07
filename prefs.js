@@ -6,7 +6,7 @@
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 import Gio from 'gi://Gio';
-import {ExtensionPreferences} from 'resource:///org/gnome/shell/extensions/extensionPreferences.js';
+import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 // nick -> label. Order is what shows in the combo. Grouped: two-sided first
 // (most users want accel + decel), then one-sided decel, then overshoot/bounce.
@@ -112,6 +112,13 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         });
         settings.bind('enabled', enableRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         switchGroup.add(enableRow);
+
+        const magicLampRow = new Adw.SwitchRow({
+            title: 'Ease magic-lamp minimize',
+            subtitle: 'If compiz-alike-magic-lamp-effect is installed, decelerate its minimize/unminimize into the dock. No-op otherwise.',
+        });
+        settings.bind('magic-lamp-easing', magicLampRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        switchGroup.add(magicLampRow);
 
         page.add(switchGroup);
         window.add(page);

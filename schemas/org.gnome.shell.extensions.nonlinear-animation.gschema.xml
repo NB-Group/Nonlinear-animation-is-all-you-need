@@ -47,5 +47,10 @@
       <summary>Enabled</summary>
       <description>Master switch (A/B without disabling the whole extension).</description>
     </key>
+    <key name="magic-lamp-easing" type="b">
+      <default>true</default>
+      <summary>Ease magic-lamp minimize/unminimize</summary>
+      <description>If compiz-alike-magic-lamp-effect is installed, curve its minimize/unminimize timeline with EASE_OUT_CUBIC so the window decelerates into the dock instead of stopping dead. No-op if magic-lamp isn't installed.</description>
+    </key>
   </schema>
 </schemalist>

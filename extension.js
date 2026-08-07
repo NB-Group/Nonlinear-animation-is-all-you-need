@@ -12,6 +12,7 @@
 // have loaded the extension).
 
 import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
 import St from 'gi://St';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
@@ -27,6 +28,15 @@ const MODE_MAP = {
     'ease-out-back': Clutter.AnimationMode.EASE_OUT_BACK,
     'ease-out-elastic': Clutter.AnimationMode.EASE_OUT_ELASTIC,
 };
+
+// compiz-alike-magic-lamp-effect drives its minimize/unminimize DeformEffect
+// with a Clutter.Timeline left at default LINEAR progress, so the window
+// collapses into the dock at full speed and stops dead. When the user opts
+// in (magic-lamp-easing setting), we set that timeline's progress_mode to
+// EASE_OUT_CUBIC so it decelerates into the dock. The effect names must match
+// the constants in compiz-alike-magic-lamp-effect/extension.js.
+const MAGIC_LAMP_MINIMIZE = 'minimize-magic-lamp-effect';
+const MAGIC_LAMP_UNMINIMIZE = 'unminimize-magic-lamp-effect';
 
 export default class SpringEaseExtension extends Extension {
     enable() {
@@ -115,6 +125,50 @@ export default class SpringEaseExtension extends Extension {
         St.Adjustment.prototype.ease = function (target, params) {
             return orig.adjustmentEase.call(this, target, springify(params));
         };
+
+        // Optional: ease the compiz-alike-magic-lamp-effect minimize/unminimize
+        // timeline so it decelerates instead of stopping dead. Live-toggleable.
+        this._mlIds = [];
+        this._installMagicLampHooks();
+        this._mlSettingId = settings.connect(
+            'changed::magic-lamp-easing', () => this._installMagicLampHooks());
+    }
+
+    _installMagicLampHooks() {
+        this._removeMagicLampHooks();
+        if (!this._settings.get_boolean('magic-lamp-easing'))
+            return;
+        this._mlIds = [
+            global.window_manager.connect('minimize', (_wm, actor) => this._easeMagicLamp(actor)),
+            global.window_manager.connect('unminimize', (_wm, actor) => this._easeMagicLamp(actor)),
+        ];
+    }
+
+    _removeMagicLampHooks() {
+        for (const id of this._mlIds) {
+            try { global.window_manager.disconnect(id); } catch (e) {}
+        }
+        this._mlIds = [];
+    }
+
+    _easeMagicLamp(actor) {
+        if (!actor) return;
+        // Defer one main-loop iteration: signal handlers run synchronously in
+        // connection order, so depending on load order our handler may fire
+        // before magic-lamp has called add_effect_with_name(). By the next
+        // HIGH_IDLE the effect (and the timeline created in its vfunc_set_actor)
+        // is in place, and the timeline's first new-frame has not fired yet.
+        GLib.idle_add(GLib.PRIORITY_HIGH_IDLE, () => {
+            try {
+                for (const name of [MAGIC_LAMP_MINIMIZE, MAGIC_LAMP_UNMINIMIZE]) {
+                    const effect = actor.get_effect(name);
+                    const timeline = effect?.timerId;
+                    if (timeline && timeline.set_progress_mode)
+                        timeline.set_progress_mode(Clutter.AnimationMode.EASE_OUT_CUBIC);
+                }
+            } catch (e) {}
+            return GLib.SOURCE_REMOVE;
+        });
     }
 
     disable() {
@@ -126,6 +180,11 @@ export default class SpringEaseExtension extends Extension {
         if (this._gestureId) {
             global.stage.disconnect(this._gestureId);
             this._gestureId = 0;
+        }
+        this._removeMagicLampHooks();
+        if (this._mlSettingId) {
+            this._settings.disconnect(this._mlSettingId);
+            this._mlSettingId = 0;
         }
         this._orig = null;
         this._settings = null;
