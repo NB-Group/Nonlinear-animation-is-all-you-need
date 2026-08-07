@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate metadata.json
+        run: |
+          jq -e '.uuid and .name and .shell-version and .settings-schema' metadata.json
+
+      - name: Install glib-compile-schemas
+        run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev-bin
+
+      - name: Build zip
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nonlinear-animation@nbgroup
+          path: nonlinear-animation@nbgroup.zip
