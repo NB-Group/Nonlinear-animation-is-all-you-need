@@ -14,17 +14,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install glib-compile-schemas
-        run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev-bin
+      - name: Package and upload to extensions.gnome.org
+        id: pkg
+        uses: murar8/gnome-extensions-action@0.1.1
+        with:
+          username: NB-Group
+          password: ${{ secrets.GNOME_PASSWORD }}
+          accept-tos: true
 
-      - name: Build zip
-        run: |
-          chmod +x build.sh
-          ./build.sh
-
-      - name: Create GitHub release with the zip
+      - name: Attach the zip to a GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" nonlinear-animation@nbgroup.zip \
+          gh release create "${GITHUB_REF_NAME}" "${{ steps.pkg.outputs.zip-file }}" \
             --title "${GITHUB_REF_NAME}" --generate-notes
