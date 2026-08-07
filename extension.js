@@ -165,12 +165,11 @@ export default class SpringEaseExtension extends Extension {
                     const timeline = effect?.timerId;
                     if (timeline && timeline.set_progress_mode) {
                         timeline.set_progress_mode(Clutter.AnimationMode.EASE_OUT_CUBIC);
-                        // Stretch the timeline a touch so the deceleration reads
-                        // more (native magic-lamp is quite fast). 1.3 ≈ noticeable
-                        // but not slow; tune here.
-                        const orig = timeline.get_duration();
-                        if (orig > 0)
-                            timeline.set_duration(Math.round(orig * 1.3));
+                        // Fixed duration for both minimize and unminimize so they
+                        // feel symmetric. 500ms = slower than native magic-lamp
+                        // (which varies ~250-400ms by window/monitor size) but
+                        // still snappy. Tune here.
+                        timeline.set_duration(500);
                     }
                 }
             } catch (e) {}
