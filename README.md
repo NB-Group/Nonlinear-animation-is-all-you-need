@@ -1,74 +1,82 @@
 # Nonlinear animation is all you need
 
-*Nonlinear animation is all you need.* — GNOME ships quick, mostly-linear-feeling
-window/workspace/overview transitions; this extension wraps the prototype ease
-methods gnome-shell itself adds (`Clutter.Actor.prototype.ease`, `ease_property`,
-`easeAsync`, `St.Adjustment.prototype.ease`) and recurves **every** animation
-routed through them, so the desktop feels closer to macOS — without forcing
-bounce on anyone. It does not patch individual UI calls, so it survives GNOME
-version bumps.
+GNOME animates its overview, workspaces and windows at a more or less constant
+velocity. Things in the real world don't move that way: they speed up, then slow
+down. Stripping out that acceleration and deceleration is what makes GNOME's
+motion feel off. It moves like a sliding door, not like something with mass.
 
-GNOME ships quick, mostly-linear-feeling transitions. This extension wraps the
-prototype ease methods gnome-shell itself adds (`Clutter.Actor.prototype.ease`,
-`ease_property`, `easeAsync`, `St.Adjustment.prototype.ease`), so **every**
-animation routed through them gets the curve and speed you pick. It does not
-patch individual UI calls, so it survives GNOME version bumps.
+This extension puts the accel/decel back. It wraps the same ease methods
+gnome-shell already uses for its own animations (`Clutter.Actor.prototype.ease`,
+`ease_property`, `easeAsync`, and `St.Adjustment.prototype.ease`), so anything
+GNOME animates through them picks up the curve and speed you choose. Because it
+hooks the prototypes instead of each call site, it keeps working when GNOME
+renames things internally.
 
-## Settings (all live — no relogin to tune)
+By default it uses a symmetric curve that eases in and out, closer to how macOS
+feels. Bounce and overshoot are available but off by default.
 
-Open the extension's preferences (Extensions app / Refine → Spring Easing → ⚙️):
+## Settings
 
-- **Easing curve**
-  - *Two-sided (In-Out): accelerate in + decelerate out — recommended.*
-    `In-Out Cubic` (default, balanced), `Quart`, `Quint`, `Expo` (most dramatic).
-  - *One-sided (Out): only decelerate at the end.*
-    `Out Cubic`, `Quart`, `Quint`, `Expo`.
-  - *With overshoot/bounce:* `Out Back` (single overshoot), `Out Elastic` (springy).
-- **Duration scale** — multiplies animation length. `1.0` = GNOME default;
-  `1.8` ≈ macOS; `2.5` = slow/luxurious.
-- **Threshold (ms)** — only animations at or above this duration are eased, so
-  short hovers stay snappy. Default 100ms.
-- **Touchpad gesture grace (ms)** — gesture-driven opens (3-finger swipe /
-  pinch) already track your finger, so their wrap-up is left at GNOME's native
-  speed for this many milliseconds after a gesture. Discrete triggers (Super
-  key, clicks) are still eased. Set `0` to ease everything.
-- **Enabled** — master switch for quick A/B comparison.
+All settings are live: change one and the next animation already uses it, no
+relogin. You do need to log out and back in once after installing (or after
+editing `extension.js`), so the shell reloads the module.
 
-**Everything applies instantly** — drag a control and the next animation
-reflects it. The extension reads GSettings on every ease call, which is a cached
-lookup, not IPC.
+Open the extension's preferences to configure:
 
-Command-line equivalent:
+**Easing curve.** Symmetric `In-Out` curves accelerate at the start and
+decelerate at the end, and are recommended; `In-Out Cubic` is the default. `Out`
+curves only decelerate. `Out Back` adds a single overshoot, `Out Elastic` is a
+bouncy spring.
+
+**Duration scale.** Multiplies how long the eased animations take. 1.0 is
+GNOME's speed, 1.8 is roughly macOS, 2.5 is deliberately slow.
+
+**Threshold (ms).** Animations shorter than this are left alone, so quick hovers
+stay snappy. Default 100.
+
+**Touchpad gesture grace (ms).** A 3-finger swipe or pinch already follows your
+finger, so for this many milliseconds after the gesture GNOME's native wrap-up
+is used instead of your curve. Discrete triggers like the Super key still get
+eased. Set to 0 to ease everything.
+
+**Gesture duration scale.** For gesture-driven commits (workspace switch,
+app-grid paging) the curve stays at GNOME's velocity-matched ease-out so
+releasing your finger doesn't jolt; this only stretches the duration a little so
+the deceleration reads. 1.0 is fully native.
+
+**Enabled.** Master switch, for A/B comparison.
+
+Equivalent via command line (point the schema dir at where it's installed):
 ```bash
-S=~/.local/share/gnome-shell/extensions/spring-ease@nbgroup/schemas
-GSETTINGS_SCHEMA_DIR=$S gsettings set org.gnome.shell.extensions.spring-ease mode 'ease-in-out-expo'
-GSETTINGS_SCHEMA_DIR=$S gsettings set org.gnome.shell.extensions.spring-ease duration-scale 1.8
-GSETTINGS_SCHEMA_DIR=$S gsettings set org.gnome.shell.extensions.spring-ease gesture-grace-ms 800
+S=~/.local/share/gnome-shell/extensions/nonlinear-animation@nbgroup/schemas
+GSETTINGS_SCHEMA_DIR=$S gsettings set org.gnome.shell.extensions.nonlinear-animation mode 'ease-in-out-expo'
+GSETTINGS_SCHEMA_DIR=$S gsettings set org.gnome.shell.extensions.nonlinear-animation duration-scale 1.8
+GSETTINGS_SCHEMA_DIR=$S gsettings set org.gnome.shell.extensions.nonlinear-animation gesture-grace-ms 800
 ```
 
 ## Install
 
-Copy into `~/.local/share/gnome-shell/extensions/`, compile the schema, enable:
+Drop the folder into `~/.local/share/gnome-shell/extensions/` and compile the
+schema:
 ```sh
-glib-compile-schemas spring-ease@nbgroup/schemas/
+glib-compile-schemas nonlinear-animation@nbgroup/schemas/
 ```
-
-GJS modules load once at shell startup, so the **first enable** (or any edit to
-`extension.js`) needs a shell restart — on Wayland, log out and back in. After
-that, tuning settings never requires a relogin.
+Then log out and back in (Wayland can't restart the shell in place), and enable
+it.
 
 ## Compatibility
 
-GNOME Shell 50. The wrapped API (Clutter ease prototypes, stage captured-event,
-`Clutter.AnimationMode`) is stable across GNOME 46–50.
+GNOME Shell 50. The API it wraps (the Clutter ease prototypes, stage
+captured-event, `Clutter.AnimationMode`) is stable from GNOME 46 through 50.
 
 ## Known limits
 
-- Only JS-layer animations are affected; a few compositor-internal (mutter C)
-  transitions are not. Overview, workspace and window animations are all
-  JS-layer and covered.
-- Per-ease overhead is a few cached GSettings reads — negligible.
+Only JS-layer animations are affected. A few compositor-internal transitions in
+mutter (C code) are not, but the overview, workspace and window animations
+people actually notice are all JS-layer and covered.
+
+Per-ease overhead is a couple of cached GSettings reads, effectively nothing.
 
 ## License
 
-GPL-3.0-or-later
+AGPL-3.0-or-later.
