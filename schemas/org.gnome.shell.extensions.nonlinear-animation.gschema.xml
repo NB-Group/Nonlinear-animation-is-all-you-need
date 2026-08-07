@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.nonlinear-animation" path="/org/gnome/shell/extensions/nonlinear-animation/">
+    <key name="mode" type="s">
+      <choices>
+        <choice value="ease-out-cubic"/>
+        <choice value="ease-out-expo"/>
+        <choice value="ease-out-quart"/>
+        <choice value="ease-out-quint"/>
+        <choice value="ease-in-out-cubic"/>
+        <choice value="ease-in-out-quart"/>
+        <choice value="ease-in-out-quint"/>
+        <choice value="ease-in-out-expo"/>
+        <choice value="ease-out-back"/>
+        <choice value="ease-out-elastic"/>
+      </choices>
+      <default>"ease-in-out-cubic"</default>
+      <summary>Easing curve</summary>
+      <description>Easing curve applied to long animations. "ease-in-out-*" curves accelerate at the start and decelerate at the end (two-sided). "ease-out-*" only decelerate. "back"/"elastic" overshoot/bounce.</description>
+    </key>
+    <key name="threshold-ms" type="i">
+      <default>100</default>
+      <range min="0" max="2000"/>
+      <summary>Threshold (ms)</summary>
+      <description>Only animations at or above this duration get the easing curve. Lower = more things eased (hovers ~100ms); higher = fewer.</description>
+    </key>
+    <key name="duration-scale" type="d">
+      <default>1.8</default>
+      <range min="0.5" max="5.0"/>
+      <summary>Duration scale</summary>
+      <description>Multiplier for the duration of eased animations. 1.0 = GNOME's default (quick); 1.8 ≈ macOS; 2.5 = slow/luxurious.</description>
+    </key>
+    <key name="gesture-duration-scale" type="d">
+      <default>1.3</default>
+      <range min="1.0" max="3.0"/>
+      <summary>Gesture duration scale</summary>
+      <description>Duration multiplier for animations during/after a touchpad gesture (workspace switch, app-grid paging). The easing curve is kept at GNOME's velocity-matched EASE_OUT_CUBIC so there's no jolt on release; this only stretches the duration so the deceleration reads more. 1.0 = gestures fully native.</description>
+    </key>
+    <key name="gesture-grace-ms" type="i">
+      <default>800</default>
+      <range min="0" max="3000"/>
+      <summary>Touchpad gesture grace (ms)</summary>
+      <description>Window after a touchpad gesture (3-finger swipe/pinch) during which animations play at GNOME's native speed. Touchpad-driven overview/workspace opens already track your finger, so their wrap-up shouldn't be slowed. Set 0 to disable the exception (ease everything, including gestures).</description>
+    </key>
+    <key name="enabled" type="b">
+      <default>true</default>
+      <summary>Enabled</summary>
+      <description>Master switch (A/B without disabling the whole extension).</description>
+    </key>
+  </schema>
+</schemalist>
