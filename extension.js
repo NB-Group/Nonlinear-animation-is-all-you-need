@@ -166,10 +166,9 @@ export default class SpringEaseExtension extends Extension {
                     if (timeline && timeline.set_progress_mode) {
                         timeline.set_progress_mode(Clutter.AnimationMode.EASE_OUT_CUBIC);
                         // Fixed duration for both minimize and unminimize so they
-                        // feel symmetric. 500ms = slower than native magic-lamp
-                        // (which varies ~250-400ms by window/monitor size) but
-                        // still snappy. Tune here.
-                        timeline.set_duration(500);
+                        // feel symmetric. 700ms = slow enough to read the
+                        // deceleration; tune here.
+                        timeline.set_duration(700);
                     }
                 }
             } catch (e) {}
