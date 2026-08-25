@@ -1,10 +1,10 @@
 {
-  "uuid": "nonlinear-animation@nbgroup",
-  "name": "Nonlinear animation is all you need",
-  "description": "Recurve GNOME's overview, workspace and window animations with smoother easing (In-Out cubic/expo/quint or spring), closer to macOS. Live-tunable speed, threshold, and a touchpad-gesture exception. No bouncing unless you ask for it.",
-  "shell-version": [
-    "50"
-  ],
-  "settings-schema": "org.gnome.shell.extensions.nonlinear-animation",
-  "url": ""
+    "uuid": "nonlinear-animation@nbgroup",
+    "name": "Nonlinear animation is all you need",
+    "description": "Recurve GNOME's overview, workspace and window animations with smoother easing (In-Out cubic/expo/quint or spring), closer to macOS. Live-tunable speed, threshold, and a touchpad-gesture exception. No bouncing unless you ask for it.",
+    "shell-version": [
+        "50"
+    ],
+    "settings-schema": "org.gnome.shell.extensions.nonlinear-animation",
+    "url": "https://github.com/NB-Group/Nonlinear-animation-is-all-you-need"
 }
