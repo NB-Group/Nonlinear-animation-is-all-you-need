@@ -77,6 +77,17 @@ people actually notice are all JS-layer and covered.
 
 Per-ease overhead is a couple of cached GSettings reads, effectively nothing.
 
+## Optional: easing the magic-lamp minimize effect
+
+If you use [compiz-alike-magic-lamp-effect], this extension can optionally
+retime its minimize/unminimize timeline (linear by default, so the window
+collapses at full speed and stops dead) to an ease-out curve, so it decelerates
+into the dock. This is off by default; enable it with the "Ease magic-lamp
+minimize" switch in the preferences. Nothing else of that extension is touched,
+and the hooks are removed when the switch is off or this extension is disabled.
+
+[compiz-alike-magic-lamp-effect]: https://extensions.gnome.org/extension/3740/compiz-alike-magic-lamp-effect/
+
 ## License
 
 AGPL-3.0-or-later.

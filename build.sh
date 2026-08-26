@@ -19,6 +19,10 @@ with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
         for f in files:
             if f in EXCLUDE:
                 continue
+            # hidden files: on ntfs-3g mounts, deleted-but-open files come
+            # back as .fuse_hidden* ghosts; never ship anything hidden
+            if f.startswith('.'):
+                continue
             p = os.path.join(root, f)
             z.write(p, os.path.relpath(p, '.'))
 print(f'built {out} ({os.path.getsize(out)} bytes)')
