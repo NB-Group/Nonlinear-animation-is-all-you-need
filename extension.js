@@ -129,7 +129,7 @@ export default class SpringEaseExtension extends Extension {
         // Optional: ease the compiz-alike-magic-lamp-effect minimize/unminimize
         // timeline so it decelerates instead of stopping dead. Live-toggleable.
         this._mlIds = [];
-        this._deferredIds = [];
+        this._deferredEaseId = 0;
         this._installMagicLampHooks();
         this._mlSettingId = settings.connect(
             'changed::magic-lamp-easing', () => this._installMagicLampHooks());
@@ -159,8 +159,10 @@ export default class SpringEaseExtension extends Extension {
         // before magic-lamp has called add_effect_with_name(). By the next
         // HIGH_IDLE the effect (and the timeline created in its vfunc_set_actor)
         // is in place, and the timeline's first new-frame has not fired yet.
-        const id = GLib.idle_add(GLib.PRIORITY_HIGH_IDLE, () => {
-            this._deferredIds = this._deferredIds.filter(x => x !== id);
+        if (this._deferredEaseId)
+            GLib.source_remove(this._deferredEaseId);
+        this._deferredEaseId = GLib.idle_add(GLib.PRIORITY_HIGH_IDLE, () => {
+            this._deferredEaseId = 0;
             try {
                 for (const name of [MAGIC_LAMP_MINIMIZE, MAGIC_LAMP_UNMINIMIZE]) {
                     const effect = actor.get_effect(name);
@@ -176,7 +178,6 @@ export default class SpringEaseExtension extends Extension {
             } catch (e) {}
             return GLib.SOURCE_REMOVE;
         });
-        this._deferredIds.push(id);
     }
 
     disable() {
@@ -194,9 +195,10 @@ export default class SpringEaseExtension extends Extension {
             this._settings.disconnect(this._mlSettingId);
             this._mlSettingId = 0;
         }
-        for (const id of this._deferredIds ?? [])
-            GLib.source_remove(id);
-        this._deferredIds = [];
+        if (this._deferredEaseId) {
+            GLib.source_remove(this._deferredEaseId);
+            this._deferredEaseId = 0;
+        }
         this._orig = null;
         this._settings = null;
     }
