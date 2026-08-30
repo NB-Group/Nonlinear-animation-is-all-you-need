@@ -28,7 +28,7 @@ const MODE_LABELS = [
 
 export default class SpringEasePrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
-        const settings = this.getSettings('org.gnome.shell.extensions.nonlinear-animation');
+        const settings = this.getSettings();
 
         const page = new Adw.PreferencesPage({
             title: 'Nonlinear Animation',

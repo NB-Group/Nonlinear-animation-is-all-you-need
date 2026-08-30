@@ -40,7 +40,7 @@ const MAGIC_LAMP_UNMINIMIZE = 'unminimize-magic-lamp-effect';
 
 export default class SpringEaseExtension extends Extension {
     enable() {
-        this._settings = this.getSettings('org.gnome.shell.extensions.nonlinear-animation');
+        this._settings = this.getSettings();
 
         this._orig = {
             ease: Clutter.Actor.prototype.ease,
@@ -59,7 +59,7 @@ export default class SpringEaseExtension extends Extension {
         // (Super key) still get the spring. We stamp the last gesture event time
         // and skip springify for a short grace window after it.
         let lastGestureTime = 0;
-        this._gestureId = global.stage.connect('captured-event', (_stage, event) => {
+        global.stage.connectObject('captured-event', (_stage, event) => {
             const t = event.type();
             if (t === Clutter.EventType.TOUCHPAD_SWIPE ||
                 t === Clutter.EventType.TOUCHPAD_PINCH) {
@@ -76,7 +76,7 @@ export default class SpringEaseExtension extends Extension {
                     lastGestureTime = Date.now();
             }
             return Clutter.EVENT_PROPAGATE;
-        });
+        }, this);
 
         const springify = params => {
             if (!settings.get_boolean('enabled'))
@@ -128,28 +128,21 @@ export default class SpringEaseExtension extends Extension {
 
         // Optional: ease the compiz-alike-magic-lamp-effect minimize/unminimize
         // timeline so it decelerates instead of stopping dead. Live-toggleable.
-        this._mlIds = [];
         this._deferredEaseId = 0;
         this._installMagicLampHooks();
-        this._mlSettingId = settings.connect(
-            'changed::magic-lamp-easing', () => this._installMagicLampHooks());
+        this._settings.connectObject(
+            'changed::magic-lamp-easing', () => this._installMagicLampHooks(),
+            this);
     }
 
     _installMagicLampHooks() {
-        this._removeMagicLampHooks();
+        global.window_manager.disconnectObject(this);
         if (!this._settings.get_boolean('magic-lamp-easing'))
             return;
-        this._mlIds = [
-            global.window_manager.connect('minimize', (_wm, actor) => this._easeMagicLamp(actor)),
-            global.window_manager.connect('unminimize', (_wm, actor) => this._easeMagicLamp(actor)),
-        ];
-    }
-
-    _removeMagicLampHooks() {
-        for (const id of this._mlIds) {
-            try { global.window_manager.disconnect(id); } catch (e) {}
-        }
-        this._mlIds = [];
+        global.window_manager.connectObject(
+            'minimize', (_wm, actor) => this._easeMagicLamp(actor),
+            'unminimize', (_wm, actor) => this._easeMagicLamp(actor),
+            this);
     }
 
     _easeMagicLamp(actor) {
@@ -163,19 +156,17 @@ export default class SpringEaseExtension extends Extension {
             GLib.source_remove(this._deferredEaseId);
         this._deferredEaseId = GLib.idle_add(GLib.PRIORITY_HIGH_IDLE, () => {
             this._deferredEaseId = 0;
-            try {
-                for (const name of [MAGIC_LAMP_MINIMIZE, MAGIC_LAMP_UNMINIMIZE]) {
-                    const effect = actor.get_effect(name);
-                    const timeline = effect?.timerId;
-                    if (timeline && timeline.set_progress_mode) {
-                        timeline.set_progress_mode(Clutter.AnimationMode.EASE_OUT_CUBIC);
-                        // Fixed duration for both minimize and unminimize so they
-                        // feel symmetric. 700ms = slow enough to read the
-                        // deceleration; tune here.
-                        timeline.set_duration(700);
-                    }
+            for (const name of [MAGIC_LAMP_MINIMIZE, MAGIC_LAMP_UNMINIMIZE]) {
+                const effect = actor.get_effect(name);
+                const timeline = effect?.timerId;
+                if (timeline?.set_progress_mode) {
+                    timeline.set_progress_mode(Clutter.AnimationMode.EASE_OUT_CUBIC);
+                    // Fixed duration for both minimize and unminimize so they
+                    // feel symmetric. 700ms = slow enough to read the
+                    // deceleration; tune here.
+                    timeline.set_duration(700);
                 }
-            } catch (e) {}
+            }
             return GLib.SOURCE_REMOVE;
         });
     }
@@ -186,15 +177,9 @@ export default class SpringEaseExtension extends Extension {
         if (this._orig.easeAsync)
             Clutter.Actor.prototype.easeAsync = this._orig.easeAsync;
         St.Adjustment.prototype.ease = this._orig.adjustmentEase;
-        if (this._gestureId) {
-            global.stage.disconnect(this._gestureId);
-            this._gestureId = 0;
-        }
-        this._removeMagicLampHooks();
-        if (this._mlSettingId) {
-            this._settings.disconnect(this._mlSettingId);
-            this._mlSettingId = 0;
-        }
+        global.stage.disconnectObject(this);
+        global.window_manager.disconnectObject(this);
+        this._settings.disconnectObject(this);
         if (this._deferredEaseId) {
             GLib.source_remove(this._deferredEaseId);
             this._deferredEaseId = 0;
