@@ -1,7 +1,7 @@
 {
     "uuid": "nonlinear-animation@nbgroup",
     "name": "Nonlinear animation is all you need",
-    "description": "Recurve GNOME's overview, workspace and window animations with smoother easing (In-Out cubic/expo/quint or spring), closer to macOS. Live-tunable speed, threshold, and a touchpad-gesture exception. No bouncing unless you ask for it.",
+    "description": "Make every GNOME animation nonlinear! Linear motion is plain and counter-intuitive: it never speeds up, never settles. If you feel that too, this extension is exactly what you need.",
     "shell-version": [
         "50"
     ],
