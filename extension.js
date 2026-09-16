@@ -16,6 +16,20 @@ import GLib from 'gi://GLib';
 import St from 'gi://St';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
+// WorkspaceAnimation drives one MonitorGroup per monitor to slide workspaces.
+// Those actors size themselves from the monitor layout while animating, and a
+// changed duration/curve there has been reported to make secondary monitors
+// flicker on multi-head fractional-scale setups (issue #1), so we leave them
+// entirely alone.
+import * as WorkspaceAnimation from
+    'resource:///org/gnome/shell/ui/workspaceAnimation.js';
+const MonitorGroup = WorkspaceAnimation.MonitorGroup ?? null;
+
+// Stay out of the way while the shell is still coming up at login: the boot
+// sequence (first layout passes, chrome fades) is timing-sensitive on
+// multi-monitor setups and "sometimes fails to initialize" (issue #1).
+const BOOT_GRACE_MS = 8000;
+
 const MODE_MAP = {
     'ease-out-cubic': Clutter.AnimationMode.EASE_OUT_CUBIC,
     'ease-out-expo': Clutter.AnimationMode.EASE_OUT_EXPO,
@@ -78,12 +92,23 @@ export default class SpringEaseExtension extends Extension {
             return Clutter.EVENT_PROPAGATE;
         }, this);
 
+        const bootTime = Date.now();
         const springify = params => {
+            try {
+                return springifyInner(params);
+            } catch (e) {
+                // Never let a settings/read hiccup break the caller's ease.
+                return params;
+            }
+        };
+        const springifyInner = params => {
             if (!settings.get_boolean('enabled'))
                 return params;
             if (!params || typeof params !== 'object' || params.duration === undefined)
                 return params;
             if (params.duration < settings.get_int('threshold-ms'))
+                return params;
+            if (Date.now() - bootTime < BOOT_GRACE_MS)
                 return params;
 
             const grace = settings.get_int('gesture-grace-ms');
@@ -100,25 +125,35 @@ export default class SpringEaseExtension extends Extension {
                 params.mode = Clutter.AnimationMode.EASE_OUT_CUBIC;
                 const gscale = settings.get_double('gesture-duration-scale');
                 if (gscale !== 1.0)
-                    params.duration = Math.round(params.duration * gscale);
+                    params.duration = Math.min(5000,
+                        Math.round(params.duration * gscale));
                 return params;
             }
 
             const mode = MODE_MAP[settings.get_string('mode')];
             if (mode !== undefined)
                 params.mode = mode;
-            params.duration = Math.round(params.duration * settings.get_double('duration-scale'));
+            params.duration = Math.min(5000,
+                Math.round(params.duration * settings.get_double('duration-scale')));
             return params;
         };
 
+        const skipActor = actor =>
+            MonitorGroup && actor instanceof MonitorGroup;
         Clutter.Actor.prototype.ease = function (props) {
+            if (skipActor(this))
+                return orig.ease.call(this, props);
             return orig.ease.call(this, springify(props));
         };
         Clutter.Actor.prototype.ease_property = function (propName, target, params) {
+            if (skipActor(this))
+                return orig.easeProperty.call(this, propName, target, params);
             return orig.easeProperty.call(this, propName, target, springify(params));
         };
         if (orig.easeAsync) {
             Clutter.Actor.prototype.easeAsync = function (props) {
+                if (skipActor(this))
+                    return orig.easeAsync.call(this, props);
                 return orig.easeAsync.call(this, springify(props));
             };
         }

@@ -6,5 +6,6 @@
         "50"
     ],
     "settings-schema": "org.gnome.shell.extensions.nonlinear-animation",
-    "url": "https://github.com/NB-Group/Nonlinear-animation-is-all-you-need"
+    "url": "https://github.com/NB-Group/Nonlinear-animation-is-all-you-need",
+    "version": 5
 }
