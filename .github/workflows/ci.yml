@@ -13,15 +13,28 @@ jobs:
 
       - name: Validate metadata.json
         run: |
-          jq -e 'has("uuid") and has("name") and has("shell-version") and has("settings-schema")' metadata.json
+          jq -e 'has("uuid") and has("name") and has("shell-version") and has("settings-schema") and has("gettext-domain")' metadata.json
 
-      - name: Install glib-compile-schemas
-        run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev-bin
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev-bin gettext
+
+      - name: Check translations
+        run: msgfmt -c --statistics po/zh_CN.po -o /dev/null
 
       - name: Build zip
         run: |
           chmod +x build.sh
           ./build.sh
+
+      # eGo review rule: the zip must contain runtime files only. Guard
+      # against regressions of the historical rejections (build.sh in zip,
+      # compiled schemas, hidden files, dev assets).
+      - name: Audit zip contents
+        run: |
+          unzip -l nonlinear-animation@nbgroup.zip > /tmp/zip.txt
+          cat /tmp/zip.txt
+          ! grep -Eq '(^| )(\.|build\.sh|gschemas\.compiled|scripts/|screenshots/|tests/|po/)' /tmp/zip.txt
+          grep -q 'locale/zh_CN/LC_MESSAGES/nonlinear-animation.mo' /tmp/zip.txt
 
       - uses: actions/upload-artifact@v4
         with:

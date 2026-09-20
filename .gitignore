@@ -2,3 +2,5 @@
 *.zip
 *~
 schemas/.fuse_hidden*
+schemas/gschemas.compiled
+locale/
