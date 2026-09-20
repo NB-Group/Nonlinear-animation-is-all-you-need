@@ -1,11 +1,12 @@
 {
     "uuid": "nonlinear-animation@nbgroup",
     "name": "Nonlinear animation is all you need",
-    "description": "Make every GNOME animation nonlinear! Linear motion is plain and counter-intuitive: it never speeds up, never settles. If you feel that too, this extension is exactly what you need.",
+    "description": "Make every GNOME animation nonlinear! Linear motion is plain and counter-intuitive: it never speeds up, never settles. Curated curve presets, springs with real physics, velocity continuity for interrupted animations, and a visual curve editor — pick a curve, it just feels right.",
     "shell-version": [
         "50"
     ],
     "settings-schema": "org.gnome.shell.extensions.nonlinear-animation",
+    "gettext-domain": "nonlinear-animation",
     "url": "https://github.com/NB-Group/Nonlinear-animation-is-all-you-need",
-    "version": 5
+    "version": 6
 }

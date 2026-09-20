@@ -1,0 +1,324 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the nonlinear-animation package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: nonlinear-animation 6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-20 23:43+0800\n"
+"PO-Revision-Date: 2026-09-20 23:45+0800\n"
+"Last-Translator: NB-Group <NB_group@qq.com>\n"
+"Language-Team: Chinese (Simplified)\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: prefs.js:48
+msgid "Nonlinear Animation"
+msgstr "非线性动画"
+
+#: prefs.js:54
+msgid "Animation curve"
+msgstr "动画曲线"
+
+#: prefs.js:55
+msgid "Pick a curve — it applies instantly. Create your own, or share curves as files."
+msgstr "选一条曲线即可，立即生效。也可以自己画，或用文件分享曲线。"
+
+#: prefs.js:69
+msgid "Speed"
+msgstr "速度"
+
+#: prefs.js:70
+msgid "How long eased animations take to play. 1.0 = GNOME default, 1.8 ≈ macOS."
+msgstr "缓动动画的播放时长。1.0 = GNOME 默认，1.8 ≈ macOS 手感。"
+
+#: prefs.js:72
+msgid "Animation speed"
+msgstr "动画速度"
+
+#: prefs.js:93
+msgid "Motion"
+msgstr "运动"
+
+#: prefs.js:97
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:38
+msgid "Interruption continuity"
+msgstr "打断连续性"
+
+#: prefs.js:98
+msgid "Interrupted animations keep their momentum instead of restarting from standstill (e.g. flipping two app-grid pages quickly)."
+msgstr "被打断的动画保留原有动量，不再从静止重新加速（例如应用网格连续快速翻两页）。"
+
+#: prefs.js:104
+msgid "Spring fidelity"
+msgstr "弹簧求解精度"
+
+#: prefs.js:105
+msgid "How spring curves are solved."
+msgstr "弹簧曲线的求解方式。"
+
+#: prefs.js:108
+msgid "Efficient (analytic)"
+msgstr "高效（解析解）"
+
+#: prefs.js:109
+msgid "Ultra (frame integration) — higher fidelity, more CPU"
+msgstr "极致（逐帧积分）— 更高保真，消耗更多 CPU"
+
+#: prefs.js:119
+msgid "Behavior"
+msgstr "行为"
+
+#: prefs.js:121
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:76
+msgid "Enabled"
+msgstr "启用"
+
+#: prefs.js:122
+msgid "Quick A/B compare; off = GNOME default easing."
+msgstr "快速 A/B 对比；关闭即回到 GNOME 默认缓动。"
+
+#: prefs.js:128
+msgid "Ease magic-lamp minimize"
+msgstr "缓动神灯最小化"
+
+#: prefs.js:129
+msgid "If compiz-alike-magic-lamp-effect is installed, decelerate its minimize/unminimize into the dock. No-op otherwise."
+msgstr "若安装了 compiz-alike-magic-lamp-effect，其最小化/还原图标动画会减速收尾。未安装则无任何影响。"
+
+#: prefs.js:138
+msgid "Advanced"
+msgstr "高级"
+
+#: prefs.js:139
+msgid "Threshold and touchpad-gesture exceptions — rarely touched."
+msgstr "阈值与触摸板手势例外，一般不用动。"
+
+#: prefs.js:144
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:53
+msgid "Threshold (ms)"
+msgstr "阈值（毫秒）"
+
+#: prefs.js:145
+msgid "Only animations ≥ this get eased (hovers ~100ms). Lower = more things eased."
+msgstr "只有不低于该时长的动画才被缓动（悬停约 100ms）。调低 = 更多动画被缓动。"
+
+#: prefs.js:152
+msgid "Gesture grace (ms)"
+msgstr "手势宽限（毫秒）"
+
+#: prefs.js:153
+msgid "After a 3-finger swipe/pinch, animations play native for this long. 0 = ease everything."
+msgstr "三指滑动/捏合之后的一段宽限时间内，动画按 GNOME 原生速度播放。0 = 全部缓动。"
+
+#: prefs.js:160
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:65
+msgid "Gesture duration scale"
+msgstr "手势时长倍数"
+
+#: prefs.js:161
+msgid "Stretches gesture commits (workspace switch, paging) — curve stays velocity-matched so no jolt. 1.0 = native."
+msgstr "拉长手势收尾动画（工作区切换、翻页），曲线保持速度匹配所以不顿挫。1.0 = 原生。"
+
+#: prefs.js:227
+msgid "New curve"
+msgstr "新建曲线"
+
+#: prefs.js:233
+msgid "Import"
+msgstr "导入"
+
+#: prefs.js:239
+msgid "Export"
+msgstr "导出"
+
+#: prefs.js:245 prefs.js:422
+msgid "Delete"
+msgstr "删除"
+
+#: prefs.js:292
+msgid "Library full"
+msgstr "曲线库已满"
+
+#: prefs.js:293 prefs.js:343
+#, javascript-format
+msgid "At most %d user curves can be stored."
+msgstr "最多只能保存 %d 条自定义曲线。"
+
+#: prefs.js:316
+msgid "Import curves"
+msgstr "导入曲线"
+
+#: prefs.js:331 prefs.js:337 prefs.js:342
+msgid "Import failed"
+msgstr "导入失败"
+
+#: prefs.js:331
+msgid "Could not read the file."
+msgstr "无法读取该文件。"
+
+#: prefs.js:370
+msgid "Export curve"
+msgstr "导出曲线"
+
+#: prefs.js:392
+#, javascript-format
+msgid "Delete “%s”?"
+msgstr "删除“%s”？"
+
+#: prefs.js:401
+msgid "Nonlinear animation curves"
+msgstr "非线性动画曲线"
+
+#: prefs.js:412
+msgid "OK"
+msgstr "确定"
+
+#: prefs.js:419
+msgid "This cannot be undone."
+msgstr "此操作无法撤销。"
+
+#: prefs.js:421 ui/curve-editor.js:53
+msgid "Cancel"
+msgstr "取消"
+
+#: curves.js:29
+msgid "Balanced"
+msgstr "均衡"
+
+#: curves.js:30
+msgid "Dramatic"
+msgstr "戏剧"
+
+#: curves.js:31
+msgid "Glide"
+msgstr "滑行"
+
+#: curves.js:32
+msgid "Whip"
+msgstr "鞭击"
+
+#: curves.js:33
+msgid "Spring"
+msgstr "弹簧"
+
+#: curves.js:34
+msgid "Soft spring"
+msgstr "软弹簧"
+
+#: curves.js:35
+msgid "Overshoot"
+msgstr "过冲"
+
+#: curves.js:37
+msgid "Kick"
+msgstr "回弹"
+
+#: ui/curve-editor.js:55
+msgid "Save"
+msgstr "保存"
+
+#: ui/curve-editor.js:67
+msgid "Curve name"
+msgstr "曲线名称"
+
+#: ui/curve-editor.js:77
+msgid "Drag points to shape the curve. Double-click to add a point, right-click to remove one."
+msgstr "拖动控制点调整曲线形状。双击添加控制点，右键删除。"
+
+#: ui/curve-editor.js:279
+msgid "Give the curve a name first."
+msgstr "请先给曲线起个名字。"
+
+#: ui/curve-editor.js:306
+msgid "Points must stay ordered left to right."
+msgstr "控制点必须保持从左到右的顺序。"
+
+#: ui/curve-editor.js:308
+msgid "Keep points between -0.5 and 1.5 vertically."
+msgstr "控制点的纵向位置需保持在 -0.5 到 1.5 之间。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:18
+msgid "Easing curve (legacy)"
+msgstr "缓动曲线（旧版）"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:19
+msgid "Legacy curve key from v1–v5. Still read once for migration to selected-curve; otherwise unused."
+msgstr "v1–v5 的旧曲线键。仅在迁移到 selected-curve 时读取一次，其余情况不再使用。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:23
+msgid "Settings schema version"
+msgstr "设置架构版本"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:24
+msgid "Bumped automatically after the one-time migration from the legacy mode key."
+msgstr "从旧版 mode 键完成一次性迁移后自动递增。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:28
+msgid "Selected curve"
+msgstr "当前曲线"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:29
+msgid "Id of the active curve: a built-in preset (preset:…) or a user curve (user:…)."
+msgstr "当前生效曲线的 ID：内置预设（preset:…）或自定义曲线（user:…）。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:33
+msgid "User curves"
+msgstr "自定义曲线"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:34
+msgid "User-created and imported curves, one JSON object per entry."
+msgstr "用户创建和导入的曲线，每条一个 JSON 对象。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:39
+msgid "When an animation is interrupted (e.g. flipping two app-grid pages quickly), carry the current velocity into the new animation instead of re-accelerating from standstill, using a velocity-matched spring."
+msgstr "动画被打断时（例如应用网格连续快速翻两页），用带初速度的弹簧把当前速度带入新动画，而不是从静止重新加速。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:47
+msgid "Spring solver"
+msgstr "弹簧求解器"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:48
+msgid "How spring curves are evaluated. analytic (default): closed-form solution, a few math calls per frame. numeric: Ultra mode, per-frame physics integration for maximum fidelity at a slightly higher CPU cost."
+msgstr "弹簧曲线的求值方式。analytic（默认）：闭式解析解，每帧只做几次数学运算。numeric：极致模式，逐帧物理积分，保真度最高但 CPU 占用略高。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:54
+msgid "Only animations at or above this duration get the easing curve. Lower = more things eased (hovers ~100ms); higher = fewer."
+msgstr "只有不低于该时长的动画才被缓动。调低 = 更多动画被缓动（悬停约 100ms）；调高 = 更少。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:59
+msgid "Duration scale"
+msgstr "时长倍数"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:60
+msgid "Multiplier for the duration of eased animations. 1.0 = GNOME's default (quick); 1.8 ≈ macOS; 2.5 = slow/luxurious."
+msgstr "缓动动画时长的倍数。1.0 = GNOME 默认（快）；1.8 ≈ macOS；2.5 = 缓慢从容。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:66
+msgid "Duration multiplier for animations during/after a touchpad gesture (workspace switch, app-grid paging). The easing curve is kept at GNOME's velocity-matched EASE_OUT_CUBIC so there's no jolt on release; this only stretches the duration so the deceleration reads more. 1.0 = gestures fully native."
+msgstr "触摸板手势期间/之后（工作区切换、应用网格翻页）动画时长的倍数。曲线保持 GNOME 速度匹配的 EASE_OUT_CUBIC，松手不会顿挫；这里只拉长时长让减速段更明显。1.0 = 手势完全原生。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:71
+msgid "Touchpad gesture grace (ms)"
+msgstr "触摸板手势宽限（毫秒）"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:72
+msgid "Window after a touchpad gesture (3-finger swipe/pinch) during which animations play at GNOME's native speed. Touchpad-driven overview/workspace opens already track your finger, so their wrap-up shouldn't be slowed. Set 0 to disable the exception (ease everything, including gestures)."
+msgstr "触摸板手势（三指滑动/捏合）后的一段宽限时间，期间动画按 GNOME 原生速度播放。触摸板驱动的概览/工作区打开本来就跟手，收尾不应被拖慢。设为 0 关闭该例外（包括手势在内全部缓动）。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:77
+msgid "Master switch (A/B without disabling the whole extension)."
+msgstr "总开关（无需禁用整个扩展即可 A/B 对比）。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:81
+msgid "Ease magic-lamp minimize/unminimize"
+msgstr "缓动神灯最小化/还原"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:82
+msgid "If compiz-alike-magic-lamp-effect is installed, curve its minimize/unminimize timeline with EASE_OUT_CUBIC so the window decelerates into the dock instead of stopping dead. No-op if magic-lamp isn't installed."
+msgstr "若安装了 compiz-alike-magic-lamp-effect，其最小化/还原时间线会改用 EASE_OUT_CUBIC，窗口减速滑入 Dock 而不是急停。未安装则无任何影响。"
