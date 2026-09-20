@@ -29,6 +29,7 @@ const CARD_CSS = `
 .curve-card.selected {
     outline: 2px solid @accent_color;
     outline-offset: 2px;
+    background: alpha(@accent_color, 0.08);
 }
 .curve-card:hover {
     background: alpha(currentColor, 0.05);
@@ -191,20 +192,22 @@ export default class SpringEasePrefs extends ExtensionPreferences {
             this._gallery.remove(this._flow);
         this._flow = null;
 
+        // Selection visuals are ours: the theme's FlowBox selection background
+        // would sit under the blue curve thumbnails and hide them.
         const flow = new Gtk.FlowBox({
-            selection_mode: Gtk.SelectionMode.SINGLE,
+            selection_mode: Gtk.SelectionMode.NONE,
             homogeneous: true,
             column_spacing: 12,
             row_spacing: 12,
             min_children_per_line: 3,
             max_children_per_line: 5,
+            activate_on_single_click: true,
         });
         flow.connect('child-activated', (_f, child) => {
             this._settings.set_string('selected-curve', child.curve_id);
         });
 
         const curves = [...Curves.BUILTIN_CURVES, ...this._userCurves()];
-        const selected = this._selectedId();
         for (const c of curves) {
             const card = new Gtk.Box({
                 orientation: Gtk.Orientation.VERTICAL,
@@ -220,8 +223,6 @@ export default class SpringEasePrefs extends ExtensionPreferences {
             const child = new Gtk.FlowBoxChild({child: card, focusable: true});
             child.curve_id = c.id;
             flow.insert(child, -1);
-            if (c.id === selected)
-                flow.select_child(child);
         }
         this._flow = flow;
         this._gallery.add(flow);
