@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schemalist>
+<schemalist gettext-domain="nonlinear-animation">
   <schema id="org.gnome.shell.extensions.nonlinear-animation" path="/org/gnome/shell/extensions/nonlinear-animation/">
     <key name="mode" type="s">
       <choices>
@@ -15,8 +15,37 @@
         <choice value="ease-out-elastic"/>
       </choices>
       <default>"ease-in-out-cubic"</default>
-      <summary>Easing curve</summary>
-      <description>Easing curve applied to long animations. "ease-in-out-*" curves accelerate at the start and decelerate at the end (two-sided). "ease-out-*" only decelerate. "back"/"elastic" overshoot/bounce.</description>
+      <summary>Easing curve (legacy)</summary>
+      <description>Legacy curve key from v1–v5. Still read once for migration to selected-curve; otherwise unused.</description>
+    </key>
+    <key name="schema-version" type="i">
+      <default>1</default>
+      <summary>Settings schema version</summary>
+      <description>Bumped automatically after the one-time migration from the legacy mode key.</description>
+    </key>
+    <key name="selected-curve" type="s">
+      <default>"preset:ease-in-out-cubic"</default>
+      <summary>Selected curve</summary>
+      <description>Id of the active curve: a built-in preset (preset:…) or a user curve (user:…).</description>
+    </key>
+    <key name="user-curves" type="as">
+      <default>[]</default>
+      <summary>User curves</summary>
+      <description>User-created and imported curves, one JSON object per entry.</description>
+    </key>
+    <key name="continuity" type="b">
+      <default>true</default>
+      <summary>Interruption continuity</summary>
+      <description>When an animation is interrupted (e.g. flipping two app-grid pages quickly), carry the current velocity into the new animation instead of re-accelerating from standstill, using a velocity-matched spring.</description>
+    </key>
+    <key name="spring-solver" type="s">
+      <choices>
+        <choice value="analytic"/>
+        <choice value="numeric"/>
+      </choices>
+      <default>"analytic"</default>
+      <summary>Spring solver</summary>
+      <description>How spring curves are evaluated. analytic (default): closed-form solution, a few math calls per frame. numeric: Ultra mode, per-frame physics integration for maximum fidelity at a slightly higher CPU cost.</description>
     </key>
     <key name="threshold-ms" type="i">
       <default>100</default>
