@@ -12,8 +12,39 @@ GNOME animates through them picks up the curve and speed you choose. Because it
 hooks the prototypes instead of each call site, it keeps working when GNOME
 renames things internally.
 
-By default it uses a symmetric curve that eases in and out, closer to how macOS
-feels. Bounce and overshoot are available but off by default.
+## What you get
+
+- **A curve gallery.** Curated presets (including real springs with damped
+  oscillator physics), each drawn as a live preview card. Click one, it applies
+  instantly.
+- **A visual curve editor.** Create your own curve by dragging control points.
+  Double-click adds a point, right-click removes one, endpoints stay pinned.
+  Values above 1 give you overshoot; a replay button previews the motion.
+- **Interruption continuity.** When an animation is interrupted — flipping two
+  app-grid pages quickly, closing the overview mid-animation — the new one
+  keeps the old one's momentum instead of restarting from standstill, using a
+  spring seeded with the measured velocity. The same trick Apple's animation
+  stack uses.
+- **Curve sharing.** Curves import and export as small JSON files. Trade them
+  like themes. The format is documented below.
+- **Touchpad gestures stay native.** Gesture-driven motion already tracks your
+  finger; only its wrap-up is stretched slightly so the deceleration reads.
+- **Translations.** English and Simplified Chinese ship in the box; others via
+  one `.po` file (see below).
+
+## Performance
+
+The whole thing is math, not magic. Preset curves swap a single enum before the
+native Clutter call — zero added per-frame work. Custom curves (splines and
+springs) run one small callback per frame per animation: the spring is a
+closed-form analytic solution (one `exp` plus a couple of trig calls, with
+coefficients precomputed when the animation starts), the spline is a binary
+search plus a handful of multiply/adds. Nothing is allocated on the frame path.
+
+`Ultra` spring fidelity switches to per-frame physics integration (semi-implicit
+Euler) — noticeably more CPU in exchange for a slightly more organic response.
+Most people will never need it; it exists because the analytic solution and the
+integrator disagree a hair on the sharpest transients.
 
 ## Settings
 
@@ -21,73 +52,95 @@ All settings are live: change one and the next animation already uses it, no
 relogin. You do need to log out and back in once after installing (or after
 editing `extension.js`), so the shell reloads the module.
 
-Open the extension's preferences to configure:
+- **Animation curve** — the gallery. Pick, create, import, export.
+- **Animation speed** — duration multiplier. 1.0 = GNOME default, 1.8 ≈ macOS,
+  higher is more luxurious.
+- **Interruption continuity** — on by default. Interrupted animations carry
+  their velocity.
+- **Spring fidelity** — `Efficient` (analytic, default) or `Ultra`
+  (frame integration).
+- **Behavior** — master switch, and easing the magic-lamp minimize effect when
+  compiz-alike-magic-lamp-effect is installed.
+- **Advanced** — threshold below which short animations are left alone, and the
+  touchpad-gesture exception window.
 
-**Easing curve.** Symmetric `In-Out` curves accelerate at the start and
-decelerate at the end, and are recommended; `In-Out Cubic` is the default. `Out`
-curves only decelerate. `Out Back` adds a single overshoot, `Out Elastic` is a
-bouncy spring.
+Power users can also drive everything via `gsettings`:
 
-**Duration scale.** Multiplies how long the eased animations take. 1.0 is
-GNOME's speed, 1.8 is roughly macOS, 2.5 is deliberately slow.
-
-**Threshold (ms).** Animations shorter than this are left alone, so quick hovers
-stay snappy. Default 100.
-
-**Touchpad gesture grace (ms).** A 3-finger swipe or pinch already follows your
-finger, so for this many milliseconds after the gesture GNOME's native wrap-up
-is used instead of your curve. Discrete triggers like the Super key still get
-eased. Set to 0 to ease everything.
-
-**Gesture duration scale.** For gesture-driven commits (workspace switch,
-app-grid paging) the curve stays at GNOME's velocity-matched ease-out so
-releasing your finger doesn't jolt; this only stretches the duration a little so
-the deceleration reads. 1.0 is fully native.
-
-**Enabled.** Master switch, for A/B comparison.
-
-Equivalent via command line (point the schema dir at where it's installed):
-```bash
-S=~/.local/share/gnome-shell/extensions/nonlinear-animation@nbgroup/schemas
-GSETTINGS_SCHEMA_DIR=$S gsettings set org.gnome.shell.extensions.nonlinear-animation mode 'ease-in-out-expo'
-GSETTINGS_SCHEMA_DIR=$S gsettings set org.gnome.shell.extensions.nonlinear-animation duration-scale 1.8
-GSETTINGS_SCHEMA_DIR=$S gsettings set org.gnome.shell.extensions.nonlinear-animation gesture-grace-ms 800
+```sh
+gsettings --schemadir schemas set org.gnome.shell.extensions.nonlinear-animation \
+    selected-curve 'preset:spring-snappy'
 ```
+
+## Curve file format
+
+A `.nla-curve.json` file is a single curve or a bundle:
+
+```json
+{
+  "format": "nonlinear-animation/curve",
+  "v": 1,
+  "curves": [
+    { "name": "Snappy", "kind": "spline",
+      "points": [[0, 0], [0.25, 0.75], [0.45, 1.04], [1, 1]] },
+    { "name": "Old spring", "kind": "spring", "damping": 0.62, "omega": 8.5 },
+    { "name": "CSS classic", "kind": "bezier", "p": [0.4, 0, 0.2, 1] }
+  ]
+}
+```
+
+Rules: spline points are `[x, y]` pairs, x strictly increasing in `[0, 1]`,
+first point at x = 0 and last at x = 1; y may exceed `[0, 1]` (overshoot) up to
+`[-0.5, 1.5]`, at most 24 points. Bezier curves (CSS-style `p1x, p1y, p2x,
+p2y`) are converted to splines on import. Springs take `damping` (0.2–1.0) and
+`omega` (1–40).
 
 ## Install
 
-Drop the folder into `~/.local/share/gnome-shell/extensions/` and compile the
-schema:
+From extensions.gnome.org (recommended):
+<https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/>
+
+Manually, for development:
+
 ```sh
-glib-compile-schemas nonlinear-animation@nbgroup/schemas/
+git clone https://github.com/NB-Group/Nonlinear-animation-is-all-you-need
+ln -s "$PWD/Nonlinear-animation-is-all-you-need" \
+    ~/.local/share/gnome-shell/extensions/nonlinear-animation@nbgroup
+glib-compile-schemas ~/.local/share/gnome-shell/extensions/nonlinear-animation@nbgroup/schemas/
 ```
-Then log out and back in (Wayland can't restart the shell in place), and enable
-it.
+
+Then log out and back in (Wayland reloads extensions only at login).
 
 ## Compatibility
 
-GNOME Shell 50. The API it wraps (the Clutter ease prototypes, stage
-captured-event, `Clutter.AnimationMode`) is stable from GNOME 46 through 50.
+GNOME Shell 50. The wrapped API is stable across 46–50 in practice; only 50 is
+declared until the newer code paths are tested on older shells.
 
 ## Known limits
 
-Only JS-layer animations are affected. A few compositor-internal transitions in
-mutter (C code) are not, but the overview, workspace and window animations
-people actually notice are all JS-layer and covered.
+- All hooking happens in JS: animations driven directly by mutter's C code
+  (some workspace-transition internals) are untouched. WorkspaceAnimation's
+  MonitorGroup is deliberately left alone — changing it flickered secondary
+  monitors on fractional-scale setups.
+- The first login after install has an 8-second grace period where nothing is
+  eased, so the boot sequence stays predictable on multi-monitor setups.
+- Custom curves don't apply to animations GNOME plays with `repeatCount` or
+  `delay` (rare in shell chrome); those fall back to native curves.
 
-Per-ease overhead is a couple of cached GSettings reads, effectively nothing.
+## Translations
+
+To add a language: copy `po/zh_CN.po` to `po/<lang>.po`, translate the strings,
+add `<lang>` to `po/LINGUAS`, and open a PR. The build compiles `.po` files into
+the zip automatically.
 
 ## Optional: easing the magic-lamp minimize effect
 
-If you use [compiz-alike-magic-lamp-effect], this extension can optionally
-retime its minimize/unminimize timeline (linear by default, so the window
-collapses at full speed and stops dead) to an ease-out curve, so it decelerates
-into the dock. This is off by default; enable it with the "Ease magic-lamp
-minimize" switch in the preferences. Nothing else of that extension is touched,
-and the hooks are removed when the switch is off or this extension is disabled.
+If you use [compiz-alike-magic-lamp-effect], this extension can curve its
+minimize/unminimize timeline (EASE_OUT_CUBIC, 700 ms) so the window glides
+into the dock instead of stopping dead. It's a no-op when magic-lamp isn't
+installed. Turn it off in Preferences → Behavior if you prefer the raw effect.
 
-[compiz-alike-magic-lamp-effect]: https://extensions.gnome.org/extension/3740/compiz-alike-magic-lamp-effect/
+[compiz-alike-magic-lamp-effect]: https://extensions.gnome.org/extension/3749/compiz-alike-magic-lamp-effect/
 
 ## License
 
-AGPL-3.0-or-later.
+AGPL-3.0-or-later. See [LICENSE](LICENSE).
