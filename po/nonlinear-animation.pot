@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nonlinear-animation 6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-21 00:04+0800\n"
+"POT-Creation-Date: 2026-09-21 19:49+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,185 +17,196 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: prefs.js:48
+#: prefs.js:49
 msgid "Nonlinear Animation"
 msgstr ""
 
-#: prefs.js:54
+#: prefs.js:55
 msgid "Animation curve"
 msgstr ""
 
-#: prefs.js:55
+#: prefs.js:56
 msgid ""
 "Pick a curve — it applies instantly. Create your own, or share curves as "
 "files."
 msgstr ""
 
-#: prefs.js:76
+#: prefs.js:77
 msgid "Speed"
 msgstr ""
 
-#: prefs.js:77
+#: prefs.js:78
 msgid ""
-"How long eased animations take to play. 1.0 = GNOME default, 1.8 ≈ macOS."
+"How long eased animations take to play. Dragging right slows them down: 1.0 "
+"= GNOME default, 1.8 ≈ macOS."
 msgstr ""
 
-#: prefs.js:79
-msgid "Animation speed"
+#: prefs.js:80
+msgid "Animation duration"
+msgstr ""
+
+#: prefs.js:88
+msgid "Faster"
 msgstr ""
 
 #: prefs.js:100
+msgid "Slower"
+msgstr ""
+
+#: prefs.js:111
 msgid "Motion"
 msgstr ""
 
-#: prefs.js:104
+#: prefs.js:115
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:38
 msgid "Interruption continuity"
 msgstr ""
 
-#: prefs.js:105
+#: prefs.js:116
 msgid ""
 "Interrupted animations keep their momentum instead of restarting from "
 "standstill (e.g. flipping two app-grid pages quickly)."
 msgstr ""
 
-#: prefs.js:111
+#: prefs.js:122
 msgid "Spring fidelity"
 msgstr ""
 
-#: prefs.js:112
-msgid "How spring curves are solved."
-msgstr ""
-
-#: prefs.js:115
-msgid "Efficient (analytic)"
-msgstr ""
-
-#: prefs.js:116
-msgid "Ultra (frame integration) — higher fidelity, more CPU"
+#: prefs.js:123
+msgid ""
+"How spring curves are solved. Ultra integrates physics every frame: higher "
+"fidelity, more CPU."
 msgstr ""
 
 #: prefs.js:126
+msgid "Efficient (analytic)"
+msgstr ""
+
+#: prefs.js:127
+msgid "Ultra (frame integration)"
+msgstr ""
+
+#: prefs.js:137
 msgid "Behavior"
 msgstr ""
 
-#: prefs.js:128
+#: prefs.js:139
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:76
 msgid "Enabled"
 msgstr ""
 
-#: prefs.js:129
+#: prefs.js:140
 msgid "Quick A/B compare; off = GNOME default easing."
 msgstr ""
 
-#: prefs.js:135
+#: prefs.js:146
 msgid "Ease magic-lamp minimize"
 msgstr ""
 
-#: prefs.js:136
+#: prefs.js:147
 msgid ""
 "If compiz-alike-magic-lamp-effect is installed, decelerate its minimize/"
 "unminimize into the dock. No-op otherwise."
 msgstr ""
 
-#: prefs.js:145
+#: prefs.js:156
 msgid "Advanced"
 msgstr ""
 
-#: prefs.js:146
+#: prefs.js:157
 msgid "Threshold and touchpad-gesture exceptions — rarely touched."
 msgstr ""
 
-#: prefs.js:151
+#: prefs.js:162
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:53
 msgid "Threshold (ms)"
 msgstr ""
 
-#: prefs.js:152
+#: prefs.js:163
 msgid ""
 "Only animations ≥ this get eased (hovers ~100ms). Lower = more things eased."
 msgstr ""
 
-#: prefs.js:159
+#: prefs.js:170
 msgid "Gesture grace (ms)"
 msgstr ""
 
-#: prefs.js:160
+#: prefs.js:171
 msgid ""
 "After a 3-finger swipe/pinch, animations play native for this long. 0 = ease "
 "everything."
 msgstr ""
 
-#: prefs.js:167
+#: prefs.js:178
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:65
 msgid "Gesture duration scale"
 msgstr ""
 
-#: prefs.js:168
+#: prefs.js:179
 msgid ""
 "Stretches gesture commits (workspace switch, paging) — curve stays velocity-"
 "matched so no jolt. 1.0 = native."
 msgstr ""
 
-#: prefs.js:234
+#: prefs.js:245
 msgid "New curve"
 msgstr ""
 
-#: prefs.js:240
+#: prefs.js:251
 msgid "Import"
 msgstr ""
 
-#: prefs.js:246
+#: prefs.js:257
 msgid "Export"
 msgstr ""
 
-#: prefs.js:252 prefs.js:429
+#: prefs.js:263 prefs.js:440
 msgid "Delete"
 msgstr ""
 
-#: prefs.js:299
+#: prefs.js:310
 msgid "Library full"
 msgstr ""
 
-#: prefs.js:300 prefs.js:350
+#: prefs.js:311 prefs.js:361
 #, javascript-format
 msgid "At most %d user curves can be stored."
 msgstr ""
 
-#: prefs.js:323
+#: prefs.js:334
 msgid "Import curves"
 msgstr ""
 
-#: prefs.js:338 prefs.js:344 prefs.js:349
+#: prefs.js:349 prefs.js:355 prefs.js:360
 msgid "Import failed"
 msgstr ""
 
-#: prefs.js:338
+#: prefs.js:349
 msgid "Could not read the file."
 msgstr ""
 
-#: prefs.js:377
+#: prefs.js:388
 msgid "Export curve"
 msgstr ""
 
-#: prefs.js:399
+#: prefs.js:410
 #, javascript-format
 msgid "Delete “%s”?"
 msgstr ""
 
-#: prefs.js:408
+#: prefs.js:419
 msgid "Nonlinear animation curves"
 msgstr ""
 
-#: prefs.js:419
+#: prefs.js:430
 msgid "OK"
 msgstr ""
 
-#: prefs.js:426
+#: prefs.js:437
 msgid "This cannot be undone."
 msgstr ""
 
-#: prefs.js:428 ui/curve-editor.js:62
+#: prefs.js:439 ui/curve-editor.js:62
 msgid "Cancel"
 msgstr ""
 

@@ -1,6 +1,6 @@
 // Unit tests for easing.js / curves.js (pure JS, no GI). Run:
 //   gjs -m tests/easingTest.js
-import {MODE_FUNCS, makeSpline, makeSpring, makeSpringNumeric} from '../easing.js';
+import {MODE_FUNCS, makeSpline, makeSpring, makeSpringNumeric, compileCurve} from '../easing.js';
 import * as Curves from '../curves.js';
 
 let failures = 0;
@@ -59,6 +59,22 @@ for (const [nick, f] of Object.entries(MODE_FUNCS)) {
     const s2 = makeSpring(0.6, 9, v0, T);
     const d0 = s2.deriv(0);
     check('spring v0 seeds deriv(0)', Math.abs(d0 - v0 * T) < 0.05);
+}
+
+// --- compiled springs settle within the animation window --------------------
+{
+    // The bug: fixed omega left the spring ~9-13% short of target when the
+    // timeline ended, snapping to the final value. compileCurve must stiffen
+    // omega so the envelope decays to ~1% by tau=1.
+    for (const [zeta, omega, T] of [[0.62, 8.5, 0.45], [0.9, 5, 0.36],
+                                    [0.55, 6, 0.9], [0.8, 12, 0.15]]) {
+        const c = compileCurve({kind: 'spring', damping: zeta, omega}, 0, T);
+        check(`spring settles by end (z=${zeta}, w=${omega}, T=${T})`,
+            Math.abs(c.eval(1) - 1) < 0.015);
+    }
+    // stiffer-than-needed user omega is preserved (early settle, flat tail)
+    const stiff = compileCurve({kind: 'spring', damping: 0.62, omega: 30}, 0, 1.2);
+    check('stiff spring kept', Math.abs(stiff.eval(1) - 1) < 0.005);
 }
 
 // --- numeric (Ultra) spring matches analytic closely ------------------------

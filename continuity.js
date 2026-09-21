@@ -135,7 +135,13 @@ export function driveTransition(target, prop, curve, write, v0 = null) {
     const isNumeric = curve.kind === 'spring' && curve.solver === 'numeric';
 
     const handler = tr.connect_after('new-frame', (timeline, elapsed) => {
-        const tau = Math.min(elapsed, dur) / dur;
+        if (elapsed >= dur) {
+            // final frame: land exactly on the target instead of leaving the
+            // curve's last sampled (≈1) value
+            write(final);
+            return;
+        }
+        const tau = elapsed / dur;
         if (isNumeric)
             write(init + (final - init) * compiled.advanceTo(tau));
         else

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nonlinear-animation 6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-20 23:43+0800\n"
-"PO-Revision-Date: 2026-09-20 23:45+0800\n"
+"POT-Creation-Date: 2026-09-21 19:49+0800\n"
+"PO-Revision-Date: 2026-09-21 19:50+0800\n"
 "Last-Translator: NB-Group <NB_group@qq.com>\n"
 "Language-Team: Chinese (Simplified)\n"
 "Language: zh_CN\n"
@@ -17,173 +17,181 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: prefs.js:48
+#: prefs.js:49
 msgid "Nonlinear Animation"
 msgstr "非线性动画"
 
-#: prefs.js:54
+#: prefs.js:55
 msgid "Animation curve"
 msgstr "动画曲线"
 
-#: prefs.js:55
+#: prefs.js:56
 msgid "Pick a curve — it applies instantly. Create your own, or share curves as files."
 msgstr "选一条曲线即可，立即生效。也可以自己画，或用文件分享曲线。"
 
-#: prefs.js:69
+#: prefs.js:77
 msgid "Speed"
 msgstr "速度"
 
-#: prefs.js:70
-msgid "How long eased animations take to play. 1.0 = GNOME default, 1.8 ≈ macOS."
-msgstr "缓动动画的播放时长。1.0 = GNOME 默认，1.8 ≈ macOS 手感。"
+#: prefs.js:78
+msgid "How long eased animations take to play. Dragging right slows them down: 1.0 = GNOME default, 1.8 ≈ macOS."
+msgstr "缓动动画的播放时长。向右拖动更慢：1.0 = GNOME 默认，1.8 ≈ macOS 手感。"
 
-#: prefs.js:72
-msgid "Animation speed"
-msgstr "动画速度"
+#: prefs.js:80
+msgid "Animation duration"
+msgstr "动画时长"
 
-#: prefs.js:93
+#: prefs.js:88
+msgid "Faster"
+msgstr "快"
+
+#: prefs.js:100
+msgid "Slower"
+msgstr "慢"
+
+#: prefs.js:111
 msgid "Motion"
 msgstr "运动"
 
-#: prefs.js:97
+#: prefs.js:115
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:38
 msgid "Interruption continuity"
 msgstr "打断连续性"
 
-#: prefs.js:98
+#: prefs.js:116
 msgid "Interrupted animations keep their momentum instead of restarting from standstill (e.g. flipping two app-grid pages quickly)."
 msgstr "被打断的动画保留原有动量，不再从静止重新加速（例如应用网格连续快速翻两页）。"
 
-#: prefs.js:104
+#: prefs.js:122
 msgid "Spring fidelity"
 msgstr "弹簧求解精度"
 
-#: prefs.js:105
-msgid "How spring curves are solved."
-msgstr "弹簧曲线的求解方式。"
+#: prefs.js:123
+msgid "How spring curves are solved. Ultra integrates physics every frame: higher fidelity, more CPU."
+msgstr "弹簧曲线的求解方式。极致模式逐帧积分物理，保真更高，CPU 占用也更高。"
 
-#: prefs.js:108
+#: prefs.js:126
 msgid "Efficient (analytic)"
 msgstr "高效（解析解）"
 
-#: prefs.js:109
-msgid "Ultra (frame integration) — higher fidelity, more CPU"
-msgstr "极致（逐帧积分）— 更高保真，消耗更多 CPU"
+#: prefs.js:127
+msgid "Ultra (frame integration)"
+msgstr "极致（逐帧积分）"
 
-#: prefs.js:119
+#: prefs.js:137
 msgid "Behavior"
 msgstr "行为"
 
-#: prefs.js:121
+#: prefs.js:139
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:76
 msgid "Enabled"
 msgstr "启用"
 
-#: prefs.js:122
+#: prefs.js:140
 msgid "Quick A/B compare; off = GNOME default easing."
 msgstr "快速 A/B 对比；关闭即回到 GNOME 默认缓动。"
 
-#: prefs.js:128
+#: prefs.js:146
 msgid "Ease magic-lamp minimize"
-msgstr "缓动神灯最小化"
+msgstr "缓动 magic-lamp 最小化"
 
-#: prefs.js:129
+#: prefs.js:147
 msgid "If compiz-alike-magic-lamp-effect is installed, decelerate its minimize/unminimize into the dock. No-op otherwise."
-msgstr "若安装了 compiz-alike-magic-lamp-effect，其最小化/还原图标动画会减速收尾。未安装则无任何影响。"
+msgstr "若安装了 compiz-alike-magic-lamp-effect，其最小化/还原动画会减速收尾。未安装则无任何影响。"
 
-#: prefs.js:138
+#: prefs.js:156
 msgid "Advanced"
 msgstr "高级"
 
-#: prefs.js:139
+#: prefs.js:157
 msgid "Threshold and touchpad-gesture exceptions — rarely touched."
 msgstr "阈值与触摸板手势例外，一般不用动。"
 
-#: prefs.js:144
+#: prefs.js:162
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:53
 msgid "Threshold (ms)"
 msgstr "阈值（毫秒）"
 
-#: prefs.js:145
+#: prefs.js:163
 msgid "Only animations ≥ this get eased (hovers ~100ms). Lower = more things eased."
 msgstr "只有不低于该时长的动画才被缓动（悬停约 100ms）。调低 = 更多动画被缓动。"
 
-#: prefs.js:152
+#: prefs.js:170
 msgid "Gesture grace (ms)"
 msgstr "手势宽限（毫秒）"
 
-#: prefs.js:153
+#: prefs.js:171
 msgid "After a 3-finger swipe/pinch, animations play native for this long. 0 = ease everything."
 msgstr "三指滑动/捏合之后的一段宽限时间内，动画按 GNOME 原生速度播放。0 = 全部缓动。"
 
-#: prefs.js:160
+#: prefs.js:178
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:65
 msgid "Gesture duration scale"
 msgstr "手势时长倍数"
 
-#: prefs.js:161
+#: prefs.js:179
 msgid "Stretches gesture commits (workspace switch, paging) — curve stays velocity-matched so no jolt. 1.0 = native."
 msgstr "拉长手势收尾动画（工作区切换、翻页），曲线保持速度匹配所以不顿挫。1.0 = 原生。"
 
-#: prefs.js:227
+#: prefs.js:245
 msgid "New curve"
 msgstr "新建曲线"
 
-#: prefs.js:233
+#: prefs.js:251
 msgid "Import"
 msgstr "导入"
 
-#: prefs.js:239
+#: prefs.js:257
 msgid "Export"
 msgstr "导出"
 
-#: prefs.js:245 prefs.js:422
+#: prefs.js:263 prefs.js:440
 msgid "Delete"
 msgstr "删除"
 
-#: prefs.js:292
+#: prefs.js:310
 msgid "Library full"
 msgstr "曲线库已满"
 
-#: prefs.js:293 prefs.js:343
+#: prefs.js:311 prefs.js:361
 #, javascript-format
 msgid "At most %d user curves can be stored."
 msgstr "最多只能保存 %d 条自定义曲线。"
 
-#: prefs.js:316
+#: prefs.js:334
 msgid "Import curves"
 msgstr "导入曲线"
 
-#: prefs.js:331 prefs.js:337 prefs.js:342
+#: prefs.js:349 prefs.js:355 prefs.js:360
 msgid "Import failed"
 msgstr "导入失败"
 
-#: prefs.js:331
+#: prefs.js:349
 msgid "Could not read the file."
 msgstr "无法读取该文件。"
 
-#: prefs.js:370
+#: prefs.js:388
 msgid "Export curve"
 msgstr "导出曲线"
 
-#: prefs.js:392
+#: prefs.js:410
 #, javascript-format
 msgid "Delete “%s”?"
 msgstr "删除“%s”？"
 
-#: prefs.js:401
+#: prefs.js:419
 msgid "Nonlinear animation curves"
 msgstr "非线性动画曲线"
 
-#: prefs.js:412
+#: prefs.js:430
 msgid "OK"
 msgstr "确定"
 
-#: prefs.js:419
+#: prefs.js:437
 msgid "This cannot be undone."
 msgstr "此操作无法撤销。"
 
-#: prefs.js:421 ui/curve-editor.js:53
+#: prefs.js:439 ui/curve-editor.js:62
 msgid "Cancel"
 msgstr "取消"
 
@@ -219,27 +227,27 @@ msgstr "过冲"
 msgid "Kick"
 msgstr "回弹"
 
-#: ui/curve-editor.js:55
+#: ui/curve-editor.js:64
 msgid "Save"
 msgstr "保存"
 
-#: ui/curve-editor.js:67
+#: ui/curve-editor.js:76
 msgid "Curve name"
 msgstr "曲线名称"
 
-#: ui/curve-editor.js:77
+#: ui/curve-editor.js:86
 msgid "Drag points to shape the curve. Double-click to add a point, right-click to remove one."
 msgstr "拖动控制点调整曲线形状。双击添加控制点，右键删除。"
 
-#: ui/curve-editor.js:279
+#: ui/curve-editor.js:288
 msgid "Give the curve a name first."
 msgstr "请先给曲线起个名字。"
 
-#: ui/curve-editor.js:306
+#: ui/curve-editor.js:315
 msgid "Points must stay ordered left to right."
 msgstr "控制点必须保持从左到右的顺序。"
 
-#: ui/curve-editor.js:308
+#: ui/curve-editor.js:317
 msgid "Keep points between -0.5 and 1.5 vertically."
 msgstr "控制点的纵向位置需保持在 -0.5 到 1.5 之间。"
 
@@ -317,7 +325,7 @@ msgstr "总开关（无需禁用整个扩展即可 A/B 对比）。"
 
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:81
 msgid "Ease magic-lamp minimize/unminimize"
-msgstr "缓动神灯最小化/还原"
+msgstr "缓动 magic-lamp 最小化/还原"
 
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:82
 msgid "If compiz-alike-magic-lamp-effect is installed, curve its minimize/unminimize timeline with EASE_OUT_CUBIC so the window decelerates into the dock instead of stopping dead. No-op if magic-lamp isn't installed."

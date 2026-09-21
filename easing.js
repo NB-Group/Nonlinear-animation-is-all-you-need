@@ -290,9 +290,17 @@ export function compileCurve(curve, v0 = 0, periodSec = 1) {
     if (curve.kind === 'spline')
         return makeSpline(curve.points);
     if (curve.kind === 'spring') {
+        // A spring must settle within the animation's duration, or the value
+        // snaps to the target when the timeline ends (very visible on GNOME's
+        // short animations). Stiffen omega until the envelope decays to ~1%
+        // by the end; a stiffer user omega is kept (it simply settles early
+        // and rests). damping stays the character knob (overshoot amount).
+        const T = Math.max(periodSec, 0.05);
+        const omegaMin = 4.6 / (curve.damping * T);
+        const omega = Math.min(Math.max(curve.omega, omegaMin), 40);
         if (curve.solver === 'numeric')
-            return makeSpringNumeric(curve.damping, curve.omega, v0, periodSec);
-        return makeSpring(curve.damping, curve.omega, v0, periodSec);
+            return makeSpringNumeric(curve.damping, omega, v0, periodSec);
+        return makeSpring(curve.damping, omega, v0, periodSec);
     }
     return MODE_FUNCS['ease-in-out-cubic'];
 }

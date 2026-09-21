@@ -75,9 +75,18 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         // ---- Speed ----
         const speedGroup = new Adw.PreferencesGroup({
             title: _('Speed'),
-            description: _('How long eased animations take to play. 1.0 = GNOME default, 1.8 ≈ macOS.'),
+            description: _('How long eased animations take to play. Dragging right slows them down: 1.0 = GNOME default, 1.8 ≈ macOS.'),
         });
-        const scaleRow = new Adw.ActionRow({title: _('Animation speed')});
+        const scaleRow = new Adw.ActionRow({title: _('Animation duration')});
+        const scaleBox = new Gtk.Box({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            spacing: 8,
+            hexpand: true,
+            valign: Gtk.Align.CENTER,
+        });
+        scaleBox.append(new Gtk.Label({
+            label: _('Faster'), css_classes: ['caption', 'dim-label'],
+        }));
         const scale = new Gtk.Scale({
             adjustment: Gtk.Adjustment.new(1.8, 0.5, 5.0, 0.05, 0.5, 0),
             draw_value: true,
@@ -86,10 +95,11 @@ export default class SpringEasePrefs extends ExtensionPreferences {
             valign: Gtk.Align.CENTER,
         });
         scale.set_format_value_func((_s, v) => `×${v.toFixed(2)}`);
-        scale.add_mark(1.0, Gtk.PositionType.BOTTOM, null);
-        scale.add_mark(1.8, Gtk.PositionType.BOTTOM, null);
-        scale.add_mark(3.0, Gtk.PositionType.BOTTOM, null);
-        scaleRow.add_suffix(scale);
+        scaleBox.append(scale);
+        scaleBox.append(new Gtk.Label({
+            label: _('Slower'), css_classes: ['caption', 'dim-label'],
+        }));
+        scaleRow.add_suffix(scaleBox);
         scaleRow.activatable_widget = scale;
         settings.bind('duration-scale', scale.adjustment, 'value',
             Gio.SettingsBindFlags.DEFAULT);
@@ -110,11 +120,11 @@ export default class SpringEasePrefs extends ExtensionPreferences {
 
         const solverRow = new Adw.ComboRow({
             title: _('Spring fidelity'),
-            subtitle: _('How spring curves are solved.'),
+            subtitle: _('How spring curves are solved. Ultra integrates physics every frame: higher fidelity, more CPU.'),
         });
         const solverModel = new Gtk.StringList();
         solverModel.append(_('Efficient (analytic)'));
-        solverModel.append(_('Ultra (frame integration) — higher fidelity, more CPU'));
+        solverModel.append(_('Ultra (frame integration)'));
         solverRow.model = solverModel;
         solverRow.selected = settings.get_string('spring-solver') === 'numeric' ? 1 : 0;
         solverRow.connect('notify::selected', () => {
