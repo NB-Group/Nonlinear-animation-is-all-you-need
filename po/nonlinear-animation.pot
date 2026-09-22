@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nonlinear-animation 6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-21 19:49+0800\n"
+"POT-Creation-Date: 2026-09-22 20:30+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -218,30 +218,6 @@ msgstr ""
 msgid "Dramatic"
 msgstr ""
 
-#: curves.js:31
-msgid "Glide"
-msgstr ""
-
-#: curves.js:32
-msgid "Whip"
-msgstr ""
-
-#: curves.js:33
-msgid "Spring"
-msgstr ""
-
-#: curves.js:34
-msgid "Soft spring"
-msgstr ""
-
-#: curves.js:35
-msgid "Overshoot"
-msgstr ""
-
-#: curves.js:37
-msgid "Kick"
-msgstr ""
-
 #: ui/curve-editor.js:64
 msgid "Save"
 msgstr ""
@@ -256,15 +232,15 @@ msgid ""
 "remove one."
 msgstr ""
 
-#: ui/curve-editor.js:288
+#: ui/curve-editor.js:291
 msgid "Give the curve a name first."
 msgstr ""
 
-#: ui/curve-editor.js:315
+#: ui/curve-editor.js:318
 msgid "Points must stay ordered left to right."
 msgstr ""
 
-#: ui/curve-editor.js:317
+#: ui/curve-editor.js:320
 msgid "Keep points between -0.5 and 1.5 vertically."
 msgstr ""
 

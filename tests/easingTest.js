@@ -77,6 +77,20 @@ for (const [nick, f] of Object.entries(MODE_FUNCS)) {
     check('stiff spring kept', Math.abs(stiff.eval(1) - 1) < 0.005);
 }
 
+// --- reversal continuity: interrupting with opposite-direction momentum -----
+{
+    // incoming motion runs against the new target: the spring must carry it
+    // (progress dips below 0) and still settle at 1 — physical, no dead stop
+    const s = makeSpring(0.8, 10, -3, 1.0);
+    check('reversal carries momentum backwards', s.eval(0.02) < 0);
+    check('reversal still settles', Math.abs(s.eval(1) - 1) < 0.02);
+    const mid = makeSpring(0.8, 10, -3, 1.0);
+    let min = 1;
+    for (let i = 0; i <= 100; i++)
+        min = Math.min(min, mid.eval(i / 100));
+    check('reversal dips then returns', min < -0.03 && min > -0.1);
+}
+
 // --- numeric (Ultra) spring matches analytic closely ------------------------
 {
     const zeta = 0.55, omega = 8, T = 1.2;
@@ -139,7 +153,7 @@ for (const [nick, f] of Object.entries(MODE_FUNCS)) {
 
 if (failures > 0) {
     console.error(`${failures} failure(s)`);
-    import.meta.exit ? import.meta.exit(1) : System.exit(1);
+    throw new Error(`${failures} easing test failure(s)`);
 } else {
     console.log('all tests passed');
 }

@@ -21,33 +21,26 @@ export const FORMAT_TAG = 'nonlinear-animation/curve';
 export const FORMAT_VERSION = 1;
 export const MAX_USER_CURVES = 100;
 
-// The curated gallery. Order = display order. The first entry is the default.
-// Every native mode from the legacy `mode` key still resolves (MODE_MAP in
-// extension.js), so old settings migrate cleanly; only a curated subset is
-// shown as tiles to keep the gallery readable.
+// The curated gallery — deliberately tiny: two done-for-you presets plus
+// whatever the user creates/imports. Springs are intentionally NOT presets:
+// macOS's lesson is that springs belong in the physics layer (interruption
+// momentum), picked for you, not in the picker.
 export const BUILTIN_CURVES = [
     {id: 'preset:ease-in-out-cubic', builtin: true, name: N_('Balanced'), kind: 'mode', mode: 'ease-in-out-cubic'},
     {id: 'preset:ease-in-out-expo', builtin: true, name: N_('Dramatic'), kind: 'mode', mode: 'ease-in-out-expo'},
-    {id: 'preset:ease-out-cubic', builtin: true, name: N_('Glide'), kind: 'mode', mode: 'ease-out-cubic'},
-    {id: 'preset:ease-out-expo', builtin: true, name: N_('Whip'), kind: 'mode', mode: 'ease-out-expo'},
-    {id: 'preset:spring-snappy', builtin: true, name: N_('Spring'), kind: 'spring', damping: 0.62, omega: 8.5},
-    {id: 'preset:spring-soft', builtin: true, name: N_('Soft spring'), kind: 'spring', damping: 0.9, omega: 5},
-    {id: 'preset:overshoot', builtin: true, name: N_('Overshoot'), kind: 'spline',
-        points: [[0, 0], [0.28, 0.72], [0.46, 1.06], [0.72, 0.985], [1, 1]]},
-    {id: 'preset:ease-out-back', builtin: true, name: N_('Kick'), kind: 'mode', mode: 'ease-out-back'},
 ];
 
 export const MIGRATION_MAP = {
-    'ease-out-cubic': 'preset:ease-out-cubic',
-    'ease-out-expo': 'preset:ease-out-expo',
+    'ease-out-cubic': 'preset:ease-in-out-cubic',
+    'ease-out-expo': 'preset:ease-in-out-expo',
     'ease-out-quart': 'preset:ease-in-out-cubic',
     'ease-out-quint': 'preset:ease-in-out-cubic',
     'ease-in-out-cubic': 'preset:ease-in-out-cubic',
     'ease-in-out-quart': 'preset:ease-in-out-expo',
     'ease-in-out-quint': 'preset:ease-in-out-expo',
     'ease-in-out-expo': 'preset:ease-in-out-expo',
-    'ease-out-back': 'preset:ease-out-back',
-    'ease-out-elastic': 'preset:spring-snappy',
+    'ease-out-back': 'preset:ease-in-out-expo',
+    'ease-out-elastic': 'preset:ease-in-out-expo',
 };
 
 // --- validation -----------------------------------------------------------

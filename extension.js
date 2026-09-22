@@ -27,8 +27,10 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import * as Curves from './curves.js';
 import {
+    MAX_V0,
+    MIN_V0,
     driveTransition,
-    entryVelocity,
+    motionState,
     noteModeAnimation,
 } from './continuity.js';
 
@@ -217,16 +219,44 @@ export default class SpringEaseExtension extends Extension {
                     continue;
                 const isInt = typeName === 'gint' || typeName === 'guint';
 
-                let v0 = null;
-                if (continuityOn && simpleCase)
-                    v0 = entryVelocity(target, prop, newTarget, props.duration);
-                if (v0 === null)
+                // Continuity: reconstruct where the previous animation on this
+                // property was heading (position + velocity), even if it just
+                // stopped or the caller reset the property for a replay.
+                let seed = null;
+                if (continuityOn && simpleCase) {
+                    const state = motionState(target, prop);
+                    if (state) {
+                        const remaining = newTarget - state.value;
+                        if (Math.abs(remaining) > 1e-6) {
+                            const v0 = Math.max(-MAX_V0, Math.min(MAX_V0,
+                                state.velocity * props.duration / remaining));
+                            // The caller may have reset the property to the
+                            // start value before re-triggering (GNOME does
+                            // this a lot): bridge the driver over the reset by
+                            // starting from the old on-screen position.
+                            let fromValue;
+                            try {
+                                const nowValue = target.get_property(prop);
+                                if (Number.isFinite(nowValue) &&
+                                    Math.abs(nowValue - state.value) >
+                                        Math.max(0.5, 0.01 * Math.abs(remaining)))
+                                    fromValue = state.value;
+                            } catch {
+                                // properties without a plain getter stay
+                                // unbridged
+                            }
+                            if (fromValue !== undefined || Math.abs(v0) >= MIN_V0)
+                                seed = {fromValue, v0};
+                        }
+                    }
+                }
+                if (seed === null)
                     numericProps.push(prop);
 
-                const wantsDriver = simpleCase &&
-                    (c.kind === 'spline' || c.kind === 'spring' || v0 !== null);
+                const wantsDriver = simpleCase && (seed !== null ||
+                    c.kind === 'spline' || c.kind === 'spring');
                 if (wantsDriver)
-                    drivers.push({prop, isInt, v0, typeName, gtype: pspec.value_type});
+                    drivers.push({prop, isInt, seed, typeName, gtype: pspec.value_type});
             }
 
             if (c.kind === 'mode') {
@@ -262,7 +292,7 @@ export default class SpringEaseExtension extends Extension {
                         gv[set](round(v));
                         target.set_final_state(d.prop, gv);
                     };
-                    driveTransition(target, d.prop, plan.curve, write, d.v0);
+                    driveTransition(target, d.prop, plan.curve, write, d.seed);
                 }
                 // Register plain-mode (and non-driven numeric) animations so a
                 // later interruption can read their velocity.
@@ -367,6 +397,9 @@ export default class SpringEaseExtension extends Extension {
             GLib.source_remove(this._deferredEaseId);
         this._deferredEaseId = GLib.idle_add(GLib.PRIORITY_HIGH_IDLE, () => {
             this._deferredEaseId = 0;
+            if (!this._magicLampTimers)
+                this._magicLampTimers = new WeakMap();
+            const prev = this._magicLampTimers.get(actor);
             for (const name of [MAGIC_LAMP_MINIMIZE, MAGIC_LAMP_UNMINIMIZE]) {
                 const effect = actor.get_effect(name);
                 const timeline = effect?.timerId;
@@ -376,6 +409,15 @@ export default class SpringEaseExtension extends Extension {
                     // feel symmetric. 700ms = slow enough to read the
                     // deceleration; tune here.
                     timeline.set_duration(700);
+                    // Interruption: if the previous magic-lamp timeline for
+                    // this window was still mid-flight, fast-forward the new
+                    // one so the effect continues instead of teleporting back
+                    // to the start of its deformation.
+                    const elapsed = prev?.timeline?.is_playing?.()
+                        ? prev.timeline.get_elapsed_time() : 0;
+                    if (elapsed > 0 && elapsed < 700)
+                        timeline.advance(elapsed);
+                    this._magicLampTimers.set(actor, {timeline});
                 }
             }
             return GLib.SOURCE_REMOVE;

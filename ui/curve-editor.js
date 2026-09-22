@@ -198,7 +198,8 @@ export const CurveEditorDialog = GObject.registerClass({
     _onDragUpdate(gesture, dx, dy) {
         if (this._dragIndex < 0)
             return;
-        const [, , sx, sy] = gesture.get_start_point();
+        // get_start_point() returns [valid, x, y]
+        const [, sx, sy] = gesture.get_start_point();
         const {width, height} = this._canvas.get_allocation();
         const g = this._geom(width, height);
         const i = this._dragIndex;
@@ -206,6 +207,8 @@ export const CurveEditorDialog = GObject.registerClass({
         const hi = i === this._points.length - 1 ? 1 : this._points[i + 1][0] - 0.01;
         const nx = Math.min(Math.max(g.ix(sx + dx), lo), Math.max(lo, hi));
         const ny = Math.min(Math.max(g.iy(sy + dy), Y_CLAMP[0]), Y_CLAMP[1]);
+        if (!Number.isFinite(nx) || !Number.isFinite(ny))
+            return;  // guard: one NaN would blank the whole curve
         this._points[i] = [nx, ny];
         this._canvas.queue_draw();
     }
