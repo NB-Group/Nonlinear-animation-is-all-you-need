@@ -14,37 +14,38 @@ renames things internally.
 
 ## What you get
 
-- **A curve gallery.** Curated presets (including real springs with damped
-  oscillator physics), each drawn as a live preview card. Click one, it applies
-  instantly.
-- **A visual curve editor.** Create your own curve by dragging control points.
-  Double-click adds a point, right-click removes one, endpoints stay pinned.
-  Values above 1 give you overshoot; a replay button previews the motion.
-- **Interruption continuity.** When an animation is interrupted — flipping two
-  app-grid pages quickly, closing the overview mid-animation — the new one
-  keeps the old one's momentum instead of restarting from standstill, using a
-  spring seeded with the measured velocity. The same trick Apple's animation
-  stack uses.
-- **Curve sharing.** Curves import and export as small JSON files. Trade them
-  like themes. The format is documented below.
-- **Touchpad gestures stay native.** Gesture-driven motion already tracks your
-  finger; only its wrap-up is stretched slightly so the deceleration reads.
-- **Translations.** English and Simplified Chinese ship in the box; others via
-  one `.po` file (see below).
+Two done-for-you presets, Balanced and Dramatic, plus a gallery that fills up
+with whatever you draw or import. The editor is a canvas: drag control points,
+double-click to add one, right-click to remove, endpoints stay pinned. Values
+above 1 give you overshoot, and a replay button previews the motion. Curves
+import and export as small JSON files, so you can trade them like themes; the
+format is documented below.
+
+Interruption continuity is the part you didn't know you wanted. Flip two
+app-grid pages quickly, or click the dock while a window is still minimizing:
+instead of teleporting back to the start or re-accelerating from standstill,
+the interrupted animation keeps its position and momentum, carried over by a
+spring seeded with the measured velocity. Same idea as Apple's animation stack.
+On by default.
+
+Touchpad gestures stay native. Gesture-driven motion already tracks your
+finger; only its wrap-up is stretched slightly so the deceleration reads.
+English and Simplified Chinese ship in the box; other languages are one
+`.po` file away (see below).
 
 ## Performance
 
-The whole thing is math, not magic. Preset curves swap a single enum before the
-native Clutter call — zero added per-frame work. Custom curves (splines and
-springs) run one small callback per frame per animation: the spring is a
-closed-form analytic solution (one `exp` plus a couple of trig calls, with
-coefficients precomputed when the animation starts), the spline is a binary
-search plus a handful of multiply/adds. Nothing is allocated on the frame path.
+Preset curves swap a single enum before the native Clutter call, which adds
+nothing per frame. Custom curves (splines and springs) run one small callback
+per frame per animation: the spring is a closed-form analytic solution (one
+`exp` plus a couple of trig calls, with coefficients precomputed when the
+animation starts), the spline is a binary search plus a handful of
+multiply/adds. Nothing is allocated on the frame path.
 
-`Ultra` spring fidelity switches to per-frame physics integration (semi-implicit
-Euler) — noticeably more CPU in exchange for a slightly more organic response.
-Most people will never need it; it exists because the analytic solution and the
-integrator disagree a hair on the sharpest transients.
+`Ultra` spring fidelity switches to per-frame physics integration
+(semi-implicit Euler) for noticeably more CPU and a slightly more organic
+response. Most people will never need it; it exists because the analytic
+solution and the integrator disagree a hair on the sharpest transients.
 
 ## Settings
 
@@ -52,23 +53,22 @@ All settings are live: change one and the next animation already uses it, no
 relogin. You do need to log out and back in once after installing (or after
 editing `extension.js`), so the shell reloads the module.
 
-- **Animation curve** — the gallery. Pick, create, import, export.
-- **Animation speed** — duration multiplier. 1.0 = GNOME default, 1.8 ≈ macOS,
-  higher is more luxurious.
-- **Interruption continuity** — on by default. Interrupted animations carry
-  their velocity.
-- **Spring fidelity** — `Efficient` (analytic, default) or `Ultra`
-  (frame integration).
-- **Behavior** — master switch, and easing the magic-lamp minimize effect when
+- Animation curve: pick from the gallery, create, import, export.
+- Animation duration: 1.0 = GNOME default, 1.8 ≈ macOS, higher is slower and
+  more luxurious.
+- Interruption continuity: on by default.
+- Spring fidelity: `Efficient` (analytic, default) or `Ultra` (frame
+  integration).
+- Behavior: master switch, plus easing the magic-lamp minimize effect when
   compiz-alike-magic-lamp-effect is installed.
-- **Advanced** — threshold below which short animations are left alone, and the
+- Advanced: threshold below which short animations are left alone, and the
   touchpad-gesture exception window.
 
 Power users can also drive everything via `gsettings`:
 
 ```sh
 gsettings --schemadir schemas set org.gnome.shell.extensions.nonlinear-animation \
-    selected-curve 'preset:spring-snappy'
+    selected-curve 'preset:ease-in-out-expo'
 ```
 
 ## Curve file format
@@ -91,8 +91,9 @@ A `.nla-curve.json` file is a single curve or a bundle:
 Rules: spline points are `[x, y]` pairs, x strictly increasing in `[0, 1]`,
 first point at x = 0 and last at x = 1; y may exceed `[0, 1]` (overshoot) up to
 `[-0.5, 1.5]`, at most 24 points. Bezier curves (CSS-style `p1x, p1y, p2x,
-p2y`) are converted to splines on import. Springs take `damping` (0.2–1.0) and
-`omega` (1–40).
+p2y`) are converted to splines on import. Springs take `damping` (0.2-1.0) and
+`omega` (1-40); they are not shown in the gallery, but imported springs work
+and the interruption engine uses the same physics.
 
 ## Install
 
@@ -112,15 +113,15 @@ Then log out and back in (Wayland reloads extensions only at login).
 
 ## Compatibility
 
-GNOME Shell 50. The wrapped API is stable across 46–50 in practice; only 50 is
+GNOME Shell 50. The wrapped API is stable across 46-50 in practice; only 50 is
 declared until the newer code paths are tested on older shells.
 
 ## Known limits
 
 - All hooking happens in JS: animations driven directly by mutter's C code
   (some workspace-transition internals) are untouched. WorkspaceAnimation's
-  MonitorGroup is deliberately left alone — changing it flickered secondary
-  monitors on fractional-scale setups.
+  MonitorGroup is deliberately left alone, because changing it flickered
+  secondary monitors on fractional-scale setups.
 - The first login after install has an 8-second grace period where nothing is
   eased, so the boot sequence stays predictable on multi-monitor setups.
 - Custom curves don't apply to animations GNOME plays with `repeatCount` or
@@ -137,7 +138,8 @@ the zip automatically.
 If you use [compiz-alike-magic-lamp-effect], this extension can curve its
 minimize/unminimize timeline (EASE_OUT_CUBIC, 700 ms) so the window glides
 into the dock instead of stopping dead. It's a no-op when magic-lamp isn't
-installed. Turn it off in Preferences → Behavior if you prefer the raw effect.
+installed, and re-triggering it mid-flight continues from the current progress.
+Turn it off in Preferences, Behavior, if you prefer the raw effect.
 
 [compiz-alike-magic-lamp-effect]: https://extensions.gnome.org/extension/3749/compiz-alike-magic-lamp-effect/
 
