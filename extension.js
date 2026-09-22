@@ -234,17 +234,15 @@ export default class SpringEaseExtension extends Extension {
                             // start value before re-triggering (GNOME does
                             // this a lot): bridge the driver over the reset by
                             // starting from the old on-screen position.
+                            // (Read the JS property: GObject.get_property is
+                            // not callable with one argument in GJS.)
                             let fromValue;
-                            try {
-                                const nowValue = target.get_property(prop);
-                                if (Number.isFinite(nowValue) &&
-                                    Math.abs(nowValue - state.value) >
-                                        Math.max(0.5, 0.01 * Math.abs(remaining)))
-                                    fromValue = state.value;
-                            } catch {
-                                // properties without a plain getter stay
-                                // unbridged
-                            }
+                            const nowValue = target[prop.replaceAll('-', '_')];
+                            if (typeof nowValue === 'number' &&
+                                Number.isFinite(nowValue) &&
+                                Math.abs(nowValue - state.value) >
+                                    Math.max(0.5, 0.01 * Math.abs(remaining)))
+                                fromValue = state.value;
                             if (fromValue !== undefined || Math.abs(v0) >= MIN_V0)
                                 seed = {fromValue, v0};
                         }
