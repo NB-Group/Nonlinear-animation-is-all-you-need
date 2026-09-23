@@ -23,6 +23,7 @@ import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
+import System from 'system';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import * as Curves from './curves.js';
@@ -141,6 +142,24 @@ export default class SpringEaseExtension extends Extension {
 
         const bootTime = Date.now();
 
+        // Idle garbage collection. The first animation after a quiet period
+        // can stall for its whole duration and then snap to the end: the
+        // allocations of the animation trigger a major GC on a shell heap
+        // swollen by other extensions, and the main loop blocks through the
+        // collection. Forcing a full GC while the screen has been completely
+        // still for a while pays that cost where nobody can see it.
+        let lastEaseAt = 0;
+        let lastGcAt = Date.now();
+        this._idleGcId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 30000, () => {
+            const now = Date.now();
+            if (lastEaseAt > lastGcAt &&
+                now - lastEaseAt > 45000 && now - bootTime > 60000) {
+                System.gc();
+                lastGcAt = now;
+            }
+            return GLib.SOURCE_CONTINUE;
+        });
+
         // --- shared plan for one ease call ---------------------------------
         // Runs BEFORE the original ease: mutates params (mode/duration) and
         // collects what postEase() must do afterwards (per-prop drivers with
@@ -168,6 +187,7 @@ export default class SpringEaseExtension extends Extension {
 
             const grace = settings.get_int('gesture-grace-ms');
             const inGrace = grace > 0 && Date.now() - lastGestureTime < grace;
+            lastEaseAt = Date.now();
             if (inGrace) {
                 // Gesture-driven motion already carries the finger's momentum.
                 // For the wrap-up we ONLY decelerate (ease-out): an in-out curve
@@ -474,6 +494,10 @@ export default class SpringEaseExtension extends Extension {
         if (this._deferredEaseId) {
             GLib.source_remove(this._deferredEaseId);
             this._deferredEaseId = 0;
+        }
+        if (this._idleGcId) {
+            GLib.source_remove(this._idleGcId);
+            this._idleGcId = 0;
         }
         this._orig = null;
         this._settings = null;
