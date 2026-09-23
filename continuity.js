@@ -76,6 +76,8 @@ export function motionState(target, prop, now = Date.now()) {
     return {
         value: r.init + (r.final - r.init) * r.compiled.eval(tau),
         velocity: (r.final - r.init) * r.compiled.deriv(tau) / r.durationMs,
+        init: r.init,
+        final: r.final,
         playing: !r.stoppedAt,
     };
 }
