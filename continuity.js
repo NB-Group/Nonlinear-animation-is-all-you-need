@@ -30,7 +30,7 @@
 // handler writes the property after the class handler each frame.
 // No GI imports — callers pass duck-typed targets.
 
-import {compileCurve, makeSpring} from './easing.js';
+import {compileCurve} from './easing.js';
 
 // target (GObject) -> Map(propName -> record)
 const registry = new WeakMap();
@@ -82,17 +82,26 @@ export function motionState(target, prop, now = Date.now()) {
     };
 }
 
-// Velocity-matched retarget curve: a spring that starts at progress 0 with
-// the measured velocity (normalized per duration) and settles at 1 within the
-// window. Critically damped on purpose: a reversal still carries the outgoing
-// motion (the spring dips below its start before physics pulls it back), but
-// it never overshoots the target — windows must not end up a hair larger or
-// brighter than their resting state.
-function retargetCompiled(v0, durationMs) {
-    const T = Math.max(durationMs, 150) / 1000;
-    const zeta = 1.0;
-    const omega = 4.6 / T;
-    return makeSpring(zeta, omega, v0 / T, T);
+// Velocity-matched retarget curve: a cubic Hermite from progress 0 to 1 with
+// the start tangent set to the measured (normalized) velocity and the end
+// tangent zero. Unlike a seeded spring, it settles on the target exactly, so
+// the last frame never has to snap a residual gap — the deceleration into the
+// target is guaranteed, and the reversal case still dips below its start
+// before turning around. v0 = 0 degenerates to smoothstep.
+function retargetCompiled(v0, _durationMs) {
+    const m0 = Math.max(-1.5, Math.min(3, v0));
+    return {
+        analytic: true,
+        eval(tau) {
+            const t2 = tau * tau;
+            const t3 = t2 * tau;
+            return (t3 - 2 * t2 + tau) * m0 - 2 * t3 + 3 * t2;
+        },
+        deriv(tau) {
+            const t2 = tau * tau;
+            return (3 * t2 - 4 * tau + 1) * m0 - 6 * t2 + 6 * tau;
+        },
+    };
 }
 
 // Attach the per-frame driver. `target.get_transition(prop)` must return the
