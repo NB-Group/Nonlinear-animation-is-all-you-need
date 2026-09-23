@@ -208,8 +208,10 @@ export default class SpringEaseExtension extends Extension {
             const continuityOn = settings.get_boolean('continuity');
             const simpleCase = props.delay === undefined &&
                 props.repeatCount === undefined;
-            const drivers = [];
-            const numericProps = [];
+
+            // Pass 1: per property, reconstruct the previous motion state and
+            // whether the caller reset the property for a replay.
+            const candidates = [];
             for (const [prop, newTarget] of animated) {
                 const pspec = target.find_property?.(prop);
                 const typeName = pspec?.value_type?.name;
@@ -219,17 +221,12 @@ export default class SpringEaseExtension extends Extension {
                     continue;
                 const isInt = typeName === 'gint' || typeName === 'guint';
 
-                // Continuity: reconstruct where the previous animation on this
-                // property was heading (position + velocity), even if it just
-                // stopped or the caller reset the property for a replay.
-                let seed = null;
+                let cand = null;
                 if (continuityOn && simpleCase) {
                     const state = motionState(target, prop);
                     if (state) {
                         const remaining = newTarget - state.value;
                         if (Math.abs(remaining) > 1e-6) {
-                            const v0 = Math.max(-MAX_V0, Math.min(MAX_V0,
-                                state.velocity * props.duration / remaining));
                             // Anti-teleport: bridge over a reset only when the
                             // caller snapped the property onto the previous
                             // animation's endpoints (replay semantics, e.g.
@@ -249,18 +246,55 @@ export default class SpringEaseExtension extends Extension {
                                 (Math.abs(nowValue - state.init) < 0.1 * rangeAbs ||
                                  Math.abs(nowValue - state.final) < 0.1 * rangeAbs))
                                 fromValue = state.value;
-                            if (fromValue !== undefined || Math.abs(v0) >= MIN_V0)
-                                seed = {fromValue, v0};
+                            const start = fromValue ?? state.value;
+                            cand = {
+                                prop, isInt, typeName,
+                                gtype: pspec.value_type,
+                                fromValue,
+                                naturalV0: state.velocity * props.duration /
+                                    (newTarget - start),
+                                span: Math.abs(newTarget - start),
+                            };
                         }
                     }
                 }
-                if (seed === null)
+                if (cand)
+                    candidates.push(cand);
+                else
                     numericProps.push(prop);
+            }
 
+            // Pass 2: properties of one ease must move along ONE shared
+            // retarget curve. Giving each property its own seeded spring let
+            // scale-x and scale-y drift apart mid-flight and windows visibly
+            // stretch. The dominant property (largest travel) defines the
+            // shared velocity seed; every property maps that one progress
+            // curve onto its own [start, target] range, so relative geometry
+            // (aspect ratio included) stays locked for the whole animation.
+            let sharedV0 = null;
+            let bestSpan = 0;
+            for (const cand of candidates) {
+                if (Math.abs(cand.naturalV0) < MIN_V0 && cand.fromValue === undefined)
+                    continue;
+                if (cand.span > bestSpan) {
+                    bestSpan = cand.span;
+                    sharedV0 = cand.naturalV0;
+                }
+            }
+            if (sharedV0 !== null)
+                sharedV0 = Math.max(-MAX_V0, Math.min(MAX_V0, sharedV0));
+
+            const drivers = [];
+            for (const cand of candidates) {
+                const seed = sharedV0 === null && cand.fromValue === undefined
+                    ? null
+                    : {fromValue: cand.fromValue, v0: sharedV0 ?? 0};
                 const wantsDriver = simpleCase && (seed !== null ||
                     c.kind === 'spline' || c.kind === 'spring');
                 if (wantsDriver)
-                    drivers.push({prop, isInt, seed, typeName, gtype: pspec.value_type});
+                    drivers.push({...cand, seed});
+                else
+                    numericProps.push(cand.prop);
             }
 
             if (c.kind === 'mode') {

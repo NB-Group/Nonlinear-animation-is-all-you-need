@@ -201,7 +201,7 @@ msgstr "均衡"
 
 #: curves.js:30
 msgid "Dramatic"
-msgstr "戏剧"
+msgstr "夸张"
 
 #: curves.js:31
 msgid "Glide"
