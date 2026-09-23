@@ -1,7 +1,7 @@
 {
     "uuid": "nonlinear-animation@nbgroup",
     "name": "Nonlinear animation is all you need",
-    "description": "Make every GNOME animation nonlinear! Linear motion is plain and counter-intuitive: it never speeds up, never settles. Curated curve presets, springs with real physics, velocity continuity for interrupted animations, and a visual curve editor — pick a curve, it just feels right.",
+    "description": "Make every GNOME animation nonlinear, with perfectly smooth interruption! / 让每一个 GNOME 动画都变为非线性，且支持完美的丝滑打断！ GNOME's linear motion is plain and counter-intuitive: it never speeds up, never settles; interruptions snap the velocity to zero and teleport back to the start. GNOME 的线性动画平淡又反直觉：它从不加速，也从不缓停；打断时速度瞬间归零并瞬移回起点。 If you feel that too, this extension is exactly what you need. 如果你也有同感，那么这个扩展正是你需要的。 Almost zero performance overhead. Just pure math. 几乎零性能开销，纯粹是数学。",
     "shell-version": [
         "50"
     ],

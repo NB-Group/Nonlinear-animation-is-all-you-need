@@ -82,12 +82,14 @@ export function motionState(target, prop, now = Date.now()) {
 
 // Velocity-matched retarget curve: a spring that starts at progress 0 with
 // the measured velocity (normalized per duration) and settles at 1 within the
-// window. A negative v0 (reversal) is equally physical: the spring carries
-// the outgoing motion past its start, then physics pulls it to the target.
+// window. Critically damped on purpose: a reversal still carries the outgoing
+// motion (the spring dips below its start before physics pulls it back), but
+// it never overshoots the target — windows must not end up a hair larger or
+// brighter than their resting state.
 function retargetCompiled(v0, durationMs) {
     const T = Math.max(durationMs, 150) / 1000;
-    const zeta = 0.8;
-    const omega = Math.min(4.6 / (zeta * T), 30);
+    const zeta = 1.0;
+    const omega = 4.6 / T;
     return makeSpring(zeta, omega, v0 / T, T);
 }
 
