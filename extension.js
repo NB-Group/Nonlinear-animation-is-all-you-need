@@ -271,6 +271,7 @@ export default class SpringEaseExtension extends Extension {
                                 prop, isInt, typeName,
                                 gtype: pspec.value_type,
                                 fromValue,
+                                stateValue: state.value,
                                 naturalV0: state.velocity * props.duration /
                                     (newTarget - start),
                                 span: Math.abs(newTarget - start),
@@ -291,6 +292,15 @@ export default class SpringEaseExtension extends Extension {
             // shared velocity seed; every property maps that one progress
             // curve onto its own [start, target] range, so relative geometry
             // (aspect ratio included) stays locked for the whole animation.
+            // Bridging is all-or-nothing: if any property restarts from its
+            // pre-reset position, every property with a motion state must,
+            // or x and y set off from different eras and the window skews.
+            const anyBridge = candidates.some(c => c.fromValue !== undefined);
+            if (anyBridge) {
+                for (const cand of candidates)
+                    if (cand.fromValue === undefined)
+                        cand.fromValue = cand.stateValue;
+            }
             let sharedV0 = null;
             let bestSpan = 0;
             for (const cand of candidates) {
