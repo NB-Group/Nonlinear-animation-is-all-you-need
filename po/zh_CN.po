@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nonlinear-animation 6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-21 19:49+0800\n"
-"PO-Revision-Date: 2026-09-21 19:50+0800\n"
+"POT-Creation-Date: 2026-09-24 21:26+0800\n"
+"PO-Revision-Date: 2026-09-24 21:30+0800\n"
 "Last-Translator: NB-Group <NB_group@qq.com>\n"
 "Language-Team: Chinese (Simplified)\n"
 "Language: zh_CN\n"
@@ -104,94 +104,112 @@ msgid "Advanced"
 msgstr "高级"
 
 #: prefs.js:157
-msgid "Threshold and touchpad-gesture exceptions — rarely touched."
-msgstr "阈值与触摸板手势例外，一般不用动。"
+msgid "Toggles for the deeper interventions, and rarely-touched tuning."
+msgstr "较深层干预的开关，以及很少动的调节项。"
+
+#: prefs.js:161
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:81
+msgid "Instant overview close"
+msgstr "Overview 即时关闭"
 
 #: prefs.js:162
+msgid "A close requested mid-animation reverses the overview immediately instead of finishing its opening first. Turn off if overview open/close misbehaves."
+msgstr "动画进行中请求关闭时，立即反向收回，而不是先放完打开动画。若 overview 开合行为异常请关闭。"
+
+#: prefs.js:168
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:86
+msgid "Idle garbage collection"
+msgstr "空闲垃圾回收"
+
+#: prefs.js:169
+msgid "Collect garbage after you have been away for a while, so the first animation afterwards does not stall. Turn off if you see pauses while the screen is idle."
+msgstr "在你离开一段时间后回收垃圾，避免之后的第一个动画卡顿。若静止时看到卡顿请关闭。"
+
+#: prefs.js:176
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:53
 msgid "Threshold (ms)"
 msgstr "阈值（毫秒）"
 
-#: prefs.js:163
+#: prefs.js:177
 msgid "Only animations ≥ this get eased (hovers ~100ms). Lower = more things eased."
 msgstr "只有不低于该时长的动画才被缓动（悬停约 100ms）。调低 = 更多动画被缓动。"
 
-#: prefs.js:170
+#: prefs.js:184
 msgid "Gesture grace (ms)"
 msgstr "手势宽限（毫秒）"
 
-#: prefs.js:171
+#: prefs.js:185
 msgid "After a 3-finger swipe/pinch, animations play native for this long. 0 = ease everything."
 msgstr "三指滑动/捏合之后的一段宽限时间内，动画按 GNOME 原生速度播放。0 = 全部缓动。"
 
-#: prefs.js:178
+#: prefs.js:192
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:65
 msgid "Gesture duration scale"
 msgstr "手势时长倍数"
 
-#: prefs.js:179
+#: prefs.js:193
 msgid "Stretches gesture commits (workspace switch, paging) — curve stays velocity-matched so no jolt. 1.0 = native."
 msgstr "拉长手势收尾动画（工作区切换、翻页），曲线保持速度匹配所以不顿挫。1.0 = 原生。"
 
-#: prefs.js:245
+#: prefs.js:259
 msgid "New curve"
 msgstr "新建曲线"
 
-#: prefs.js:251
+#: prefs.js:265
 msgid "Import"
 msgstr "导入"
 
-#: prefs.js:257
+#: prefs.js:271
 msgid "Export"
 msgstr "导出"
 
-#: prefs.js:263 prefs.js:440
+#: prefs.js:277 prefs.js:454
 msgid "Delete"
 msgstr "删除"
 
-#: prefs.js:310
+#: prefs.js:324
 msgid "Library full"
 msgstr "曲线库已满"
 
-#: prefs.js:311 prefs.js:361
+#: prefs.js:325 prefs.js:375
 #, javascript-format
 msgid "At most %d user curves can be stored."
 msgstr "最多只能保存 %d 条自定义曲线。"
 
-#: prefs.js:334
+#: prefs.js:348
 msgid "Import curves"
 msgstr "导入曲线"
 
-#: prefs.js:349 prefs.js:355 prefs.js:360
+#: prefs.js:363 prefs.js:369 prefs.js:374
 msgid "Import failed"
 msgstr "导入失败"
 
-#: prefs.js:349
+#: prefs.js:363
 msgid "Could not read the file."
 msgstr "无法读取该文件。"
 
-#: prefs.js:388
+#: prefs.js:402
 msgid "Export curve"
 msgstr "导出曲线"
 
-#: prefs.js:410
+#: prefs.js:424
 #, javascript-format
 msgid "Delete “%s”?"
 msgstr "删除“%s”？"
 
-#: prefs.js:419
+#: prefs.js:433
 msgid "Nonlinear animation curves"
 msgstr "非线性动画曲线"
 
-#: prefs.js:430
+#: prefs.js:444
 msgid "OK"
 msgstr "确定"
 
-#: prefs.js:437
+#: prefs.js:451
 msgid "This cannot be undone."
 msgstr "此操作无法撤销。"
 
-#: prefs.js:439 ui/curve-editor.js:62
+#: prefs.js:453 ui/curve-editor.js:62
 msgid "Cancel"
 msgstr "取消"
 
@@ -202,30 +220,6 @@ msgstr "均衡"
 #: curves.js:30
 msgid "Dramatic"
 msgstr "夸张"
-
-#: curves.js:31
-msgid "Glide"
-msgstr "滑行"
-
-#: curves.js:32
-msgid "Whip"
-msgstr "鞭击"
-
-#: curves.js:33
-msgid "Spring"
-msgstr "弹簧"
-
-#: curves.js:34
-msgid "Soft spring"
-msgstr "软弹簧"
-
-#: curves.js:35
-msgid "Overshoot"
-msgstr "过冲"
-
-#: curves.js:37
-msgid "Kick"
-msgstr "回弹"
 
 #: ui/curve-editor.js:64
 msgid "Save"
@@ -239,15 +233,15 @@ msgstr "曲线名称"
 msgid "Drag points to shape the curve. Double-click to add a point, right-click to remove one."
 msgstr "拖动控制点调整曲线形状。双击添加控制点，右键删除。"
 
-#: ui/curve-editor.js:288
+#: ui/curve-editor.js:291
 msgid "Give the curve a name first."
 msgstr "请先给曲线起个名字。"
 
-#: ui/curve-editor.js:315
+#: ui/curve-editor.js:318
 msgid "Points must stay ordered left to right."
 msgstr "控制点必须保持从左到右的顺序。"
 
-#: ui/curve-editor.js:317
+#: ui/curve-editor.js:320
 msgid "Keep points between -0.5 and 1.5 vertically."
 msgstr "控制点的纵向位置需保持在 -0.5 到 1.5 之间。"
 
@@ -323,10 +317,18 @@ msgstr "触摸板手势（三指滑动/捏合）后的一段宽限时间，期�
 msgid "Master switch (A/B without disabling the whole extension)."
 msgstr "总开关（无需禁用整个扩展即可 A/B 对比）。"
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:81
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:82
+msgid "Route a close requested while the overview is still animating through the gesture channel, so the drawer reverses immediately instead of finishing its opening first. Turn off if overview open/close misbehaves."
+msgstr "动画进行中请求关闭时改走手势通道，抽屉立即反向收回，而不是先放完打开动画。若 overview 开合行为异常请关闭。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:87
+msgid "Force a garbage collection after the user has been away for a while, so the first animation afterwards does not stall on one. Turn off if you see pauses while the screen is idle."
+msgstr "在用户离开一段时间后强制回收垃圾，避免之后的第一个动画卡顿。若静止时看到卡顿请关闭。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:91
 msgid "Ease magic-lamp minimize/unminimize"
 msgstr "缓动 magic-lamp 最小化/还原"
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:82
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:92
 msgid "If compiz-alike-magic-lamp-effect is installed, curve its minimize/unminimize timeline with EASE_OUT_CUBIC so the window decelerates into the dock instead of stopping dead. No-op if magic-lamp isn't installed."
 msgstr "若安装了 compiz-alike-magic-lamp-effect，其最小化/还原时间线会改用 EASE_OUT_CUBIC，窗口减速滑入 Dock 而不是急停。未安装则无任何影响。"

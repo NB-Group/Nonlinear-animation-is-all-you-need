@@ -154,8 +154,22 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         const advGroup = new Adw.PreferencesGroup();
         const expander = new Adw.ExpanderRow({
             title: _('Advanced'),
-            subtitle: _('Threshold and touchpad-gesture exceptions — rarely touched.'),
+            subtitle: _('Toggles for the deeper interventions, and rarely-touched tuning.'),
         });
+
+        const overviewPatchRow = new Adw.SwitchRow({
+            title: _('Instant overview close'),
+            subtitle: _('A close requested mid-animation reverses the overview immediately instead of finishing its opening first. Turn off if overview open/close misbehaves.'),
+        });
+        settings.bind('overview-patch', overviewPatchRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        expander.add_row(overviewPatchRow);
+
+        const idleGcRow = new Adw.SwitchRow({
+            title: _('Idle garbage collection'),
+            subtitle: _('Collect garbage after you have been away for a while, so the first animation afterwards does not stall. Turn off if you see pauses while the screen is idle.'),
+        });
+        settings.bind('idle-gc', idleGcRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        expander.add_row(idleGcRow);
         advGroup.add(expander);
 
         const thrRow = new Adw.SpinRow({

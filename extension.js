@@ -147,14 +147,23 @@ export default class SpringEaseExtension extends Extension {
         // can stall for its whole duration and then snap to the end: the
         // allocations of the animation trigger a major GC on a shell heap
         // swollen by other extensions, and the main loop blocks through the
-        // collection. Forcing a full GC while the screen has been completely
-        // still for a while pays that cost where nobody can see it.
+        // collection. Forcing a full GC pays that cost where nobody can see
+        // it, but "nobody is watching" must mean the USER is away, not just
+        // that nothing is animating (a synchronous full GC on a large heap
+        // stalls for seconds and must never land mid-interaction), so the
+        // input idle time from MetaIdleMonitor gates it, not just ease
+        // activity. System.gc() on a huge heap is not cheap; run it only when
+        // the user has touched nothing for a full minute.
         let lastEaseAt = 0;
         let lastGcAt = Date.now();
         this._idleGcId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 30000, () => {
             const now = Date.now();
-            if (lastEaseAt > lastGcAt &&
-                now - lastEaseAt > 45000 && now - bootTime > 60000) {
+            const idleMonitor = global.backend?.get_core_idle_monitor?.();
+            const inputIdleMs = idleMonitor?.get_idletime?.() ?? 0;
+            if (settings.get_boolean('idle-gc') &&
+                lastEaseAt > lastGcAt &&
+                now - bootTime > 60000 &&
+                inputIdleMs > 60000) {
                 System.gc();
                 lastGcAt = now;
             }
@@ -431,6 +440,12 @@ export default class SpringEaseExtension extends Extension {
             this);
 
         this._installOverviewPatch();
+        this._settings.connectObject(
+            'changed::overview-patch', () => {
+                this._removeOverviewPatch();
+                this._installOverviewPatch();
+            },
+            this);
     }
 
     // GNOME's Overview defers a hide() requested while an animation is still
@@ -445,7 +460,8 @@ export default class SpringEaseExtension extends Extension {
     // path degrades to stock behavior.
     _installOverviewPatch() {
         const ov = Main.overview;
-        if (!ov?._animateNotVisible || !ov?._showDone ||
+        if (!this._settings.get_boolean('overview-patch') ||
+            !ov?._animateNotVisible || !ov?._showDone ||
             !ov?._overview?.controls?.gestureEnd ||
             !ov?._changeShownState || !ov?._hideDone) {
             this._overviewPatched = false;

@@ -76,6 +76,16 @@
       <summary>Enabled</summary>
       <description>Master switch (A/B without disabling the whole extension).</description>
     </key>
+    <key name="overview-patch" type="b">
+      <default>true</default>
+      <summary>Instant overview close</summary>
+      <description>Route a close requested while the overview is still animating through the gesture channel, so the drawer reverses immediately instead of finishing its opening first. Turn off if overview open/close misbehaves.</description>
+    </key>
+    <key name="idle-gc" type="b">
+      <default>true</default>
+      <summary>Idle garbage collection</summary>
+      <description>Force a garbage collection after the user has been away for a while, so the first animation afterwards does not stall on one. Turn off if you see pauses while the screen is idle.</description>
+    </key>
     <key name="magic-lamp-easing" type="b">
       <default>true</default>
       <summary>Ease magic-lamp minimize/unminimize</summary>

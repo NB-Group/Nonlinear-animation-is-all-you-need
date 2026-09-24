@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nonlinear-animation 6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-22 20:30+0800\n"
+"POT-Creation-Date: 2026-09-24 21:26+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -114,99 +114,122 @@ msgid "Advanced"
 msgstr ""
 
 #: prefs.js:157
-msgid "Threshold and touchpad-gesture exceptions — rarely touched."
+msgid "Toggles for the deeper interventions, and rarely-touched tuning."
+msgstr ""
+
+#: prefs.js:161
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:81
+msgid "Instant overview close"
 msgstr ""
 
 #: prefs.js:162
+msgid ""
+"A close requested mid-animation reverses the overview immediately instead of "
+"finishing its opening first. Turn off if overview open/close misbehaves."
+msgstr ""
+
+#: prefs.js:168
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:86
+msgid "Idle garbage collection"
+msgstr ""
+
+#: prefs.js:169
+msgid ""
+"Collect garbage after you have been away for a while, so the first animation "
+"afterwards does not stall. Turn off if you see pauses while the screen is "
+"idle."
+msgstr ""
+
+#: prefs.js:176
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:53
 msgid "Threshold (ms)"
 msgstr ""
 
-#: prefs.js:163
+#: prefs.js:177
 msgid ""
 "Only animations ≥ this get eased (hovers ~100ms). Lower = more things eased."
 msgstr ""
 
-#: prefs.js:170
+#: prefs.js:184
 msgid "Gesture grace (ms)"
 msgstr ""
 
-#: prefs.js:171
+#: prefs.js:185
 msgid ""
 "After a 3-finger swipe/pinch, animations play native for this long. 0 = ease "
 "everything."
 msgstr ""
 
-#: prefs.js:178
+#: prefs.js:192
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:65
 msgid "Gesture duration scale"
 msgstr ""
 
-#: prefs.js:179
+#: prefs.js:193
 msgid ""
 "Stretches gesture commits (workspace switch, paging) — curve stays velocity-"
 "matched so no jolt. 1.0 = native."
 msgstr ""
 
-#: prefs.js:245
+#: prefs.js:259
 msgid "New curve"
 msgstr ""
 
-#: prefs.js:251
+#: prefs.js:265
 msgid "Import"
 msgstr ""
 
-#: prefs.js:257
+#: prefs.js:271
 msgid "Export"
 msgstr ""
 
-#: prefs.js:263 prefs.js:440
+#: prefs.js:277 prefs.js:454
 msgid "Delete"
 msgstr ""
 
-#: prefs.js:310
+#: prefs.js:324
 msgid "Library full"
 msgstr ""
 
-#: prefs.js:311 prefs.js:361
+#: prefs.js:325 prefs.js:375
 #, javascript-format
 msgid "At most %d user curves can be stored."
 msgstr ""
 
-#: prefs.js:334
+#: prefs.js:348
 msgid "Import curves"
 msgstr ""
 
-#: prefs.js:349 prefs.js:355 prefs.js:360
+#: prefs.js:363 prefs.js:369 prefs.js:374
 msgid "Import failed"
 msgstr ""
 
-#: prefs.js:349
+#: prefs.js:363
 msgid "Could not read the file."
 msgstr ""
 
-#: prefs.js:388
+#: prefs.js:402
 msgid "Export curve"
 msgstr ""
 
-#: prefs.js:410
+#: prefs.js:424
 #, javascript-format
 msgid "Delete “%s”?"
 msgstr ""
 
-#: prefs.js:419
+#: prefs.js:433
 msgid "Nonlinear animation curves"
 msgstr ""
 
-#: prefs.js:430
+#: prefs.js:444
 msgid "OK"
 msgstr ""
 
-#: prefs.js:437
+#: prefs.js:451
 msgid "This cannot be undone."
 msgstr ""
 
-#: prefs.js:439 ui/curve-editor.js:62
+#: prefs.js:453 ui/curve-editor.js:62
 msgid "Cancel"
 msgstr ""
 
@@ -340,11 +363,25 @@ msgstr ""
 msgid "Master switch (A/B without disabling the whole extension)."
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:81
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:82
+msgid ""
+"Route a close requested while the overview is still animating through the "
+"gesture channel, so the drawer reverses immediately instead of finishing its "
+"opening first. Turn off if overview open/close misbehaves."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:87
+msgid ""
+"Force a garbage collection after the user has been away for a while, so the "
+"first animation afterwards does not stall on one. Turn off if you see pauses "
+"while the screen is idle."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:91
 msgid "Ease magic-lamp minimize/unminimize"
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:82
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:92
 msgid ""
 "If compiz-alike-magic-lamp-effect is installed, curve its minimize/"
 "unminimize timeline with EASE_OUT_CUBIC so the window decelerates into the "
