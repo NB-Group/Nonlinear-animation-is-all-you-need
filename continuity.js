@@ -85,13 +85,13 @@ export function motionState(target, prop, now = Date.now()) {
 // Velocity-matched retarget curve: a cubic Hermite from progress 0 to 1 with
 // the start tangent set to a damped fraction of the measured (normalized)
 // velocity and the end tangent zero. Unlike a seeded spring, it settles on
-// the target exactly, so the last frame never snaps a residual gap. Matching
-// the full velocity reads as a launch (seamless in theory, aggressive in
-// practice at stretched durations), so the carried momentum is damped and the
-// tangent clamped: the retarget acknowledges the motion it came from without
-// being catapulted by it. v0 = 0 degenerates to smoothstep.
+// the target exactly, so the last frame never snaps a residual gap. The
+// carried momentum is heavily damped and clamped shallow: a reversal nods in
+// the outgoing direction briefly instead of committing to it, and the caller
+// shortens the retarget's duration so the settle is decisive. v0 = 0
+// degenerates to smoothstep.
 function retargetCompiled(v0, _durationMs) {
-    const m0 = Math.max(-1.0, Math.min(1.2, 0.65 * v0));
+    const m0 = Math.max(-0.6, Math.min(0.8, 0.5 * v0));
     return {
         analytic: true,
         eval(tau) {

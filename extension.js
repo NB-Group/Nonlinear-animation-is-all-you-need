@@ -314,6 +314,17 @@ export default class SpringEaseExtension extends Extension {
             if (sharedV0 !== null)
                 sharedV0 = Math.max(-MAX_V0, Math.min(MAX_V0, sharedV0));
 
+            // Interruptions resolve FASTER, not slower: a retarget that keeps
+            // the full (stretched) duration crawls into its target for
+            // hundreds of milliseconds after the eye has decided the motion
+            // is over. Shrink the retarget to 60% so the redirect is quick
+            // and the settle decisive. v0 scales linearly with duration, so
+            // scaling the seed here matches the shorter window exactly.
+            if (sharedV0 !== null || anyBridge) {
+                props.duration = Math.max(150, Math.round(props.duration * 0.6));
+                sharedV0 = sharedV0 === null ? null : sharedV0 * 0.6;
+            }
+
             const drivers = [];
             for (const cand of candidates) {
                 const seed = sharedV0 === null && cand.fromValue === undefined
