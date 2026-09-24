@@ -209,17 +209,8 @@ export default class SpringEaseExtension extends Extension {
             if (!c)
                 return null;
 
-            // The overview state adjustment is the spine of GNOME's
-            // choreography: a hide() requested while it animates is deferred
-            // by the shell until the animation completes, so double-clicking
-            // the drawer button shows "open fully, then close". The deferral
-            // is upstream and cannot be removed from an animation wrapper;
-            // capping this one transition's scale shrinks the dead window
-            // from ~1.2s to ~600ms while everything else keeps the setting.
-            let dscale = settings.get_double('duration-scale');
-            if (target === Main.overview?._overview?.controls?._stateAdjustment)
-                dscale = Math.min(dscale, 1.5);
-            props.duration = Math.min(5000, Math.round(props.duration * dscale));
+            props.duration = Math.min(5000,
+                Math.round(props.duration * settings.get_double('duration-scale')));
 
             // Collect animated (property, new target value) pairs.
             // '@'-escaped sub-object properties are left native (the value is
@@ -438,6 +429,75 @@ export default class SpringEaseExtension extends Extension {
         this._settings.connectObject(
             'changed::magic-lamp-easing', () => this._installMagicLampHooks(),
             this);
+
+        this._installOverviewPatch();
+    }
+
+    // GNOME's Overview defers a hide() requested while an animation is still
+    // running: the close only starts once the open finished, which users read
+    // as "it replayed". The shell's own touchpad gestures never hit this
+    // because they exit through the gesture channel, which retargets the
+    // state adjustment from wherever it currently is (and lands right on this
+    // extension's continuity engine). Route deferred hides through that same
+    // exit. The open chain's completion callback would fire afterwards and
+    // corrupt the state machine (HIDING -> SHOWN throws), so it is swallowed
+    // once per takeover. Everything is feature-tested; any missing private
+    // path degrades to stock behavior.
+    _installOverviewPatch() {
+        const ov = Main.overview;
+        if (!ov?._animateNotVisible || !ov?._showDone ||
+            !ov?._overview?.controls?.gestureEnd ||
+            !ov?._changeShownState || !ov?._hideDone) {
+            this._overviewPatched = false;
+            return;
+        }
+        this._overviewPatched = true;
+        this._origAnimateNotVisible = ov._animateNotVisible.bind(ov);
+        this._origShowDone = ov._showDone.bind(ov);
+        this._suppressShowDone = 0;
+        const origAnimateNotVisible = this._origAnimateNotVisible;
+        const origShowDone = this._origShowDone;
+        const settings = this._settings;
+        let takeovers = 0;
+
+        ov._animateNotVisible = function () {
+            if (settings.get_boolean('continuity') &&
+                this._visible && this._animationInProgress &&
+                this._shownState !== 'HIDING') {
+                try {
+                    takeovers++;
+                    this._visibleTarget = false;
+                    this._changeShownState('HIDING');
+                    Main.panel.style = 'transition-duration: 250ms;';
+                    this._overview.controls.gestureEnd(0, 250,
+                        () => this._hideDone());
+                    return;
+                } catch {
+                    // fall through to stock deferral
+                }
+            }
+            origAnimateNotVisible.call(this);
+        };
+        ov._showDone = function () {
+            // A takeover leaves the open chain's completion stale: it would
+            // flip the shown state back to SHOWN from HIDING and throw.
+            if (takeovers > 0) {
+                takeovers--;
+                return;
+            }
+            origShowDone.call(this);
+        };
+    }
+
+    _removeOverviewPatch() {
+        if (!this._overviewPatched)
+            return;
+        const ov = Main.overview;
+        if (ov?._animateNotVisible)
+            ov._animateNotVisible = this._origAnimateNotVisible;
+        if (ov?._showDone)
+            ov._showDone = this._origShowDone;
+        this._overviewPatched = false;
     }
 
     _resolveCurve(settings) {
@@ -530,6 +590,7 @@ export default class SpringEaseExtension extends Extension {
             GLib.source_remove(this._idleGcId);
             this._idleGcId = 0;
         }
+        this._removeOverviewPatch();
         this._orig = null;
         this._settings = null;
     }
