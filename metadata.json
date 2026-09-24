@@ -1,7 +1,7 @@
 {
     "uuid": "nonlinear-animation@nbgroup",
     "name": "Nonlinear animation is all you need",
-    "description": "Make every GNOME animation nonlinear, with perfectly smooth interruption! / 让每一个 GNOME 动画都变为非线性，且支持完美的丝滑打断！ GNOME's linear motion is plain and counter-intuitive: it never speeds up, never settles; interruptions snap the velocity to zero and teleport back to the start. GNOME 的线性动画平淡又反直觉：它从不加速，也从不缓停；打断时速度瞬间归零并瞬移回起点。 If you feel that too, this extension is exactly what you need. 如果你也有同感，那么这个扩展正是你需要的。 Almost zero performance overhead. Just pure math. 几乎零性能开销，纯粹是数学。",
+    "description": "Make every GNOME animation nonlinear: curated curves, a visual curve editor, and interruption physics that keeps its momentum. / 让每一个 GNOME 动画都变为非线性：精选曲线、可视化曲线编辑器、保留动量的打断物理。 GNOME's motion is linear and forgets where it was going: it never speeds up, never settles, and an interrupted animation snaps back to the start with zero velocity. GNOME 的运动是线性的，而且被打断就失忆：它从不加速，从不缓停，打断时速度瞬间归零并瞬移回起点。 This extension is a complete motion engine: pick a curve or draw your own, tune the speed, and every interruption continues from where it was, carrying its momentum, like something with mass. 这个扩展是一个完整的动画引擎：选一条曲线或自己画一条，调节速度，任何打断都从原位置带着动量继续，像一个有质量的东西。 Curves import and export as small JSON files, so you can share them. English and Chinese out of the box. 曲线可导入导出为轻量 JSON 文件，方便分享。内置中英文。 Almost zero performance overhead. Just pure math. 几乎零性能开销，纯粹是数学。",
     "shell-version": [
         "50"
     ],
