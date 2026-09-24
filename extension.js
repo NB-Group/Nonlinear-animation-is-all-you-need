@@ -42,6 +42,7 @@ import {
 // entirely alone.
 import * as WorkspaceAnimation from
     'resource:///org/gnome/shell/ui/workspaceAnimation.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 const MonitorGroup = WorkspaceAnimation.MonitorGroup ?? null;
 
 // Stay out of the way while the shell is still coming up at login: the boot
@@ -208,8 +209,17 @@ export default class SpringEaseExtension extends Extension {
             if (!c)
                 return null;
 
-            props.duration = Math.min(5000,
-                Math.round(props.duration * settings.get_double('duration-scale')));
+            // The overview state adjustment is the spine of GNOME's
+            // choreography: a hide() requested while it animates is deferred
+            // by the shell until the animation completes, so double-clicking
+            // the drawer button shows "open fully, then close". The deferral
+            // is upstream and cannot be removed from an animation wrapper;
+            // capping this one transition's scale shrinks the dead window
+            // from ~1.2s to ~600ms while everything else keeps the setting.
+            let dscale = settings.get_double('duration-scale');
+            if (target === Main.overview?._overview?.controls?._stateAdjustment)
+                dscale = Math.min(dscale, 1.5);
+            props.duration = Math.min(5000, Math.round(props.duration * dscale));
 
             // Collect animated (property, new target value) pairs.
             // '@'-escaped sub-object properties are left native (the value is
