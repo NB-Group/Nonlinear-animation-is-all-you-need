@@ -304,3 +304,17 @@ export function compileCurve(curve, v0 = 0, periodSec = 1) {
     }
     return MODE_FUNCS['ease-in-out-cubic'];
 }
+
+// Native-cubic-bezier evaluator (matches clutter_timeline_set_cubic_bezier_
+// progress). Used where a retarget must run entirely inside the native
+// transition (St.Adjustment targets: JS per-frame writes on them trigger
+// layout churn that kills the transition being driven).
+export function makeBezierEvaluator(p1x, p1y, p2x, p2y) {
+    const evalY = t => bezierY(p1x, p1y, p2x, p2y, t);
+    const e = 0.002;
+    return {
+        analytic: true,
+        eval: evalY,
+        deriv: t => (evalY(t + e) - evalY(t - e)) / (2 * e),
+    };
+}

@@ -22,6 +22,7 @@
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
+import Graphene from 'gi://Graphene';
 import St from 'gi://St';
 import System from 'system';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -33,7 +34,9 @@ import {
     driveTransition,
     motionState,
     noteModeAnimation,
+    seedAdjustmentTransition,
 } from './continuity.js';
+import {makeBezierEvaluator} from './easing.js';
 
 // WorkspaceAnimation drives one MonitorGroup per monitor to slide workspaces.
 // Those actors size themselves from the monitor layout while animating, and a
@@ -235,6 +238,14 @@ export default class SpringEaseExtension extends Extension {
                 }
             }
 
+            // Drivers (JS per-frame writes) are for ACTOR targets only:
+            // writing an St.Adjustment from a driver goes through
+            // notify::value, and the controls layer's reaction makes mutter
+            // kill the transition being driven (the drawer froze mid-open
+            // and snapped). Adjustments get continuity through purely native
+            // mechanics instead: interval-rewrite + velocity-matched bezier
+            // progress, evaluated in C.
+            const isActor = target instanceof Clutter.Actor;
             const continuityOn = settings.get_boolean('continuity');
             const simpleCase = props.delay === undefined &&
                 props.repeatCount === undefined;
@@ -340,7 +351,7 @@ export default class SpringEaseExtension extends Extension {
                 const seed = sharedV0 === null && cand.fromValue === undefined
                     ? null
                     : {fromValue: cand.fromValue, v0: sharedV0 ?? 0};
-                const wantsDriver = simpleCase && (seed !== null ||
+                const wantsDriver = isActor && simpleCase && (seed !== null ||
                     c.kind === 'spline' || c.kind === 'spring');
                 if (wantsDriver)
                     drivers.push({...cand, seed});
@@ -383,10 +394,26 @@ export default class SpringEaseExtension extends Extension {
                     };
                     driveTransition(target, d.prop, plan.curve, write, d.seed);
                 }
+                for (const s of plan.adjSeeds) {
+                    // Native continuity for adjustments: no JS per frame.
+                    const gv = new GObject.Value();
+                    gv.init(s.gtype);
+                    gv[GVALUE_SETTERS[s.typeName]](s.fromValue ?? 0);
+                    seedAdjustmentTransition(target, s.prop, s.seed,
+                        m0 => makeBezierEvaluator(0.32,
+                            Math.max(-0.45, Math.min(0.5, m0 * 0.32)),
+                            0.62, 1.0),
+                        gv, v => {
+                            gv[GVALUE_SETTERS[s.typeName]](
+                                s.isInt ? Math.round(v) : v);
+                        },
+                        (x, y) => Graphene.Point.alloc().init(x, y));
+                }
                 // Register plain-mode (and non-driven numeric) animations so a
                 // later interruption can read their velocity.
                 for (const prop of plan.numericProps) {
-                    if (!plan.drivers.some(d => d.prop === prop))
+                    if (!plan.drivers.some(d => d.prop === prop) &&
+                        !plan.adjSeeds.some(s => s.prop === prop))
                         noteModeAnimation(target, prop, plan.curve,
                             () => target.get_transition?.(prop));
                 }

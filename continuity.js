@@ -91,7 +91,7 @@ export function motionState(target, prop, now = Date.now()) {
 // shortens the retarget's duration so the settle is decisive. v0 = 0
 // degenerates to smoothstep.
 function retargetCompiled(v0, _durationMs) {
-    const m0 = Math.max(-0.6, Math.min(0.8, 0.5 * v0));
+    const m0 = Math.max(-0.8, Math.min(1.2, 0.85 * v0));
     return {
         analytic: true,
         eval(tau) {
@@ -185,4 +185,49 @@ export function noteModeAnimation(target, prop, curve, getTransition) {
         if (r)
             r.stoppedAt = Date.now();
     });
+}
+
+// Seed an ADJUSTMENT transition with continuity, entirely through native
+// mechanics: rewriting the interval's initial value bridges over a
+// reset-to-start (anti-teleport), and a native cubic-bezier progress curve
+// whose initial slope equals the measured velocity carries the momentum.
+// No JS runs per frame on adjustments — their value writes go through
+// notify::value, and the controls layer's reaction to that makes mutter kill
+// any transition we drive from connect_after.
+// `gv` is a preallocated GValue typed to the property's GType; `bezier` is a
+// Graphene.Point pair builder; both passed in to keep this module GI-free.
+export function seedAdjustmentTransition(target, prop, seed, makeCompiled,
+    gv, setGv, points) {
+    const tr = target.get_transition?.(prop);
+    if (!tr?.is_playing?.())
+        return null;
+    const iv = tr.get_interval?.();
+    if (!iv)
+        return null;
+    const final = iv.peek_final_value();
+    let init = iv.peek_initial_value();
+    if (seed?.fromValue !== undefined && Number.isFinite(seed.fromValue)) {
+        setGv(seed.fromValue);
+        iv.set_initial(gv);
+        init = seed.fromValue;
+    }
+    const dur = tr.get_duration();
+    if (!(dur > 0) || !Number.isFinite(init) || !Number.isFinite(final))
+        return null;
+
+    const v0 = seed?.v0 ?? 0;
+    const m0 = Math.max(-1.2, Math.min(1.5, 0.85 * v0));
+    if (Math.abs(m0) >= 0.05) {
+        // bezier initial slope dProgress/dTau = p1y / p1x
+        const p1x = 0.32;
+        const p1y = Math.max(-0.45, Math.min(0.5, m0 * p1x));
+        tr.set_cubic_bezier_progress(points(p1x, p1y), points(0.62, 1.0));
+    }
+    noteAnimation(target, prop, makeCompiled(m0), init, final, dur);
+    tr.connect('stopped', () => {
+        const r = record(target, prop);
+        if (r)
+            r.stoppedAt = Date.now();
+    });
+    return tr;
 }
