@@ -474,14 +474,12 @@ export default class SpringEaseExtension extends Extension {
         const origAnimateNotVisible = this._origAnimateNotVisible;
         const origShowDone = this._origShowDone;
         const settings = this._settings;
-        let takeovers = 0;
 
         ov._animateNotVisible = function () {
             if (settings.get_boolean('continuity') &&
                 this._visible && this._animationInProgress &&
-                this._shownState !== 'HIDING') {
+                this._shown && this._shownState === 'SHOWING') {
                 try {
-                    takeovers++;
                     this._visibleTarget = false;
                     this._changeShownState('HIDING');
                     Main.panel.style = 'transition-duration: 250ms;';
@@ -496,11 +494,15 @@ export default class SpringEaseExtension extends Extension {
         };
         ov._showDone = function () {
             // A takeover leaves the open chain's completion stale: it would
-            // flip the shown state back to SHOWN from HIDING and throw.
-            if (takeovers > 0) {
-                takeovers--;
+            // flip the shown state back to SHOWN from HIDING and throw. A
+            // stale completion is recognized by state, not by counting: a
+            // legitimate _showDone only ever completes while SHOWING. (The
+            // interrupted open's callback usually never fires at all, so a
+            // counter would leak and swallow the NEXT legitimate one, which
+            // wedged the overview behind an _animationInProgress that never
+            // cleared.)
+            if (this._shownState !== 'SHOWING')
                 return;
-            }
             origShowDone.call(this);
         };
     }
