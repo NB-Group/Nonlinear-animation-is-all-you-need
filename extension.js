@@ -503,9 +503,11 @@ export default class SpringEaseExtension extends Extension {
         const settings = this._settings;
 
         ov._animateNotVisible = function () {
+            // NOTE: hide() clears _shown BEFORE calling here, so it must not
+            // be part of the gate; SHOWING alone excludes the startup path.
             if (settings.get_boolean('continuity') &&
                 this._visible && this._animationInProgress &&
-                this._shown && this._shownState === 'SHOWING') {
+                this._shownState === 'SHOWING') {
                 try {
                     this._visibleTarget = false;
                     this._changeShownState('HIDING');
