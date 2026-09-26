@@ -1,7 +1,7 @@
 {
     "uuid": "nonlinear-animation@nbgroup",
     "name": "Nonlinear animation is all you need",
-    "description": "让 GNOME 的每个动画都丝滑非线性！自定义曲线、动态打断动画、动画卡顿优化，尽在此插件内！GNOME 的默认动画是反直觉又不好看的线性动画，它没有加速也没有减速，有的动画打断的时候更是瞬移回到起点，有的动画第一次播放的时候会很卡。如果你也有相同的感觉，那么这个插件，便是如你所需！/ Make every GNOME animation smooth and nonlinear! Custom curves, interruptions that keep flowing, and jank fixes, all in one extension. GNOME's default animations are linear, counter-intuitive, and plain: they never speed up, never slow down; some snap back to the start when interrupted, and some stutter the first time they play. If you feel that too, this extension is exactly what you need.",
+    "description": "Make every GNOME animation smooth and nonlinear! Custom curves, interruptions that keep flowing, and jank fixes, all in one extension. GNOME's default animations are linear, counter-intuitive, and plain: they never speed up, never slow down; some snap back to the start when interrupted, and some stutter the first time they play. If you feel that too, this extension is exactly what you need.",
     "shell-version": [
         "50"
     ],
