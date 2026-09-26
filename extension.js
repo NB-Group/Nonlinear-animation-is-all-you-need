@@ -276,10 +276,18 @@ export default class SpringEaseExtension extends Extension {
                             // move, resize) lands anywhere else and must start
                             // from its own new value, or windows end up
                             // animating from stale positions.
+                            // WINDOW actors never bridge: the shell's
+                            // interrupt cleanup resets the scale pivot, so
+                            // bridged values render in a different coordinate
+                            // frame than they were recorded in and the window
+                            // visibly distorts. Windows restart from the
+                            // icon (native semantics, geometrically correct)
+                            // and keep only the velocity seed.
                             let fromValue;
                             const nowValue = target[prop.replaceAll('-', '_')];
                             const rangeAbs = Math.abs(state.final - state.init);
-                            if (typeof nowValue === 'number' &&
+                            if (!target.meta_window &&
+                                typeof nowValue === 'number' &&
                                 Number.isFinite(nowValue) &&
                                 rangeAbs > 1e-6 &&
                                 Math.abs(nowValue - state.value) >
