@@ -488,7 +488,8 @@ export default class SpringEaseExtension extends Extension {
     _installOverviewPatch() {
         const ov = Main.overview;
         if (!this._settings.get_boolean('overview-patch') ||
-            !ov?._animateNotVisible || !ov?._showDone ||
+            !ov?._animateNotVisible || !ov?._animateVisible ||
+            !ov?._showDone ||
             !ov?._overview?.controls?.gestureEnd ||
             !ov?._changeShownState || !ov?._hideDone) {
             this._overviewPatched = false;
@@ -496,14 +497,33 @@ export default class SpringEaseExtension extends Extension {
         }
         this._overviewPatched = true;
         this._origAnimateNotVisible = ov._animateNotVisible.bind(ov);
+        this._origAnimateVisible = ov._animateVisible.bind(ov);
         this._origShowDone = ov._showDone.bind(ov);
         this._suppressShowDone = 0;
         const origAnimateNotVisible = this._origAnimateNotVisible;
         const origShowDone = this._origShowDone;
         const settings = this._settings;
 
+        // Symmetric takeover: a show requested during an animation ALSO exits
+        // through the gesture channel (reopening mid-close works, and the
+        // deferred show of a triple-click reverses instead of queueing).
+        ov._animateVisible = function (state) {
+            if (this._visible && this._animationInProgress &&
+                this._shownState === 'HIDING') {
+                try {
+                    this._changeShownState('SHOWING');
+                    this._overview.controls.gestureEnd(state, 250,
+                        () => this._showDone());
+                    this._watchTakeoverSettle();
+                    return;
+                } catch {
+                    // fall through to stock deferral
+                }
+            }
+            origAnimateVisible.call(this, state);
+        };
         ov._animateNotVisible = function () {
-            // NOTE: hide() clears _shown BEFORE calling here, so it must not
+            // NOTE: hide() clears _shown before calling here, so it must not
             // be part of the gate; SHOWING alone excludes the startup path.
             if (settings.get_boolean('continuity') &&
                 this._visible && this._animationInProgress &&
@@ -514,6 +534,7 @@ export default class SpringEaseExtension extends Extension {
                     Main.panel.style = 'transition-duration: 250ms;';
                     this._overview.controls.gestureEnd(0, 250,
                         () => this._hideDone());
+                    this._watchTakeoverSettle();
                     return;
                 } catch {
                     // fall through to stock deferral
@@ -534,14 +555,33 @@ export default class SpringEaseExtension extends Extension {
                 return;
             origShowDone.call(this);
         };
-    }
-
+        ov._watchTakeoverSettle = () => {
+            // gestureEnd's completion is completion-only: if THIS transition
+            // is interrupted (another takeover), its done-callback never runs
+            // and _animationInProgress would stay true forever, wedging the
+            // overview. The 'stopped' signal fires on interruption too, so it
+            // settles the state machine whenever the takeover's transition
+            // ends without completing; a newer takeover has already moved the
+            // shown state, which makes the guard a no-op for stale watchers.
+            const tr = ov._overview.controls._stateAdjustment
+                ?.get_transition?.('value');
+            tr?.connect('stopped', (t, finished) => {
+                if (finished)
+                    return;  // gestureEnd's own onComplete handles it
+                if (ov._shownState === 'HIDING' && !ov._visibleTarget)
+                    ov._hideDone();
+                else if (ov._shownState === 'SHOWING' && ov._visibleTarget)
+                    ov._showDone();
+            });
+        };
     _removeOverviewPatch() {
         if (!this._overviewPatched)
             return;
         const ov = Main.overview;
         if (ov?._animateNotVisible)
             ov._animateNotVisible = this._origAnimateNotVisible;
+        if (ov?._animateVisible)
+            ov._animateVisible = this._origAnimateVisible;
         if (ov?._showDone)
             ov._showDone = this._origShowDone;
         this._overviewPatched = false;
