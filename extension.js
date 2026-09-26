@@ -475,6 +475,7 @@ export default class SpringEaseExtension extends Extension {
             this);
 
         this._installOverviewPatch();
+        this._installWindowRetargetPatch();
         this._settings.connectObject(
             'changed::overview-patch', () => {
                 this._removeOverviewPatch();
@@ -582,6 +583,73 @@ export default class SpringEaseExtension extends Extension {
                     ov._showDone();
             });
         };
+    // True in-place window interruption. The shell's _unminimizeWindow
+    // teleports the window to the dock icon and replays from there (and its
+    // interrupt cleanup resets scale/opacity), so even a bridged retarget
+    // fights a coordinate change and can flash. Instead: let the shell run
+    // (its cleanup and completed_* bookkeeping settle), then — in the same
+    // main-loop turn, before any frame is painted — restore the snapshot of
+    // where the window actually was, and start our own ease from there. The
+    // ease goes through our own wrapper, so it picks up the selected curve,
+    // the duration scale, and the momentum seed from the interrupted
+    // minimize automatically.
+    _installWindowRetargetPatch() {
+        const wm = global.window_manager;
+        if (!wm?._unminimizeWindow || !this._settings.get_boolean('continuity')) {
+            this._windowPatchOk = false;
+            return;
+        }
+        this._windowPatchOk = true;
+        const settings = this._settings;
+        this._origUnminimizeWindow = wm._unminimizeWindow;
+        wm._unminimizeWindow = (shellwm, actor) => {
+            try {
+                const snap = Number.isFinite(actor.x) &&
+                    Number.isFinite(actor.scale_x) &&
+                    actor.get_transition('scale-x')?.is_playing?.()
+                    ? {
+                        x: actor.x, y: actor.y,
+                        sx: actor.scale_x, sy: actor.scale_y,
+                        op: actor.opacity,
+                    }
+                    : null;
+                this._origUnminimizeWindow.call(wm, shellwm, actor);
+                if (!snap || !settings.get_boolean('continuity'))
+                    return;
+                // undo the teleport before any frame paints; removing the
+                // freshly created transitions also settles the shell's own
+                // done-bookkeeping early (completed_unminimize), which is
+                // exactly what we want
+                for (const p of ['x', 'y', 'scale-x', 'scale-y', 'opacity'])
+                    actor.remove_transition(p);
+                actor.set_position(snap.x, snap.y);
+                actor.set_scale(snap.sx, snap.sy);
+                actor.opacity = snap.op;
+                const rect = actor.meta_window?.get_buffer_rect?.();
+                if (rect) {
+                    actor.ease({
+                        x: rect.x, y: rect.y,
+                        scale_x: 1, scale_y: 1,
+                        opacity: 255,
+                        duration: 250,
+                        mode: Clutter.AnimationMode.EASE_OUT_CUBIC,
+                    });
+                }
+            } catch {
+                // never break the caller's unminimize
+            }
+        };
+    }
+
+    _removeWindowRetargetPatch() {
+        if (!this._windowPatchOk)
+            return;
+        const wm = global.window_manager;
+        if (wm?._unminimizeWindow)
+            wm._unminimizeWindow = this._origUnminimizeWindow;
+        this._windowPatchOk = false;
+    }
+
     _removeOverviewPatch() {
         if (!this._overviewPatched)
             return;
@@ -686,6 +754,7 @@ export default class SpringEaseExtension extends Extension {
             this._idleGcId = 0;
         }
         this._removeOverviewPatch();
+        this._removeWindowRetargetPatch();
         this._orig = null;
         this._settings = null;
     }
