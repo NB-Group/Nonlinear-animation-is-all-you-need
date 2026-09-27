@@ -583,6 +583,8 @@ export default class SpringEaseExtension extends Extension {
                     ov._showDone();
             });
         };
+    }
+
     // True in-place window interruption. The shell's _unminimizeWindow
     // teleports the window to the dock icon and replays from there (and its
     // interrupt cleanup resets scale/opacity), so even a bridged retarget

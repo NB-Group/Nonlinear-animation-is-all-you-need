@@ -1,6 +1,7 @@
 // Unit tests for easing.js / curves.js (pure JS, no GI). Run:
 //   gjs -m tests/easingTest.js
 import {MODE_FUNCS, makeSpline, makeSpring, makeSpringNumeric, compileCurve} from '../easing.js';
+import GLib from 'gi://GLib';
 import * as Curves from '../curves.js';
 
 let failures = 0;
@@ -149,6 +150,26 @@ for (const [nick, f] of Object.entries(MODE_FUNCS)) {
 
     check('migration map covers all modes',
         Object.keys(Curves.MIGRATION_MAP).length === 10);
+}
+
+// --- extension.js brace balance: a python-surgery once ate a closing brace
+// and only the shell's loader noticed; never let that ship again ---
+{
+    const here = import.meta.url.replace('file://', '');
+    const path = here.slice(0, here.lastIndexOf('/') + 1) + '../extension.js';
+    const [, bytes] = GLib.file_get_contents(path);
+    const text = new TextDecoder().decode(bytes);
+    // naive count: braces inside strings/comments skew this in principle,
+    // but this file's strings carry balanced braces, and the check's value
+    // is catching a surgically-deleted brace (depth drifts to ±1)
+    let depth = 0;
+    for (const c of text) {
+        if (c === '{')
+            depth++;
+        else if (c === '}')
+            depth--;
+    }
+    check('extension.js brace balance', depth === 0);
 }
 
 if (failures > 0) {
