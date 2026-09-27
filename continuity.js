@@ -91,7 +91,13 @@ export function motionState(target, prop, now = Date.now()) {
 // shortens the retarget's duration so the settle is decisive. v0 = 0
 // degenerates to smoothstep.
 function retargetCompiled(v0, _durationMs) {
-    const m0 = Math.max(-0.8, Math.min(1.2, 0.85 * v0));
+    // Asymmetric: momentum in the direction of travel carries fully, but a
+    // reversal only nods — a window interrupted while restoring and then
+    // minimized otherwise swells toward full size before shrinking, which
+    // reads as the reverse animation being "bigger than a normal minimize".
+    const m0 = v0 >= 0
+        ? Math.min(1.2, 0.85 * v0)
+        : Math.max(-0.3, 0.5 * v0);
     return {
         analytic: true,
         eval(tau) {
