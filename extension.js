@@ -115,6 +115,27 @@ export default class SpringEaseExtension extends Extension {
             'changed::spring-solver', invalidateCurve,
             this);
 
+        // Dispose guard: an actor can be destroyed inside its own ease()
+        // (very short animations complete synchronously and their onComplete
+        // destroys the actor). Touching it afterwards logs a GJS CRITICAL
+        // that try/catch cannot intercept (property access on a disposed
+        // GObject warns instead of throwing), so mark targets at destroy
+        // time and skip them in postEase. One connection per actor for its
+        // whole lifetime, never per ease call.
+        const disposedTargets = new WeakSet();
+        const disposeHooked = new WeakSet();
+        const hookDispose = target => {
+            if (disposeHooked.has(target))
+                return;
+            disposeHooked.add(target);
+            try {
+                target.connect('destroy', () => disposedTargets.add(target));
+            } catch {
+                // not a Clutter.Actor (e.g. St.Adjustment): no destroy
+                // signal; those are never disposed mid-note in practice
+            }
+        };
+
         // Touchpad-gesture exclusion: when the user drives an overview/workspace
         // open with a 3-finger swipe, the motion is gesture-driven (it already
         // tracks the finger). We leave the wrap-up animation at GNOME's native
@@ -374,13 +395,14 @@ export default class SpringEaseExtension extends Extension {
             // For custom curves the native mode under the driver is invisible
             // (we overwrite the value every frame); whatever mode the caller
             // asked for keeps running underneath until our handler runs.
+            hookDispose(target);
 
             return {curve: c, drivers, numericProps};
         };
 
         // --- after the original ease --------------------------------------
         const postEase = (target, plan) => {
-            if (!plan)
+            if (!plan || disposedTargets.has(target))
                 return;
             try {
                 for (const d of plan.drivers) {
@@ -498,9 +520,11 @@ export default class SpringEaseExtension extends Extension {
         this._origAnimateNotVisible = ov._animateNotVisible.bind(ov);
         this._origAnimateVisible = ov._animateVisible.bind(ov);
         this._origShowDone = ov._showDone.bind(ov);
+        this._origToggle = ov.toggle.bind(ov);
         const origAnimateNotVisible = this._origAnimateNotVisible;
         const origAnimateVisible = this._origAnimateVisible;
         const origShowDone = this._origShowDone;
+        const origToggle = this._origToggle;
         const settings = this._settings;
 
         // Symmetric takeover: a show requested during an animation ALSO exits
@@ -554,6 +578,20 @@ export default class SpringEaseExtension extends Extension {
                 return;
             origShowDone.call(this);
         };
+        // While a hide is animating, _visible stays true until _hideDone
+        // runs, so the stock toggle() routes a new press to hide() — which
+        // returns early because _shown is already false — and the press is
+        // swallowed (a Super triple-press ends hidden, third press dead).
+        // Route by the animation state instead: a press during HIDING means
+        // show, and lands on the takeover reversal in _animateVisible.
+        ov.toggle = function () {
+            if (this._animationInProgress &&
+                this._shownState === 'HIDING' && !this._shown) {
+                this.show();
+                return;
+            }
+            origToggle.call(this);
+        };
         ov._watchTakeoverSettle = () => {
             // gestureEnd's completion is completion-only: if THIS transition
             // is interrupted (another takeover), its done-callback never runs
@@ -585,6 +623,8 @@ export default class SpringEaseExtension extends Extension {
             ov._animateVisible = this._origAnimateVisible;
         if (ov?._showDone)
             ov._showDone = this._origShowDone;
+        if (ov?.toggle)
+            ov.toggle = this._origToggle;
         delete ov._watchTakeoverSettle;
         this._overviewPatched = false;
     }
