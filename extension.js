@@ -22,21 +22,16 @@
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
-import Graphene from 'gi://Graphene';
 import St from 'gi://St';
 import System from 'system';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import * as Curves from './curves.js';
 import {
-    MAX_V0,
-    MIN_V0,
     driveTransition,
     motionState,
     noteModeAnimation,
-    seedAdjustmentTransition,
 } from './continuity.js';
-import {makeBezierEvaluator} from './easing.js';
 
 // WorkspaceAnimation drives one MonitorGroup per monitor to slide workspaces.
 // Those actors size themselves from the monitor layout while animating, and a
@@ -183,8 +178,11 @@ export default class SpringEaseExtension extends Extension {
         const planEase = (target, props, forcedProp, forcedValue) => {
             try {
                 return planEaseInner(target, props, forcedProp, forcedValue);
-            } catch {
-                // Never let a settings/read hiccup break the caller's ease.
+            } catch (e) {
+                // Never let a settings/read hiccup break the caller's ease,
+                // but never swallow it silently again either — a dead
+                // engine shipped for four days behind a quiet catch.
+                console.warn(`nonlinear-animation: ${e.message}`);
                 return null;
             }
         };
@@ -221,8 +219,14 @@ export default class SpringEaseExtension extends Extension {
             if (!c)
                 return null;
 
-            props.duration = Math.min(5000,
-                Math.round(props.duration * settings.get_double('duration-scale')));
+            // The overview state adjustment is the choreography spine; the
+            // shell sequences transitions around its native duration, and a
+            // hide during show is deferred until it finishes. Capping its
+            // scale keeps that machinery within design tolerances.
+            let dscale = settings.get_double('duration-scale');
+            if (target === Main.overview?._overview?.controls?._stateAdjustment)
+                dscale = Math.min(dscale, 1.5);
+            props.duration = Math.min(5000, Math.round(props.duration * dscale));
 
             // Collect animated (property, new target value) pairs.
             // '@'-escaped sub-object properties are left native (the value is
@@ -253,6 +257,7 @@ export default class SpringEaseExtension extends Extension {
             // Pass 1: per property, reconstruct the previous motion state and
             // whether the caller reset the property for a replay.
             const candidates = [];
+            const numericProps = [];
             for (const [prop, newTarget] of animated) {
                 const pspec = target.find_property?.(prop);
                 const typeName = pspec?.value_type?.name;
@@ -402,31 +407,15 @@ export default class SpringEaseExtension extends Extension {
                     };
                     driveTransition(target, d.prop, plan.curve, write, d.seed);
                 }
-                for (const s of plan.adjSeeds) {
-                    // Native continuity for adjustments: no JS per frame.
-                    const gv = new GObject.Value();
-                    gv.init(s.gtype);
-                    gv[GVALUE_SETTERS[s.typeName]](s.fromValue ?? 0);
-                    seedAdjustmentTransition(target, s.prop, s.seed,
-                        m0 => makeBezierEvaluator(0.32,
-                            Math.max(-0.45, Math.min(0.5, m0 * 0.32)),
-                            0.62, 1.0),
-                        gv, v => {
-                            gv[GVALUE_SETTERS[s.typeName]](
-                                s.isInt ? Math.round(v) : v);
-                        },
-                        (x, y) => Graphene.Point.alloc().init(x, y));
-                }
                 // Register plain-mode (and non-driven numeric) animations so a
                 // later interruption can read their velocity.
                 for (const prop of plan.numericProps) {
-                    if (!plan.drivers.some(d => d.prop === prop) &&
-                        !plan.adjSeeds.some(s => s.prop === prop))
+                    if (!plan.drivers.some(d => d.prop === prop))
                         noteModeAnimation(target, prop, plan.curve,
                             () => target.get_transition?.(prop));
                 }
-            } catch {
-                // A driver failure must never break the caller.
+            } catch (e) {
+                console.warn(`nonlinear-animation: ${e.message}`);
             }
         };
 
@@ -475,8 +464,7 @@ export default class SpringEaseExtension extends Extension {
             this);
 
         this._installOverviewPatch();
-        this._installWindowRetargetPatch();
-        this._installMinimizeSnapshotPatch();
+        this._installWindowSignals();
         this._settings.connectObject(
             'changed::overview-patch', () => {
                 this._removeOverviewPatch();
@@ -509,7 +497,6 @@ export default class SpringEaseExtension extends Extension {
         this._origAnimateNotVisible = ov._animateNotVisible.bind(ov);
         this._origAnimateVisible = ov._animateVisible.bind(ov);
         this._origShowDone = ov._showDone.bind(ov);
-        this._suppressShowDone = 0;
         const origAnimateNotVisible = this._origAnimateNotVisible;
         const origAnimateVisible = this._origAnimateVisible;
         const origShowDone = this._origShowDone;
@@ -587,140 +574,56 @@ export default class SpringEaseExtension extends Extension {
         };
     }
 
-    // True in-place window interruption. The shell's _unminimizeWindow
-    // teleports the window to the dock icon and replays from there (and its
-    // interrupt cleanup resets scale/opacity), so even a bridged retarget
-    // fights a coordinate change and can flash. Instead: let the shell run
-    // (its cleanup and completed_* bookkeeping settle), then — in the same
-    // main-loop turn, before any frame is painted — restore the snapshot of
-    // where the window actually was, and start our own ease from there. The
-    // ease goes through our own wrapper, so it picks up the selected curve,
-    // the duration scale, and the momentum seed from the interrupted
-    // minimize automatically.
-    _installWindowRetargetPatch() {
-        const wm = global.window_manager;
-        if (!wm?._unminimizeWindow || !this._settings.get_boolean('continuity')) {
-            this._windowPatchOk = false;
+    // In-place window interruption, via the only channel that actually
+    // fires: GNOME connects its handlers with .bind() at startup, so
+    // replacing the method properties never took effect. Signal handlers
+    // connected here run AFTER the shell's own, in the same emission and
+    // before any frame paints: the shell's version has already done its
+    // bookkeeping (and its teleport), and the registry still holds the
+    // pre-teleport motion state. We rewrite the just-created transitions'
+    // interval initial values back to the real on-screen positions and seed
+    // a velocity-matched native bezier — the shell's own durations, curves
+    // and completion callbacks stay intact.
+    _installWindowSignals() {
+        if (!this._settings.get_boolean('continuity')) {
+            this._wmSignals = [];
             return;
         }
-        this._windowPatchOk = true;
-        const settings = this._settings;
-        this._origUnminimizeWindow = wm._unminimizeWindow;
-        wm._unminimizeWindow = (shellwm, actor) => {
+        const retarget = actor => {
             try {
-                const snap = Number.isFinite(actor.x) &&
-                    Number.isFinite(actor.scale_x) &&
-                    actor.get_transition('scale-x')?.is_playing?.()
-                    ? {
-                        x: actor.x, y: actor.y,
-                        sx: actor.scale_x, sy: actor.scale_y,
-                        op: actor.opacity,
-                    }
-                    : null;
-                this._origUnminimizeWindow.call(wm, shellwm, actor);
-                if (!snap || !settings.get_boolean('continuity'))
-                    return;
-                // undo the teleport before any frame paints; removing the
-                // freshly created transitions also settles the shell's own
-                // done-bookkeeping early (completed_unminimize), which is
-                // exactly what we want
-                for (const p of ['x', 'y', 'scale-x', 'scale-y', 'opacity'])
-                    actor.remove_transition(p);
-                actor.set_position(snap.x, snap.y);
-                actor.set_scale(snap.sx, snap.sy);
-                actor.opacity = snap.op;
-                const rect = actor.meta_window?.get_buffer_rect?.();
-                if (rect) {
-                    actor.ease({
-                        x: rect.x, y: rect.y,
-                        scale_x: 1, scale_y: 1,
-                        opacity: 255,
-                        duration: 250,
-                        mode: Clutter.AnimationMode.EASE_OUT_CUBIC,
-                    });
+                for (const prop of ['x', 'y', 'scale-x', 'scale-y', 'opacity']) {
+                    const state = motionState(actor, prop);
+                    if (!state)
+                        continue;
+                    const tr = actor.get_transition?.(prop);
+                    const iv = tr?.get_interval?.();
+                    if (!tr?.is_playing?.() || !iv)
+                        continue;
+                    // bridge over the teleport only when the shell reset the
+                    // property onto the old animation's endpoints
+                    const nowValue = iv.peek_initial_value();
+                    const rangeAbs = Math.abs(state.final - state.init);
+                    if (rangeAbs > 1e-6 &&
+                        (Math.abs(nowValue - state.init) < 0.1 * rangeAbs ||
+                         Math.abs(nowValue - state.final) < 0.1 * rangeAbs))
+                        iv.set_initial(state.value);
                 }
             } catch {
-                // never break the caller's unminimize
+                // never break the caller's window operation
             }
         };
+        this._wmSignals = [
+            global.window_manager.connect('minimize', (_wm, actor) =>
+                retarget(actor)),
+            global.window_manager.connect('unminimize', (_wm, actor) =>
+                retarget(actor)),
+        ];
     }
 
-    // The minimize side of the in-place contract: _minimizeWindow
-    // normalizes the scale to 1.0 before easing toward the icon, so a
-    // minimize requested during the first frames of a restore teleports
-    // the window to full size mid-flight. Same dance as the unminimize
-    // hook: run the shell's version (bookkeeping settles), restore the
-    // snapshot, then ease toward the icon ourselves.
-    _installMinimizeSnapshotPatch() {
-        const wm = global.window_manager;
-        if (!wm?._minimizeWindow || !this._settings.get_boolean('continuity')) {
-            this._minPatchOk = false;
-            return;
-        }
-        this._minPatchOk = true;
-        this._origMinimizeWindow = wm._minimizeWindow;
-        wm._minimizeWindow = (shellwm, actor) => {
-            try {
-                const snap = Number.isFinite(actor.scale_x)
-                    ? {
-                        x: actor.x, y: actor.y,
-                        sx: actor.scale_x, sy: actor.scale_y,
-                        op: actor.opacity,
-                    }
-                    : null;
-                this._origMinimizeWindow.call(wm, shellwm, actor);
-                if (!snap || !this._settings.get_boolean('continuity'))
-                    return;
-                for (const p of ['x', 'y', 'scale-x', 'scale-y', 'opacity'])
-                    actor.remove_transition(p);
-                actor.set_position(snap.x, snap.y);
-                actor.set_scale(snap.sx, snap.sy);
-                actor.opacity = snap.op;
-                // icon geometry exactly like the shell computes it
-                const mw = actor.meta_window;
-                const [ok, geom] = mw?.get_icon_geometry?.() ?? [false, null];
-                let xDest, yDest, xScale, yScale;
-                if (ok) {
-                    xDest = geom.x;
-                    yDest = geom.y;
-                    xScale = geom.width / actor.width;
-                    yScale = geom.height / actor.height;
-                } else {
-                    const mon = global.display.get_monitor(mw.get_monitor());
-                    xDest = mon.x;
-                    yDest = mon.y;
-                    xScale = 0;
-                    yScale = 0;
-                }
-                actor.ease({
-                    x: xDest, y: yDest,
-                    scale_x: xScale, scale_y: yScale,
-                    opacity: 0,
-                    duration: 250,
-                    mode: Clutter.AnimationMode.EASE_OUT_CUBIC,
-                });
-            } catch {
-                // never break the caller's minimize
-            }
-        };
-    }
-
-    _removeMinimizeSnapshotPatch() {
-        if (!this._minPatchOk)
-            return;
-        const wm = global.window_manager;
-        if (wm?._minimizeWindow)
-            wm._minimizeWindow = this._origMinimizeWindow;
-        this._minPatchOk = false;
-    }
-
-    _removeWindowRetargetPatch() {
-        if (!this._windowPatchOk)
-            return;
-        const wm = global.window_manager;
-        if (wm?._unminimizeWindow)
-            wm._unminimizeWindow = this._origUnminimizeWindow;
-        this._windowPatchOk = false;
+    _removeWindowSignals() {
+        for (const id of this._wmSignals ?? [])
+            global.window_manager.disconnect(id);
+        this._wmSignals = [];
     }
 
     _removeOverviewPatch() {
@@ -733,6 +636,7 @@ export default class SpringEaseExtension extends Extension {
             ov._animateVisible = this._origAnimateVisible;
         if (ov?._showDone)
             ov._showDone = this._origShowDone;
+        delete ov._watchTakeoverSettle;
         this._overviewPatched = false;
     }
 
@@ -827,8 +731,7 @@ export default class SpringEaseExtension extends Extension {
             this._idleGcId = 0;
         }
         this._removeOverviewPatch();
-        this._removeWindowRetargetPatch();
-        this._removeMinimizeSnapshotPatch();
+        this._removeWindowSignals();
         this._orig = null;
         this._settings = null;
     }
