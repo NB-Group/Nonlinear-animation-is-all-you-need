@@ -160,6 +160,16 @@ export function driveTransition(target, prop, curve, write, seed = null) {
             write(init + range * compiled.eval(tau));
     });
 
+    // Write the first value in the same main-loop turn the driver is
+    // attached: between the caller's reset (the shell normalizes window
+    // scale to 1.0 at minimize time) and the first new-frame tick, a frame
+    // can paint the reset state. At an early interrupt that is a full-size
+    // flash before the bridged animation takes over.
+    if (isNumeric)
+        write(init + range * compiled.advanceTo(0));
+    else
+        write(init + range * compiled.eval(0));
+
     noteAnimation(target, prop, compiled, init, final, dur);
     tr.connect('stopped', () => {
         tr.disconnect(handler);
