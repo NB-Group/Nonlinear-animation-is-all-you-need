@@ -15,7 +15,7 @@ for arg in "$@"; do
     case "$arg" in
         -i|--install) install=true ;;
         -h|--help)
-            printf 'Usage: %s [--install]\n\nBuild the extension zip.\n  -i, --install  Also install or update it for the current user.\n' "$0"
+            printf 'Usage: %s [-i|--install] [-h|--help]\n\nBuild the extension zip.\n  -i, --install  Also install or update it for the current user.\n  -h, --help     Show this help message.\n' "$0"
             exit 0
             ;;
         *)
