@@ -28,6 +28,7 @@ const state = {
     settings, curve, bootTime: 0, lastGestureTime: 0,
     BOOT_GRACE_MS: 0,
     motionState: () => null,
+    hookDispose: () => {},
     MIN_V0: 0.15, MAX_V0: 4,
     CONTROL_KEYS: new Set(['duration', 'delay', 'mode', 'progress_mode',
         'repeatCount', 'autoReverse', 'animationRequired', 'onComplete',
