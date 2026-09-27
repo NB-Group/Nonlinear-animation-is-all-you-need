@@ -28,6 +28,8 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import * as Curves from './curves.js';
 import {
+    MAX_V0,
+    MIN_V0,
     driveTransition,
     motionState,
     noteModeAnimation,
