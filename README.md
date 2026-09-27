@@ -100,7 +100,21 @@ and the interruption engine uses the same physics.
 From extensions.gnome.org (recommended):
 <https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/>
 
-Manually, for development:
+Build and install locally (also updates an existing installation):
+
+```sh
+./build.sh --install
+```
+
+Requires `glib-compile-schemas`, `msgfmt`, `python3`, and `gnome-extensions`.
+Run `./build.sh` without arguments to only build the zip.
+After installing, log out and back in, then enable the extension if needed:
+
+```sh
+gnome-extensions enable nonlinear-animation@nbgroup
+```
+
+Alternatively, symlink the checkout for development:
 
 ```sh
 git clone https://github.com/NB-Group/Nonlinear-animation-is-all-you-need

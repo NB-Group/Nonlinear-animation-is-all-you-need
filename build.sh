@@ -7,7 +7,29 @@
 # into locale/ and shipped.
 #
 # Output: nonlinear-animation@nbgroup.zip
+# Usage: ./build.sh [--install]
 set -e
+
+install=false
+for arg in "$@"; do
+    case "$arg" in
+        -i|--install) install=true ;;
+        -h|--help)
+            printf 'Usage: %s [--install]\n\nBuild the extension zip.\n  -i, --install  Also install or update it for the current user.\n' "$0"
+            exit 0
+            ;;
+        *)
+            printf 'Unknown option: %s\nUsage: %s [--install]\n' "$arg" "$0" >&2
+            exit 1
+            ;;
+    esac
+done
+
+if [ "$install" = true ] && ! command -v gnome-extensions >/dev/null 2>&1; then
+    printf 'Local installation requires gnome-extensions.\n' >&2
+    exit 1
+fi
+
 cd "$(dirname "$0")"
 
 glib-compile-schemas schemas/
@@ -39,3 +61,9 @@ print(f'built {out} ({os.path.getsize(out)} bytes):')
 for f in files:
     print(f'  {f}')
 PY
+
+if [ "$install" = true ]; then
+    gnome-extensions install --force nonlinear-animation@nbgroup.zip
+    printf '\nInstalled for the current user. Log out and back in to reload the extension.\n'
+    printf 'Then enable it if needed: gnome-extensions enable nonlinear-animation@nbgroup\n'
+fi
