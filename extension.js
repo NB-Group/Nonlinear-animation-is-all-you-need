@@ -406,7 +406,15 @@ export default class SpringEaseExtension extends Extension {
                 for (const prop of plan.numericProps) {
                     if (!plan.drivers.some(d => d.prop === prop))
                         noteModeAnimation(target, prop, plan.curve,
-                            () => target.get_transition?.(prop));
+                            () => {
+                                try {
+                                    return target.get_transition?.(prop);
+                                } catch {
+                                    // actor destroyed between the ease and
+                                    // the registry note; nothing to register
+                                    return null;
+                                }
+                            });
                 }
             } catch (e) {
                 console.warn(`nonlinear-animation: ${e.message}`);
