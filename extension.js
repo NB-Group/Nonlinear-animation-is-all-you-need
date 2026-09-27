@@ -476,6 +476,7 @@ export default class SpringEaseExtension extends Extension {
 
         this._installOverviewPatch();
         this._installWindowRetargetPatch();
+        this._installMinimizeSnapshotPatch();
         this._settings.connectObject(
             'changed::overview-patch', () => {
                 this._removeOverviewPatch();
@@ -644,6 +645,75 @@ export default class SpringEaseExtension extends Extension {
         };
     }
 
+    // The minimize side of the in-place contract: _minimizeWindow
+    // normalizes the scale to 1.0 before easing toward the icon, so a
+    // minimize requested during the first frames of a restore teleports
+    // the window to full size mid-flight. Same dance as the unminimize
+    // hook: run the shell's version (bookkeeping settles), restore the
+    // snapshot, then ease toward the icon ourselves.
+    _installMinimizeSnapshotPatch() {
+        const wm = global.window_manager;
+        if (!wm?._minimizeWindow || !this._settings.get_boolean('continuity')) {
+            this._minPatchOk = false;
+            return;
+        }
+        this._minPatchOk = true;
+        this._origMinimizeWindow = wm._minimizeWindow;
+        wm._minimizeWindow = (shellwm, actor) => {
+            try {
+                const snap = Number.isFinite(actor.scale_x)
+                    ? {
+                        x: actor.x, y: actor.y,
+                        sx: actor.scale_x, sy: actor.scale_y,
+                        op: actor.opacity,
+                    }
+                    : null;
+                this._origMinimizeWindow.call(wm, shellwm, actor);
+                if (!snap || !this._settings.get_boolean('continuity'))
+                    return;
+                for (const p of ['x', 'y', 'scale-x', 'scale-y', 'opacity'])
+                    actor.remove_transition(p);
+                actor.set_position(snap.x, snap.y);
+                actor.set_scale(snap.sx, snap.sy);
+                actor.opacity = snap.op;
+                // icon geometry exactly like the shell computes it
+                const mw = actor.meta_window;
+                const [ok, geom] = mw?.get_icon_geometry?.() ?? [false, null];
+                let xDest, yDest, xScale, yScale;
+                if (ok) {
+                    xDest = geom.x;
+                    yDest = geom.y;
+                    xScale = geom.width / actor.width;
+                    yScale = geom.height / actor.height;
+                } else {
+                    const mon = global.display.get_monitor(mw.get_monitor());
+                    xDest = mon.x;
+                    yDest = mon.y;
+                    xScale = 0;
+                    yScale = 0;
+                }
+                actor.ease({
+                    x: xDest, y: yDest,
+                    scale_x: xScale, scale_y: yScale,
+                    opacity: 0,
+                    duration: 250,
+                    mode: Clutter.AnimationMode.EASE_OUT_CUBIC,
+                });
+            } catch {
+                // never break the caller's minimize
+            }
+        };
+    }
+
+    _removeMinimizeSnapshotPatch() {
+        if (!this._minPatchOk)
+            return;
+        const wm = global.window_manager;
+        if (wm?._minimizeWindow)
+            wm._minimizeWindow = this._origMinimizeWindow;
+        this._minPatchOk = false;
+    }
+
     _removeWindowRetargetPatch() {
         if (!this._windowPatchOk)
             return;
@@ -758,6 +828,7 @@ export default class SpringEaseExtension extends Extension {
         }
         this._removeOverviewPatch();
         this._removeWindowRetargetPatch();
+        this._removeMinimizeSnapshotPatch();
         this._orig = null;
         this._settings = null;
     }
