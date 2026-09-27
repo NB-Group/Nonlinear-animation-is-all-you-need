@@ -510,6 +510,7 @@ export default class SpringEaseExtension extends Extension {
         this._origShowDone = ov._showDone.bind(ov);
         this._suppressShowDone = 0;
         const origAnimateNotVisible = this._origAnimateNotVisible;
+        const origAnimateVisible = this._origAnimateVisible;
         const origShowDone = this._origShowDone;
         const settings = this._settings;
 
