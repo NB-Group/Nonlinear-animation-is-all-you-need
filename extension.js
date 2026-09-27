@@ -281,18 +281,10 @@ export default class SpringEaseExtension extends Extension {
                             // move, resize) lands anywhere else and must start
                             // from its own new value, or windows end up
                             // animating from stale positions.
-                            // WINDOW actors never bridge: the shell's
-                            // interrupt cleanup resets the scale pivot, so
-                            // bridged values render in a different coordinate
-                            // frame than they were recorded in and the window
-                            // visibly distorts. Windows restart from the
-                            // icon (native semantics, geometrically correct)
-                            // and keep only the velocity seed.
                             let fromValue;
                             const nowValue = target[prop.replaceAll('-', '_')];
                             const rangeAbs = Math.abs(state.final - state.init);
-                            if (!target.meta_window &&
-                                typeof nowValue === 'number' &&
+                            if (typeof nowValue === 'number' &&
                                 Number.isFinite(nowValue) &&
                                 rangeAbs > 1e-6 &&
                                 Math.abs(nowValue - state.value) >
@@ -464,7 +456,6 @@ export default class SpringEaseExtension extends Extension {
             this);
 
         this._installOverviewPatch();
-        this._installWindowSignals();
         this._settings.connectObject(
             'changed::overview-patch', () => {
                 this._removeOverviewPatch();
@@ -574,58 +565,6 @@ export default class SpringEaseExtension extends Extension {
         };
     }
 
-    // In-place window interruption, via the only channel that actually
-    // fires: GNOME connects its handlers with .bind() at startup, so
-    // replacing the method properties never took effect. Signal handlers
-    // connected here run AFTER the shell's own, in the same emission and
-    // before any frame paints: the shell's version has already done its
-    // bookkeeping (and its teleport), and the registry still holds the
-    // pre-teleport motion state. We rewrite the just-created transitions'
-    // interval initial values back to the real on-screen positions and seed
-    // a velocity-matched native bezier — the shell's own durations, curves
-    // and completion callbacks stay intact.
-    _installWindowSignals() {
-        if (!this._settings.get_boolean('continuity')) {
-            this._wmSignals = [];
-            return;
-        }
-        const retarget = actor => {
-            try {
-                for (const prop of ['x', 'y', 'scale-x', 'scale-y', 'opacity']) {
-                    const state = motionState(actor, prop);
-                    if (!state)
-                        continue;
-                    const tr = actor.get_transition?.(prop);
-                    const iv = tr?.get_interval?.();
-                    if (!tr?.is_playing?.() || !iv)
-                        continue;
-                    // bridge over the teleport only when the shell reset the
-                    // property onto the old animation's endpoints
-                    const nowValue = iv.peek_initial_value();
-                    const rangeAbs = Math.abs(state.final - state.init);
-                    if (rangeAbs > 1e-6 &&
-                        (Math.abs(nowValue - state.init) < 0.1 * rangeAbs ||
-                         Math.abs(nowValue - state.final) < 0.1 * rangeAbs))
-                        iv.set_initial(state.value);
-                }
-            } catch {
-                // never break the caller's window operation
-            }
-        };
-        this._wmSignals = [
-            global.window_manager.connect('minimize', (_wm, actor) =>
-                retarget(actor)),
-            global.window_manager.connect('unminimize', (_wm, actor) =>
-                retarget(actor)),
-        ];
-    }
-
-    _removeWindowSignals() {
-        for (const id of this._wmSignals ?? [])
-            global.window_manager.disconnect(id);
-        this._wmSignals = [];
-    }
-
     _removeOverviewPatch() {
         if (!this._overviewPatched)
             return;
@@ -731,7 +670,6 @@ export default class SpringEaseExtension extends Extension {
             this._idleGcId = 0;
         }
         this._removeOverviewPatch();
-        this._removeWindowSignals();
         this._orig = null;
         this._settings = null;
     }
