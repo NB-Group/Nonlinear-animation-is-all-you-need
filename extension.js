@@ -22,6 +22,7 @@
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
+import Graphene from 'gi://Graphene';
 import St from 'gi://St';
 import System from 'system';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -29,11 +30,12 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Curves from './curves.js';
 import {
     MAX_V0,
-    MIN_V0,
     driveTransition,
     motionState,
     noteModeAnimation,
+    seedAdjustmentTransition,
 } from './continuity.js';
+import {makeBezierEvaluator} from './easing.js';
 
 // WorkspaceAnimation drives one MonitorGroup per monitor to slide workspaces.
 // Those actors size themselves from the monitor layout while animating, and a
@@ -353,8 +355,10 @@ export default class SpringEaseExtension extends Extension {
             let sharedV0 = null;
             let bestSpan = 0;
             for (const cand of candidates) {
-                if (Math.abs(cand.naturalV0) < MIN_V0 && cand.fromValue === undefined)
-                    continue;
+                // Low velocity no longer disqualifies: a retarget from inside
+                // the selected curve's slow-start region must still leave the
+                // velocity-matched path (retargetCompiled floors the entry
+                // speed), not replay the slow start.
                 if (cand.span > bestSpan) {
                     bestSpan = cand.span;
                     sharedV0 = cand.naturalV0;
@@ -375,16 +379,24 @@ export default class SpringEaseExtension extends Extension {
             }
 
             const drivers = [];
+            const adjSeeds = [];
             for (const cand of candidates) {
                 const seed = sharedV0 === null && cand.fromValue === undefined
                     ? null
                     : {fromValue: cand.fromValue, v0: sharedV0 ?? 0};
-                const wantsDriver = isActor && simpleCase && (seed !== null ||
-                    c.kind === 'spline' || c.kind === 'spring');
-                if (wantsDriver)
+                if (isActor && simpleCase && (seed !== null ||
+                    c.kind === 'spline' || c.kind === 'spring')) {
                     drivers.push({...cand, seed});
-                else
+                } else if (!isActor && seed !== null) {
+                    // Adjustments are never driven from JS (their value
+                    // writes go through notify::value and mutter kills the
+                    // transition); continuity is seeded through native
+                    // mechanics instead: interval rewrite + velocity-matched
+                    // bezier progress, evaluated in C.
+                    adjSeeds.push({...cand, seed});
+                } else {
                     numericProps.push(cand.prop);
+                }
             }
 
             if (c.kind === 'mode') {
@@ -397,7 +409,7 @@ export default class SpringEaseExtension extends Extension {
             // asked for keeps running underneath until our handler runs.
             hookDispose(target);
 
-            return {curve: c, drivers, numericProps};
+            return {curve: c, drivers, adjSeeds, numericProps};
         };
 
         // --- after the original ease --------------------------------------
@@ -423,10 +435,25 @@ export default class SpringEaseExtension extends Extension {
                     };
                     driveTransition(target, d.prop, plan.curve, write, d.seed);
                 }
+                for (const s of plan.adjSeeds) {
+                    // Native continuity for adjustments: no JS per frame.
+                    const gv = new GObject.Value();
+                    gv.init(s.gtype);
+                    const set = GVALUE_SETTERS[s.typeName];
+                    const round = s.isInt ? Math.round : (v => v);
+                    gv[set](round(s.seed.fromValue ?? 0));
+                    seedAdjustmentTransition(target, s.prop, s.seed,
+                        m0 => makeBezierEvaluator(0.32,
+                            Math.max(-0.45, Math.min(0.5, m0 * 0.32)),
+                            0.62, 1.0),
+                        gv, v => gv[set](round(v)),
+                        (x, y) => Graphene.Point.alloc().init(x, y));
+                }
                 // Register plain-mode (and non-driven numeric) animations so a
                 // later interruption can read their velocity.
                 for (const prop of plan.numericProps) {
-                    if (!plan.drivers.some(d => d.prop === prop))
+                    if (!plan.drivers.some(d => d.prop === prop) &&
+                        !plan.adjSeeds.some(s => s.prop === prop))
                         noteModeAnimation(target, prop, plan.curve,
                             () => {
                                 try {

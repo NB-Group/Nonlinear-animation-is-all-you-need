@@ -51,6 +51,7 @@ if (plan === null)
     throw new Error('planEaseInner returned null (engine dead)');
 if (props.mode !== 19)
     throw new Error(`mode not swapped (got ${props.mode})`);
-if (!Array.isArray(plan.drivers) || !Array.isArray(plan.numericProps))
+if (!Array.isArray(plan.drivers) || !Array.isArray(plan.adjSeeds) ||
+    !Array.isArray(plan.numericProps))
     throw new Error('plan missing arrays');
 console.log('planEaseInner smoke: ALIVE (mode=19, dur=' + props.duration + ')');

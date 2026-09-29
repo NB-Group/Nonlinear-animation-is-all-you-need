@@ -95,9 +95,18 @@ function retargetCompiled(v0, _durationMs) {
     // reversal only nods — a window interrupted while restoring and then
     // minimized otherwise swells toward full size before shrinking, which
     // reads as the reverse animation being "bigger than a normal minimize".
-    const m0 = v0 >= 0
+    // A retarget must also never leave from a standstill: when the interrupt
+    // lands in the selected curve's slow-start region (in-out-expo spends
+    // ~40% of its duration nearly static), the measured v0 is tiny and the
+    // old code fell back to the full curve — repainting the same dead zone
+    // and reading as "velocity snapped to zero, then re-accelerated". A
+    // redirect always departs briskly toward its target.
+    const MIN_ENTRY = 0.3;
+    let m0 = v0 >= 0
         ? Math.min(1.2, 0.85 * v0)
         : Math.max(-0.3, 0.5 * v0);
+    if (m0 > -0.15 && m0 < MIN_ENTRY)
+        m0 = MIN_ENTRY;
     return {
         analytic: true,
         eval(tau) {
@@ -134,8 +143,10 @@ export function driveTransition(target, prop, curve, write, seed = null) {
     const T = dur / 1000;
     const v0 = seed?.v0 ?? null;
     let compiled;
-    if (v0 !== null && Math.abs(v0) >= MIN_V0 && curve.kind !== 'spring') {
-        // interruption with momentum → universal velocity-matched spring
+    if (v0 !== null && curve.kind !== 'spring') {
+        // Any seeded interruption uses the velocity-matched retarget curve —
+        // including low-velocity ones: falling back to the selected curve
+        // here replays its slow-start region (see retargetCompiled).
         compiled = retargetCompiled(v0, dur);
     } else if (curve.kind === 'spring') {
         compiled = compileCurve(curve, v0 === null ? 0 : v0 / T, T);
@@ -232,7 +243,11 @@ export function seedAdjustmentTransition(target, prop, seed, makeCompiled,
         return null;
 
     const v0 = seed?.v0 ?? 0;
-    const m0 = Math.max(-1.2, Math.min(1.5, 0.85 * v0));
+    let m0 = Math.max(-1.2, Math.min(1.5, 0.85 * v0));
+    // Same rule as retargetCompiled: an interruption never restarts from a
+    // standstill, even when the measured velocity is tiny.
+    if (m0 > -0.15 && m0 < 0.3)
+        m0 = 0.3;
     if (Math.abs(m0) >= 0.05) {
         // bezier initial slope dProgress/dTau = p1y / p1x
         const p1x = 0.32;
