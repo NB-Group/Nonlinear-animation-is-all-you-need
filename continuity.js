@@ -90,35 +90,22 @@ export function motionState(target, prop, now = Date.now()) {
 // the outgoing direction briefly instead of committing to it, and the caller
 // shortens the retarget's duration so the settle is decisive. v0 = 0
 // degenerates to smoothstep.
-function retargetCompiled(v0, _durationMs) {
-    // Asymmetric: momentum in the direction of travel carries fully, but a
-    // reversal only nods — a window interrupted while restoring and then
-    // minimized otherwise swells toward full size before shrinking, which
-    // reads as the reverse animation being "bigger than a normal minimize".
-    // A retarget must also never leave from a standstill: when the interrupt
-    // lands in the selected curve's slow-start region (in-out-expo spends
-    // ~40% of its duration nearly static), the measured v0 is tiny and the
-    // old code fell back to the full curve — repainting the same dead zone
-    // and reading as "velocity snapped to zero, then re-accelerated". A
-    // redirect always departs briskly toward its target.
-    const MIN_ENTRY = 0.3;
-    let m0 = v0 >= 0
-        ? Math.min(1.2, 0.85 * v0)
-        : Math.max(-0.3, 0.5 * v0);
-    if (m0 > -0.15 && m0 < MIN_ENTRY)
-        m0 = MIN_ENTRY;
-    return {
-        analytic: true,
-        eval(tau) {
-            const t2 = tau * tau;
-            const t3 = t2 * tau;
-            return (t3 - 2 * t2 + tau) * m0 - 2 * t3 + 3 * t2;
-        },
-        deriv(tau) {
-            const t2 = tau * tau;
-            return (3 * t2 - 4 * tau + 1) * m0 - 6 * t2 + 6 * tau;
-        },
-    };
+// Elastic retarget: a slightly overdamped spring seeded with the measured
+// entry velocity. Velocity stays CONTINUOUS across the interrupt — the
+// window keeps moving at its old speed, decelerates fast but smoothly like
+// it slammed into something soft, then accelerates toward the new target.
+// (A Hermite with a clamped start tangent snapped the velocity to zero in
+// one frame, which read as a dead stop followed by a restart.)
+const RETARGET_DAMPING = 1.05;
+function retargetCompiled(v0, durationMs) {
+    const T = durationMs / 1000;
+    // progress/sec; a dead-zone interrupt (entry ~0) still departs briskly
+    const minEntry = 0.3 / T;
+    let entry = v0 / T;
+    if (Math.abs(entry) < minEntry)
+        entry = minEntry;
+    return compileCurve({kind: 'spring', damping: RETARGET_DAMPING,
+        omega: 0}, entry, T);
 }
 
 // Attach the per-frame driver. `target.get_transition(prop)` must return the
