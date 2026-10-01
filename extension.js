@@ -185,6 +185,11 @@ export default class SpringEaseExtension extends Extension {
             const inputIdleMs = idleMonitor?.get_idletime?.() ?? 0;
             if (settings.get_boolean('idle-gc') &&
                 lastEaseAt > lastGcAt &&
+                // "Nobody is watching" must also mean nothing animated
+                // recently: a user staring at an animation without touching
+                // input is still watching, and a full GC during/right after
+                // that froze the shell for seconds.
+                now - lastEaseAt > 30000 &&
                 now - bootTime > 60000 &&
                 inputIdleMs > 60000) {
                 System.gc();

@@ -96,16 +96,34 @@ export function motionState(target, prop, now = Date.now()) {
 // it slammed into something soft, then accelerates toward the new target.
 // (A Hermite with a clamped start tangent snapped the velocity to zero in
 // one frame, which read as a dead stop followed by a restart.)
+// The reversal entry is clamped shallow on purpose: carrying the full
+// measured speed compressed the spring through 60-80% of the travel, which
+// read as the window suddenly swelling. A shallow entry (~15-20% nod) plus
+// the settle loop below reads as a brief visible deceleration instead.
 const RETARGET_DAMPING = 1.05;
 function retargetCompiled(v0, durationMs) {
     const T = durationMs / 1000;
     // progress/sec; a dead-zone interrupt (entry ~0) still departs briskly
-    const minEntry = 0.3 / T;
     let entry = v0 / T;
-    if (Math.abs(entry) < minEntry)
-        entry = minEntry;
-    return compileCurve({kind: 'spring', damping: RETARGET_DAMPING,
-        omega: 0}, entry, T);
+    if (entry >= 0)
+        entry = Math.min(Math.max(entry, 0.3), 3.0);
+    else
+        entry = Math.max(entry, -1.2);
+    // compileCurve's omega floor is tuned for zero entry velocity; a seeded
+    // spring can still be moving at timeline end, and the final write then
+    // teleports the residual. Stiffen until the spring lands on the target
+    // by tau = 1 (checked, not assumed).
+    const floor = 4.6 / (RETARGET_DAMPING * T);
+    let omega = floor;
+    let compiled = null;
+    for (let i = 0; i < 6; i++) {
+        compiled = compileCurve({kind: 'spring', damping: RETARGET_DAMPING,
+            omega}, entry, T);
+        if (Math.abs(compiled.eval(1) - 1) < 0.015)
+            return compiled;
+        omega = Math.max(omega * 1.6, floor + i / T);
+    }
+    return compiled;
 }
 
 // Attach the per-frame driver. `target.get_transition(prop)` must return the
