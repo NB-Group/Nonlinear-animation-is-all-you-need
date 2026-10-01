@@ -236,6 +236,12 @@ export function driveTransition(target, prop, curve, write, seed = null) {
 
     const isNumeric = curve.kind === 'spring' && curve.solver === 'numeric';
     const range = final - init;
+    // A seeded reversal nods beyond its start point; on POSITION properties
+    // (x/y over hundreds of pixels) a deep nod flings the window off-screen.
+    // Keep every driven value inside the travel band plus a little slack.
+    const lo = Math.min(init, final) - 0.10 * Math.abs(range);
+    const hi = Math.max(init, final) + 0.10 * Math.abs(range);
+    const clamp = v => Math.max(lo, Math.min(hi, v));
 
     const handler = tr.connect_after('new-frame', (timeline, elapsed) => {
         if (elapsed >= dur) {
@@ -246,9 +252,9 @@ export function driveTransition(target, prop, curve, write, seed = null) {
         }
         const tau = elapsed / dur;
         if (isNumeric)
-            write(init + range * compiled.advanceTo(tau));
+            write(clamp(init + range * compiled.advanceTo(tau)));
         else
-            write(init + range * compiled.eval(tau));
+            write(clamp(init + range * compiled.eval(tau)));
     });
 
     // Write the first value in the same main-loop turn the driver is

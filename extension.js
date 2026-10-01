@@ -65,6 +65,15 @@ const MODE_MAP = {
     'ease-out-elastic': Clutter.AnimationMode.EASE_OUT_ELASTIC,
 };
 
+// Caller-selected ease-out modes: their initial slope matches an existing
+// velocity (gesture release), which a zero-start library curve would kill.
+const OUT_MODES = new Set(Object.values(MODE_MAP).filter(m =>
+    [Clutter.AnimationMode.EASE_OUT_CUBIC, Clutter.AnimationMode.EASE_OUT_EXPO,
+        Clutter.AnimationMode.EASE_OUT_QUART,
+        Clutter.AnimationMode.EASE_OUT_QUINT,
+        Clutter.AnimationMode.EASE_OUT_BACK,
+        Clutter.AnimationMode.EASE_OUT_ELASTIC].includes(m)));
+
 // Keys of the ease params object that control the animation rather than name
 // an animated property (mirrors what gnome-shell's own helpers consume).
 const CONTROL_KEYS = new Set([
@@ -406,7 +415,16 @@ export default class SpringEaseExtension extends Extension {
 
             if (c.kind === 'mode') {
                 const mode = MODE_MAP[c.mode];
-                if (mode !== undefined)
+                // Callers that pick an EASE_OUT_* mode themselves (GNOME's
+                // touchpad wrap-ups, scroll snapping) do it because the
+                // curve's initial slope MATCHES THE RELEASE VELOCITY. An
+                // in-out library curve starts at slope zero and visibly
+                // kills that momentum at finger-lift; only take over the
+                // mode when we are adding continuity of our own.
+                const callerOut = props.mode !== undefined &&
+                    OUT_MODES.has(props.mode);
+                if (mode !== undefined && (!callerOut || sharedV0 !== null ||
+                    anyBridge))
                     props.mode = mode;
             }
             // For custom curves the native mode under the driver is invisible
