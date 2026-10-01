@@ -415,16 +415,16 @@ export default class SpringEaseExtension extends Extension {
 
             if (c.kind === 'mode') {
                 const mode = MODE_MAP[c.mode];
-                // Callers that pick an EASE_OUT_* mode themselves (GNOME's
-                // touchpad wrap-ups, scroll snapping) do it because the
-                // curve's initial slope MATCHES THE RELEASE VELOCITY. An
-                // in-out library curve starts at slope zero and visibly
-                // kills that momentum at finger-lift; only take over the
-                // mode when we are adding continuity of our own.
-                const callerOut = props.mode !== undefined &&
-                    OUT_MODES.has(props.mode);
-                if (mode !== undefined && (!callerOut || sharedV0 !== null ||
-                    anyBridge))
+                // Scroll-adjustment wrap-ups (app-grid paging) pick an
+                // EASE_OUT_* mode because the initial slope MATCHES THE
+                // RELEASE VELOCITY; an in-out library curve starts at slope
+                // zero and kills that momentum at finger-lift. Preserve the
+                // caller's mode there unless we seed continuity of our own.
+                // Actor eases are NOT included: window minimize/restore also
+                // pass ease-out modes, and the library curve must win there.
+                const preserveCallerMode = !isActor && props.mode !== undefined &&
+                    OUT_MODES.has(props.mode) && sharedV0 === null && !anyBridge;
+                if (mode !== undefined && !preserveCallerMode)
                     props.mode = mode;
             }
             // For custom curves the native mode under the driver is invisible
