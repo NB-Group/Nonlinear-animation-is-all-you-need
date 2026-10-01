@@ -28,8 +28,9 @@
 // transition itself stays native (completion signals, remove-on-complete and
 // the shell's own callbacks keep working) and a connect_after('new-frame')
 // handler writes the property after the class handler each frame.
-// No GI imports — callers pass duck-typed targets.
+// GLib is imported only for the sampler timer; the rest stays duck-typed.
 
+import GLib from 'gi://GLib';
 import {compileCurve} from './easing.js';
 
 // target (GObject) -> Map(propName -> record)
@@ -42,24 +43,84 @@ export const MIN_V0 = 0.15;
 // Above this no curve can honor the flick gracefully.
 export const MAX_V0 = 4;
 
+// Visual sampler: the analytic reconstruction of a registered animation
+// (wall-clock since ease + closed-form curve) drifts from what is actually
+// painted — window unminimize starts measurably later than its ease call,
+// and the effective curve differs from the assumed one. Bridging from the
+// analytic position then TELEPORTED the window at the interrupt. While a
+// record is live, sample the real property value every 50ms (a handful of
+// property reads; no JS per frame) and trust the freshest sample instead.
+const SAMPLE_MS = 50;
+const SAMPLE_FRESH_MS = 150;
+const samplers = new Set();  // {ref: WeakRef(target), read(), rec}
+let samplerId = 0;
+
+function pumpSamplers() {
+    const now = Date.now();
+    for (const s of [...samplers]) {
+        if (s.rec.stoppedAt && now - s.rec.stoppedAt > STATE_GRACE_MS) {
+            samplers.delete(s);
+            continue;
+        }
+        const t = s.ref.deref();
+        if (!t) {
+            samplers.delete(s);
+            continue;
+        }
+        let v;
+        try {
+            v = s.read();
+        } catch {
+            samplers.delete(s);
+            continue;
+        }
+        if (typeof v !== 'number' || !Number.isFinite(v))
+            continue;
+        s.rec.samples.push([now, v]);
+        if (s.rec.samples.length > 6)
+            s.rec.samples.shift();
+    }
+    if (samplers.size === 0 && samplerId) {
+        GLib.source_remove(samplerId);
+        samplerId = 0;
+    }
+    return GLib.SOURCE_CONTINUE;
+}
+
+function startSampler(target, prop, rec, read) {
+    if (!rec.samples)
+        rec.samples = [];
+    samplers.add({ref: new WeakRef(target), read, rec});
+    if (!samplerId) {
+        samplerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, SAMPLE_MS,
+            pumpSamplers);
+    }
+}
+
 function record(target, prop) {
     return registry.get(target)?.get(prop) ?? null;
 }
 
-function noteAnimation(target, prop, compiled, init, final, durationMs) {
+function noteAnimation(target, prop, compiled, init, final, durationMs,
+    read = null) {
     let m = registry.get(target);
     if (!m) {
         m = new Map();
         registry.set(target, m);
     }
-    m.set(prop, {
+    const rec = {
         compiled,
         init,
         final,
         durationMs,
         startedAt: Date.now(),
         stoppedAt: 0,
-    });
+        samples: [],
+    };
+    m.set(prop, rec);
+    if (read)
+        startSampler(target, prop, rec, read);
+    return rec;
 }
 
 // Reconstruct the on-screen motion state (position + velocity in
@@ -72,6 +133,25 @@ export function motionState(target, prop, now = Date.now()) {
         return null;
     if (r.stoppedAt && now - r.stoppedAt > STATE_GRACE_MS)
         return null;
+    // Prefer a fresh visual sample: it is the true painted position, immune
+    // to start latency and curve mismatch (see samplers above).
+    const s = r.samples;
+    if (s?.length && now - s[s.length - 1][0] <= SAMPLE_FRESH_MS) {
+        const [tw, vw] = s[s.length - 1];
+        let velocity = null;
+        if (s.length >= 2) {
+            const [pw, pv] = s[s.length - 2];
+            if (tw - pw > 5)
+                velocity = (vw - pv) / (tw - pw);
+        }
+        return {
+            value: vw,
+            velocity: velocity ?? 0,
+            init: r.init,
+            final: r.final,
+            playing: !r.stoppedAt,
+        };
+    }
     const tau = Math.min((now - r.startedAt) / r.durationMs, 1);
     return {
         value: r.init + (r.final - r.init) * r.compiled.eval(tau),
@@ -82,14 +162,6 @@ export function motionState(target, prop, now = Date.now()) {
     };
 }
 
-// Velocity-matched retarget curve: a cubic Hermite from progress 0 to 1 with
-// the start tangent set to a damped fraction of the measured (normalized)
-// velocity and the end tangent zero. Unlike a seeded spring, it settles on
-// the target exactly, so the last frame never snaps a residual gap. The
-// carried momentum is heavily damped and clamped shallow: a reversal nods in
-// the outgoing direction briefly instead of committing to it, and the caller
-// shortens the retarget's duration so the settle is decisive. v0 = 0
-// degenerates to smoothstep.
 // Elastic retarget: a slightly overdamped spring seeded with the measured
 // entry velocity. Velocity stays CONTINUOUS across the interrupt — the
 // window keeps moving at its old speed, decelerates fast but smoothly like
@@ -186,7 +258,7 @@ export function driveTransition(target, prop, curve, write, seed = null) {
     else
         write(init + range * compiled.eval(0));
 
-    noteAnimation(target, prop, compiled, init, final, dur);
+    noteAnimation(target, prop, compiled, init, final, dur, () => target[prop.replaceAll('-', '_')]);
     tr.connect('stopped', () => {
         tr.disconnect(handler);
         // keep the record for STATE_GRACE_MS so a re-trigger right after the
@@ -211,7 +283,7 @@ export function noteModeAnimation(target, prop, curve, getTransition) {
     const final = iv.peek_final_value();
     if (!Number.isFinite(init) || !Number.isFinite(final))
         return;
-    noteAnimation(target, prop, compileCurve(curve), init, final, dur);
+    noteAnimation(target, prop, compileCurve(curve), init, final, dur, () => target[prop.replaceAll('-', '_')]);
     tr.connect('stopped', () => {
         const r = record(target, prop);
         if (r)
@@ -259,7 +331,7 @@ export function seedAdjustmentTransition(target, prop, seed, makeCompiled,
         const p1y = Math.max(-0.45, Math.min(0.5, m0 * p1x));
         tr.set_cubic_bezier_progress(points(p1x, p1y), points(0.62, 1.0));
     }
-    noteAnimation(target, prop, makeCompiled(m0), init, final, dur);
+    noteAnimation(target, prop, makeCompiled(m0), init, final, dur, () => target[prop.replaceAll('-', '_')]);
     tr.connect('stopped', () => {
         const r = record(target, prop);
         if (r)
