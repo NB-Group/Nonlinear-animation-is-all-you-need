@@ -50,7 +50,7 @@ export const MAX_V0 = 4;
 // analytic position then TELEPORTED the window at the interrupt. While a
 // record is live, sample the real property value every 50ms (a handful of
 // property reads; no JS per frame) and trust the freshest sample instead.
-const SAMPLE_MS = 50;
+const SAMPLE_MS = 25;
 const SAMPLE_FRESH_MS = 150;
 const samplers = new Set();  // {ref: WeakRef(target), read(), rec}
 let samplerId = 0;
@@ -134,19 +134,27 @@ export function motionState(target, prop, now = Date.now()) {
     if (r.stoppedAt && now - r.stoppedAt > STATE_GRACE_MS)
         return null;
     // Prefer a fresh visual sample: it is the true painted position, immune
-    // to start latency and curve mismatch (see samplers above).
+    // to start latency and curve mismatch (see samplers above). Extrapolate
+    // it linearly to `now` with the sampled velocity — at an expo-curve
+    // sprint (several units per 50ms sample) the raw sample alone is far
+    // behind what is on screen right now.
     const s = r.samples;
     if (s?.length && now - s[s.length - 1][0] <= SAMPLE_FRESH_MS) {
         const [tw, vw] = s[s.length - 1];
-        let velocity = null;
+        let velocity = 0;
         if (s.length >= 2) {
             const [pw, pv] = s[s.length - 2];
             if (tw - pw > 5)
                 velocity = (vw - pv) / (tw - pw);
         }
+        let value = vw + velocity * (now - tw);
+        const lo = Math.min(r.init, r.final);
+        const hi = Math.max(r.init, r.final);
+        const slack = 0.05 * (hi - lo);
+        value = Math.max(lo - slack, Math.min(hi + slack, value));
         return {
-            value: vw,
-            velocity: velocity ?? 0,
+            value,
+            velocity,
             init: r.init,
             final: r.final,
             playing: !r.stoppedAt,
@@ -162,25 +170,20 @@ export function motionState(target, prop, now = Date.now()) {
     };
 }
 
-// Elastic retarget: a slightly overdamped spring seeded with the measured
-// entry velocity. Velocity stays CONTINUOUS across the interrupt — the
-// window keeps moving at its old speed, decelerates fast but smoothly like
-// it slammed into something soft, then accelerates toward the new target.
-// (A Hermite with a clamped start tangent snapped the velocity to zero in
-// one frame, which read as a dead stop followed by a restart.)
-// The reversal entry is clamped shallow on purpose: carrying the full
-// measured speed compressed the spring through 60-80% of the travel, which
-// read as the window suddenly swelling. A shallow entry (~15-20% nod) plus
-// the settle loop below reads as a brief visible deceleration instead.
-const RETARGET_DAMPING = 1.05;
+// Elastic retarget: a lightly damped spring seeded with the FULL measured
+// entry velocity. Velocity stays continuous across the interrupt — the
+// window keeps its speed, decelerates over a visible stretch like it hit
+// something soft, then springs toward the new target. Clamping the entry
+// shallow was tried and is wrong: at a fast interrupt the carried speed was
+// chopped to a fraction in one frame, which read as a hard stop followed by
+// a big positional nod (the nod depth scales with the remaining travel).
+const RETARGET_DAMPING = 0.92;
 function retargetCompiled(v0, durationMs) {
     const T = durationMs / 1000;
     // progress/sec; a dead-zone interrupt (entry ~0) still departs briskly
     let entry = v0 / T;
-    if (entry >= 0)
-        entry = Math.min(Math.max(entry, 0.3), 3.0);
-    else
-        entry = Math.max(entry, -1.2);
+    if (Math.abs(entry) < 0.3 / T)
+        entry = entry < 0 ? -0.3 / T : 0.3 / T;
     // compileCurve's omega floor is tuned for zero entry velocity; a seeded
     // spring can still be moving at timeline end, and the final write then
     // teleports the residual. Stiffen until the spring lands on the target
