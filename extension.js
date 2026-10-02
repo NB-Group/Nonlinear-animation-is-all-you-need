@@ -432,7 +432,18 @@ export default class SpringEaseExtension extends Extension {
                     const gv = new GObject.Value();
                     gv.init(d.gtype);
                     const set = GVALUE_SETTERS[d.typeName];
-                    const round = d.isInt ? Math.round : (v => v);
+                    // Integer properties must stay inside their GType range:
+                    // a retarget curve can undershoot (reversal nod) and
+                    // writing opacity as a negative number throws
+                    // "value is out of range for uint32" inside the frame
+                    // handler.
+                    const round = d.isInt
+                        ? (d.typeName === 'guint'
+                            ? (v => Math.max(0, Math.min(4294967295,
+                                Math.round(v))))
+                            : (v => Math.max(-2147483648,
+                                Math.min(2147483647, Math.round(v)))))
+                        : (v => v);
                     const write = v => {
                         gv[set](round(v));
                         target.set_final_state(d.prop, gv);
@@ -444,7 +455,9 @@ export default class SpringEaseExtension extends Extension {
                     const gv = new GObject.Value();
                     gv.init(s.gtype);
                     const set = GVALUE_SETTERS[s.typeName];
-                    const round = s.isInt ? Math.round : (v => v);
+                    const round = s.isInt
+                        ? (v => Math.max(0, Math.min(4294967295, Math.round(v))))
+                        : (v => v);
                     gv[set](round(s.seed.fromValue ?? 0));
                     seedAdjustmentTransition(target, s.prop, s.seed,
                         m0 => makeBezierEvaluator(0.32,
