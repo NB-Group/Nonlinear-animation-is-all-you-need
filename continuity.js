@@ -74,8 +74,13 @@ function pumpSamplers() {
             samplers.delete(s);
             continue;
         }
-        if (typeof v !== 'number' || !Number.isFinite(v))
+        if (typeof v !== 'number' || !Number.isFinite(v)) {
+            // A disposed-but-derefable wrapper reads as undefined WITHOUT
+            // throwing: an entry that stays here floods CRITICALs every
+            // tick and took the whole shell down with it. Prune on sight.
+            samplers.delete(s);
             continue;
+        }
         s.rec.samples.push([now, v]);
         if (s.rec.samples.length > 6)
             s.rec.samples.shift();
