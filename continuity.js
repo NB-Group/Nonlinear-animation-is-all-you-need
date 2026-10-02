@@ -181,13 +181,14 @@ export function motionState(target, prop, now = Date.now()) {
 // shortens the retarget's duration so the settle is decisive. v0 = 0
 // degenerates to smoothstep.
 function retargetCompiled(v0, _durationMs) {
-    // Asymmetric: momentum in the direction of travel carries fully, but a
-    // reversal only nods — a window interrupted while restoring and then
-    // minimized otherwise swells toward full size before shrinking, which
-    // reads as the reverse animation being "bigger than a normal minimize".
+    // Asymmetric: same-direction momentum carries ~fully. A reversal also
+    // carries ~85% of the measured speed now — a shallow clamp (-0.3) killed
+    // the incoming speed within one frame, which read as an instant stop;
+    // a deeper nod spreads the deceleration over visible frames. The cap
+    // keeps the nod around a fifth of the travel.
     const m0 = v0 >= 0
         ? Math.min(1.2, 0.85 * v0)
-        : Math.max(-0.3, 0.5 * v0);
+        : Math.max(-1.4, 0.85 * v0);
     return {
         analytic: true,
         eval(tau) {
