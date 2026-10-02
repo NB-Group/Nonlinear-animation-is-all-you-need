@@ -263,13 +263,31 @@ export function driveTransition(target, prop, curve, write, seed = null) {
 
     noteAnimation(target, prop, compiled, init, final, dur,
         () => target[prop.replaceAll('-', '_')]);
-    tr.connect('stopped', () => {
+    tr.connect('stopped', (timeline, finished) => {
         tr.disconnect(handler);
         // keep the record for STATE_GRACE_MS so a re-trigger right after the
         // stop can still bridge over a reset-to-start
         const r = record(target, prop);
         if (r)
             r.stoppedAt = Date.now();
+        if (!finished) {
+            // An interrupted chain whose LAST transition dies without a
+            // successor leaves the property at whatever the driver last
+            // wrote (rapid minimize interrupts could park opacity at 100
+            // and the restored window stayed translucent). If nothing has
+            // taken over by the next idle tick, settle on the target. A
+            // real handoff has already installed its own transition.
+            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                try {
+                    if (target.get_transition?.(prop) === null ||
+                        target.get_transition?.(prop) === undefined)
+                        write(final);
+                } catch {
+                    // target gone: nothing to heal
+                }
+                return GLib.SOURCE_REMOVE;
+            });
+        }
     });
     return tr;
 }
