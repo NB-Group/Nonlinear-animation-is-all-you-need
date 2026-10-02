@@ -315,11 +315,20 @@ export default class SpringEaseExtension extends Extension {
                             let fromValue;
                             const nowValue = target[prop.replaceAll('-', '_')];
                             const rangeAbs = Math.abs(state.final - state.init);
+                            // A reset is "the property jumped away from the
+                            // visual position". The old absolute 0.5 threshold
+                            // left the whole upper half of a scale travel
+                            // (range ~0.85) unprotected: interrupts past the
+                            // halfway point bridged nothing and the driver
+                            // started from the reset value — the window
+                            // instantly grew to full size. Any jump larger
+                            // than ~1% of the old travel is a reset.
                             if (typeof nowValue === 'number' &&
                                 Number.isFinite(nowValue) &&
                                 rangeAbs > 1e-6 &&
                                 Math.abs(nowValue - state.value) >
-                                    Math.max(0.5, 0.01 * Math.abs(remaining)) &&
+                                    Math.max(0.01 * rangeAbs,
+                                        0.01 * Math.abs(remaining)) &&
                                 (Math.abs(nowValue - state.init) < 0.1 * rangeAbs ||
                                  Math.abs(nowValue - state.final) < 0.1 * rangeAbs))
                                 fromValue = state.value;
