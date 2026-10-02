@@ -30,6 +30,7 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Curves from './curves.js';
 import {
     MAX_V0,
+    MIN_V0,
     driveTransition,
     motionState,
     noteModeAnimation,
@@ -64,15 +65,6 @@ const MODE_MAP = {
     'ease-out-back': Clutter.AnimationMode.EASE_OUT_BACK,
     'ease-out-elastic': Clutter.AnimationMode.EASE_OUT_ELASTIC,
 };
-
-// Caller-selected ease-out modes: their initial slope matches an existing
-// velocity (gesture release), which a zero-start library curve would kill.
-const OUT_MODES = new Set(Object.values(MODE_MAP).filter(m =>
-    [Clutter.AnimationMode.EASE_OUT_CUBIC, Clutter.AnimationMode.EASE_OUT_EXPO,
-        Clutter.AnimationMode.EASE_OUT_QUART,
-        Clutter.AnimationMode.EASE_OUT_QUINT,
-        Clutter.AnimationMode.EASE_OUT_BACK,
-        Clutter.AnimationMode.EASE_OUT_ELASTIC].includes(m)));
 
 // Keys of the ease params object that control the animation rather than name
 // an animated property (mirrors what gnome-shell's own helpers consume).
@@ -369,10 +361,8 @@ export default class SpringEaseExtension extends Extension {
             let sharedV0 = null;
             let bestSpan = 0;
             for (const cand of candidates) {
-                // Low velocity no longer disqualifies: a retarget from inside
-                // the selected curve's slow-start region must still leave the
-                // velocity-matched path (retargetCompiled floors the entry
-                // speed), not replay the slow start.
+                if (Math.abs(cand.naturalV0) < MIN_V0 && cand.fromValue === undefined)
+                    continue;
                 if (cand.span > bestSpan) {
                     bestSpan = cand.span;
                     sharedV0 = cand.naturalV0;
@@ -415,16 +405,7 @@ export default class SpringEaseExtension extends Extension {
 
             if (c.kind === 'mode') {
                 const mode = MODE_MAP[c.mode];
-                // Scroll-adjustment wrap-ups (app-grid paging) pick an
-                // EASE_OUT_* mode because the initial slope MATCHES THE
-                // RELEASE VELOCITY; an in-out library curve starts at slope
-                // zero and kills that momentum at finger-lift. Preserve the
-                // caller's mode there unless we seed continuity of our own.
-                // Actor eases are NOT included: window minimize/restore also
-                // pass ease-out modes, and the library curve must win there.
-                const preserveCallerMode = !isActor && props.mode !== undefined &&
-                    OUT_MODES.has(props.mode) && sharedV0 === null && !anyBridge;
-                if (mode !== undefined && !preserveCallerMode)
+                if (mode !== undefined)
                     props.mode = mode;
             }
             // For custom curves the native mode under the driver is invisible
@@ -570,11 +551,9 @@ export default class SpringEaseExtension extends Extension {
         this._origAnimateNotVisible = ov._animateNotVisible.bind(ov);
         this._origAnimateVisible = ov._animateVisible.bind(ov);
         this._origShowDone = ov._showDone.bind(ov);
-        this._origToggle = ov.toggle.bind(ov);
         const origAnimateNotVisible = this._origAnimateNotVisible;
         const origAnimateVisible = this._origAnimateVisible;
         const origShowDone = this._origShowDone;
-        const origToggle = this._origToggle;
         const settings = this._settings;
 
         // Symmetric takeover: a show requested during an animation ALSO exits
@@ -628,20 +607,6 @@ export default class SpringEaseExtension extends Extension {
                 return;
             origShowDone.call(this);
         };
-        // While a hide is animating, _visible stays true until _hideDone
-        // runs, so the stock toggle() routes a new press to hide() — which
-        // returns early because _shown is already false — and the press is
-        // swallowed (a Super triple-press ends hidden, third press dead).
-        // Route by the animation state instead: a press during HIDING means
-        // show, and lands on the takeover reversal in _animateVisible.
-        ov.toggle = function () {
-            if (this._animationInProgress &&
-                this._shownState === 'HIDING' && !this._shown) {
-                this.show();
-                return;
-            }
-            origToggle.call(this);
-        };
         ov._watchTakeoverSettle = () => {
             // gestureEnd's completion is completion-only: if THIS transition
             // is interrupted (another takeover), its done-callback never runs
@@ -673,8 +638,6 @@ export default class SpringEaseExtension extends Extension {
             ov._animateVisible = this._origAnimateVisible;
         if (ov?._showDone)
             ov._showDone = this._origShowDone;
-        if (ov?.toggle)
-            ov.toggle = this._origToggle;
         delete ov._watchTakeoverSettle;
         this._overviewPatched = false;
     }
