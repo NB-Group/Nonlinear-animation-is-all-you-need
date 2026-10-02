@@ -260,7 +260,8 @@ export function driveTransition(target, prop, curve, write, seed = null) {
     else
         write(init + range * compiled.eval(0));
 
-    noteAnimation(target, prop, compiled, init, final, dur), () => target[prop.replaceAll('-', '_')]);
+    noteAnimation(target, prop, compiled, init, final, dur,
+        () => target[prop.replaceAll('-', '_')]);
     tr.connect('stopped', () => {
         tr.disconnect(handler);
         // keep the record for STATE_GRACE_MS so a re-trigger right after the
@@ -285,7 +286,8 @@ export function noteModeAnimation(target, prop, curve, getTransition) {
     const final = iv.peek_final_value();
     if (!Number.isFinite(init) || !Number.isFinite(final))
         return;
-    noteAnimation(target, prop, compileCurve(curve), init, final, dur), () => target[prop.replaceAll('-', '_')]);
+    noteAnimation(target, prop, compileCurve(curve), init, final, dur,
+        () => target[prop.replaceAll('-', '_')]);
     tr.connect('stopped', () => {
         const r = record(target, prop);
         if (r)
@@ -329,7 +331,8 @@ export function seedAdjustmentTransition(target, prop, seed, makeCompiled,
         const p1y = Math.max(-0.45, Math.min(0.5, m0 * p1x));
         tr.set_cubic_bezier_progress(points(p1x, p1y), points(0.62, 1.0));
     }
-    noteAnimation(target, prop, makeCompiled(m0), init, final, dur), () => target[prop.replaceAll('-', '_')]);
+    noteAnimation(target, prop, makeCompiled(m0), init, final, dur,
+        () => target[prop.replaceAll('-', '_')]);
     tr.connect('stopped', () => {
         const r = record(target, prop);
         if (r)

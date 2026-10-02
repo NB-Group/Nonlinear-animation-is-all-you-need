@@ -3,6 +3,9 @@
 import {MODE_FUNCS, makeSpline, makeSpring, makeSpringNumeric, compileCurve} from '../easing.js';
 import GLib from 'gi://GLib';
 import * as Curves from '../curves.js';
+// continuity.js must also load under tests: a syntax error there once
+// shipped into the installed zip because no test imports it.
+import * as Continuity from '../continuity.js';
 
 let failures = 0;
 function check(name, cond) {
@@ -170,6 +173,13 @@ for (const [nick, f] of Object.entries(MODE_FUNCS)) {
             depth--;
     }
     check('extension.js brace balance', depth === 0);
+}
+
+// --- continuity.js loads and its registry round-trips -----------------------
+{
+    check('continuity module exports', typeof Continuity.motionState === 'function' &&
+        typeof Continuity.driveTransition === 'function');
+    check('motionState null on unknown target', Continuity.motionState({}, 'x') === null);
 }
 
 if (failures > 0) {
