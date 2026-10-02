@@ -15,7 +15,7 @@ renames things internally.
 ## What you get
 
 Two done-for-you presets, Balanced and Dramatic, plus a gallery that fills up
-with whatever you draw or import. The editor is a canvas: drag control points,
+with whatever you draw or import. The editor is a  canvas: drag control points,
 double-click to add one, right-click to remove, endpoints stay pinned. Values
 above 1 give you overshoot, and a replay button previews the motion. Curves
 import and export as small JSON files, so you can trade them like themes; the

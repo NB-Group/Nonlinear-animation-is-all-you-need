@@ -157,6 +157,7 @@ export function motionState(target, prop, now = Date.now()) {
         return {
             value,
             velocity,
+            startedAt: r.startedAt,
             init: r.init,
             final: r.final,
             playing: !r.stoppedAt,
@@ -166,6 +167,7 @@ export function motionState(target, prop, now = Date.now()) {
     return {
         value: r.init + (r.final - r.init) * r.compiled.eval(tau),
         velocity: (r.final - r.init) * r.compiled.deriv(tau) / r.durationMs,
+        startedAt: r.startedAt,
         init: r.init,
         final: r.final,
         playing: !r.stoppedAt,

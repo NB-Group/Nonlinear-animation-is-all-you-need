@@ -36,6 +36,14 @@ import {
     noteModeAnimation,
     seedAdjustmentTransition,
 } from './continuity.js';
+import {
+    simRetarget,
+    simSeed,
+    simSettle,
+    simDropActor,
+    startEngine,
+    stopEngine,
+} from './simengine.js';
 import {makeBezierEvaluator} from './easing.js';
 
 // WorkspaceAnimation drives one MonitorGroup per monitor to slide workspaces.
@@ -132,7 +140,10 @@ export default class SpringEaseExtension extends Extension {
                 return;
             disposeHooked.add(target);
             try {
-                target.connect('destroy', () => disposedTargets.add(target));
+                target.connect('destroy', () => {
+                    disposedTargets.add(target);
+                    simDropActor(target);
+                });
             } catch {
                 // not a Clutter.Actor (e.g. St.Adjustment): no destroy
                 // signal; those are never disposed mid-note in practice
@@ -166,6 +177,28 @@ export default class SpringEaseExtension extends Extension {
         }, this);
 
         const bootTime = Date.now();
+
+        // Spring-simulation engine lifecycle: one master timeline ticking
+        // every frame while any simulator is live (it idles itself down).
+        const makeFrameDriver = cb => {
+            const tl = new Clutter.Timeline({
+                duration: 1000000,
+                repeat_count: -1,
+            });
+            tl.connect('new-frame', () => cb());
+            return {
+                start: () => tl.start(),
+                stop: () => tl.stop(),
+            };
+        };
+        if (settings.get_string('engine') === 'spring')
+            startEngine(makeFrameDriver);
+        settings.connectObject('changed::engine', () => {
+            if (settings.get_string('engine') === 'spring')
+                startEngine(makeFrameDriver);
+            else
+                stopEngine();
+        }, this);
 
         // Idle garbage collection. The first animation after a quiet period
         // can stall for its whole duration and then snap to the end: the
@@ -250,6 +283,8 @@ export default class SpringEaseExtension extends Extension {
             if (!c)
                 return null;
 
+            const springEngine = settings.get_string('engine') === 'spring';
+
             // The overview state adjustment is the choreography spine; the
             // shell sequences transitions around its native duration, and a
             // hide during show is deferred until it finishes. Capping its
@@ -299,7 +334,7 @@ export default class SpringEaseExtension extends Extension {
                 const isInt = typeName === 'gint' || typeName === 'guint';
 
                 let cand = null;
-                if (continuityOn && simpleCase) {
+                if ((continuityOn || springEngine) && simpleCase) {
                     const state = motionState(target, prop);
                     if (state) {
                         const remaining = newTarget - state.value;
@@ -338,6 +373,7 @@ export default class SpringEaseExtension extends Extension {
                                 gtype: pspec.value_type,
                                 fromValue,
                                 stateValue: state.value,
+                                stateVelocity: state.velocity,
                                 naturalV0: state.velocity * props.duration /
                                     (newTarget - start),
                                 span: Math.abs(newTarget - start),
@@ -397,7 +433,7 @@ export default class SpringEaseExtension extends Extension {
                 const seed = sharedV0 === null && cand.fromValue === undefined
                     ? null
                     : {fromValue: cand.fromValue, v0: sharedV0 ?? 0};
-                if (isActor && simpleCase && (seed !== null ||
+                if (isActor && simpleCase && !springEngine && (seed !== null ||
                     c.kind === 'spline' || c.kind === 'spring')) {
                     drivers.push({...cand, seed});
                 } else if (!isActor && seed !== null) {
@@ -422,7 +458,23 @@ export default class SpringEaseExtension extends Extension {
             // asked for keeps running underneath until our handler runs.
             hookDispose(target);
 
-            return {curve: c, drivers, adjSeeds, numericProps};
+            // Spring-simulation engine: actor properties are handed to
+            // persistent simulators instead of per-transition curves. The
+            // init value is read HERE, before the caller's reset, so the
+            // engine never even sees a teleport. Records are still noted
+            // (numericProps) so takeover velocity is available.
+            const simItems = springEngine && isActor && simpleCase
+                ? candidates.map(cand => ({
+                    prop: cand.prop,
+                    isInt: cand.isInt,
+                    typeName: cand.typeName,
+                    gtype: cand.gtype,
+                    initValue: target[cand.prop.replaceAll('-', '_')],
+                    velocity: cand.stateVelocity ?? 0,
+                }))
+                : [];
+
+            return {curve: c, drivers, adjSeeds, simItems, numericProps};
         };
 
         // --- after the original ease --------------------------------------
@@ -430,6 +482,43 @@ export default class SpringEaseExtension extends Extension {
             if (!plan || disposedTargets.has(target))
                 return;
             try {
+                for (const s of plan.simItems) {
+                    // Hand the property to a persistent spring simulator.
+                    // The native transition underneath still owns completion
+                    // semantics; the sim owns the values, every frame.
+                    const tr = target.get_transition?.(s.prop);
+                    if (!tr?.is_playing?.())
+                        continue;
+                    const iv = tr.get_interval?.();
+                    const final = iv?.peek_final_value?.();
+                    const dur = tr.get_duration();
+                    if (!Number.isFinite(final) || !(dur > 0))
+                        continue;
+                    const gv = new GObject.Value();
+                    gv.init(s.gtype);
+                    const set = GVALUE_SETTERS[s.typeName];
+                    const round = s.typeName === 'guint'
+                        ? (v => Math.max(0, Math.min(4294967295, Math.round(v))))
+                        : (s.isInt ? Math.round : (v => v));
+                    const write = v => {
+                        gv[set](round(v));
+                        target.set_final_state(s.prop, gv);
+                    };
+                    simRetarget(target, s.prop, s.initValue, final, dur,
+                        write);
+                    simSeed(target, s.prop, s.initValue, s.velocity);
+                    try {
+                        write(s.initValue);
+                    } catch {
+                        // actor gone between plan and post
+                        continue;
+                    }
+                    tr.connect('stopped', () => {
+                        // settle only if nothing newer has taken the slot
+                        if (target.get_transition?.(s.prop) === tr)
+                            simSettle(target, s.prop, final);
+                    });
+                }
                 for (const d of plan.drivers) {
                     // Write through the ClutterAnimatable interface — the same
                     // channel the transition itself uses. A plain property set
@@ -755,6 +844,7 @@ export default class SpringEaseExtension extends Extension {
             this._idleGcId = 0;
         }
         this._removeOverviewPatch();
+        stopEngine();
         this._orig = null;
         this._settings = null;
     }

@@ -6,6 +6,7 @@ import * as Curves from '../curves.js';
 // continuity.js must also load under tests: a syntax error there once
 // shipped into the installed zip because no test imports it.
 import * as Continuity from '../continuity.js';
+import * as SimEngine from '../simengine.js';
 
 let failures = 0;
 function check(name, cond) {
@@ -180,6 +181,20 @@ for (const [nick, f] of Object.entries(MODE_FUNCS)) {
     check('continuity module exports', typeof Continuity.motionState === 'function' &&
         typeof Continuity.driveTransition === 'function');
     check('motionState null on unknown target', Continuity.motionState({}, 'x') === null);
+    check('simengine module exports',
+        typeof SimEngine.simRetarget === 'function' &&
+        typeof SimEngine.simSettle === 'function');
+    {
+        // A persistent sim retargeted mid-flight keeps its exact state:
+        // integrate to some (pos, vel), retarget, state must be identical.
+        let written = [];
+        const fake = {};
+        SimEngine.simRetarget(fake, 'x', 0, 100, 1000,
+            v => written.push(v), () => {});
+        SimEngine.simSeed(fake, 'x', 0, 5);
+        SimEngine.simSettle(fake, 'x', 100);
+        check('sim settle writes target and retires', written.includes(100));
+    }
 }
 
 if (failures > 0) {

@@ -76,6 +76,15 @@
       <summary>Enabled</summary>
       <description>Master switch (A/B without disabling the whole extension).</description>
     </key>
+    <key name="engine" type="s">
+      <choices>
+        <choice value="bridge"/>
+        <choice value="spring"/>
+      </choices>
+      <default>"bridge"</default>
+      <summary>Continuity engine</summary>
+      <description>Bridge rebuilds motion state per interruption (stable, default). Spring runs every animated property as one persistent spring simulation: interrupting only changes the target, so any number of rapid interruptions stays perfectly smooth (experimental).</description>
+    </key>
     <key name="overview-patch" type="b">
       <default>true</default>
       <summary>Instant overview close</summary>
