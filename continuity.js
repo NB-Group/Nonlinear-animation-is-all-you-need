@@ -28,12 +28,73 @@
 // transition itself stays native (completion signals, remove-on-complete and
 // the shell's own callbacks keep working) and a connect_after('new-frame')
 // handler writes the property after the class handler each frame.
-// No GI imports — callers pass duck-typed targets.
+// GLib is imported only for the sampler timer; the rest stays duck-typed.
 
+import GLib from 'gi://GLib';
 import {compileCurve} from './easing.js';
 
 // target (GObject) -> Map(propName -> record)
 const registry = new WeakMap();
+
+// Visual sampler: the analytic reconstruction (wall clock since the ease
+// call plus the assumed curve) runs AHEAD of what is actually painted —
+// window restores start measurably later than their ease call and the
+// effective curve differs from the assumed one. Bridging an interrupt from
+// the analytic position teleported the window UPWARD (the long-standing
+// "instantly grows at interrupt"). While a record is live, sample the real
+// property value every 25ms (a handful of reads; no JS per frame) and trust
+// the freshest sample instead, extrapolated with its own velocity.
+const SAMPLE_MS = 25;
+const SAMPLE_FRESH_MS = 150;
+const samplers = new Set();  // {ref: WeakRef(target), read(), rec}
+let samplerId = 0;
+
+function pumpSamplers() {
+    const now = Date.now();
+    for (const s of [...samplers]) {
+        if (s.rec.stoppedAt && now - s.rec.stoppedAt > STATE_GRACE_MS) {
+            samplers.delete(s);
+            continue;
+        }
+        const t = s.ref.deref();
+        if (!t) {
+            samplers.delete(s);
+            continue;
+        }
+        let v;
+        try {
+            v = s.read();
+        } catch {
+            samplers.delete(s);
+            continue;
+        }
+        if (typeof v !== 'number' || !Number.isFinite(v)) {
+            // A disposed-but-derefable wrapper reads as undefined WITHOUT
+            // throwing: an entry that stays here floods CRITICALs every
+            // tick and took the whole shell down with it. Prune on sight.
+            samplers.delete(s);
+            continue;
+        }
+        s.rec.samples.push([now, v]);
+        if (s.rec.samples.length > 6)
+            s.rec.samples.shift();
+    }
+    if (samplers.size === 0 && samplerId) {
+        GLib.source_remove(samplerId);
+        samplerId = 0;
+    }
+    return GLib.SOURCE_CONTINUE;
+}
+
+function startSampler(target, rec, read) {
+    if (!rec.samples)
+        rec.samples = [];
+    samplers.add({ref: new WeakRef(target), read, rec});
+    if (!samplerId) {
+        samplerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, SAMPLE_MS,
+            pumpSamplers);
+    }
+}
 
 // How long a finished animation's motion state stays bridging-eligible.
 const STATE_GRACE_MS = 250;
@@ -46,20 +107,25 @@ function record(target, prop) {
     return registry.get(target)?.get(prop) ?? null;
 }
 
-function noteAnimation(target, prop, compiled, init, final, durationMs) {
+function noteAnimation(target, prop, compiled, init, final, durationMs,
+    read = null) {
     let m = registry.get(target);
     if (!m) {
         m = new Map();
         registry.set(target, m);
     }
-    m.set(prop, {
+    const rec = {
         compiled,
         init,
         final,
         durationMs,
         startedAt: Date.now(),
         stoppedAt: 0,
-    });
+        samples: [],
+    };
+    m.set(prop, rec);
+    if (read)
+        startSampler(target, rec, read);
 }
 
 // Reconstruct the on-screen motion state (position + velocity in
@@ -72,6 +138,30 @@ export function motionState(target, prop, now = Date.now()) {
         return null;
     if (r.stoppedAt && now - r.stoppedAt > STATE_GRACE_MS)
         return null;
+    // Prefer a fresh visual sample extrapolated to now: the true painted
+    // position, immune to start latency and curve mismatch (see samplers).
+    const s = r.samples;
+    if (s?.length && now - s[s.length - 1][0] <= SAMPLE_FRESH_MS) {
+        const [tw, vw] = s[s.length - 1];
+        let velocity = 0;
+        if (s.length >= 2) {
+            const [pw, pv] = s[s.length - 2];
+            if (tw - pw > 5)
+                velocity = (vw - pv) / (tw - pw);
+        }
+        let value = vw + velocity * (now - tw);
+        const lo = Math.min(r.init, r.final);
+        const hi = Math.max(r.init, r.final);
+        const slack = 0.05 * (hi - lo);
+        value = Math.max(lo - slack, Math.min(hi + slack, value));
+        return {
+            value,
+            velocity,
+            init: r.init,
+            final: r.final,
+            playing: !r.stoppedAt,
+        };
+    }
     const tau = Math.min((now - r.startedAt) / r.durationMs, 1);
     return {
         value: r.init + (r.final - r.init) * r.compiled.eval(tau),
@@ -170,7 +260,7 @@ export function driveTransition(target, prop, curve, write, seed = null) {
     else
         write(init + range * compiled.eval(0));
 
-    noteAnimation(target, prop, compiled, init, final, dur);
+    noteAnimation(target, prop, compiled, init, final, dur), () => target[prop.replaceAll('-', '_')]);
     tr.connect('stopped', () => {
         tr.disconnect(handler);
         // keep the record for STATE_GRACE_MS so a re-trigger right after the
@@ -195,7 +285,7 @@ export function noteModeAnimation(target, prop, curve, getTransition) {
     const final = iv.peek_final_value();
     if (!Number.isFinite(init) || !Number.isFinite(final))
         return;
-    noteAnimation(target, prop, compileCurve(curve), init, final, dur);
+    noteAnimation(target, prop, compileCurve(curve), init, final, dur), () => target[prop.replaceAll('-', '_')]);
     tr.connect('stopped', () => {
         const r = record(target, prop);
         if (r)
@@ -239,7 +329,7 @@ export function seedAdjustmentTransition(target, prop, seed, makeCompiled,
         const p1y = Math.max(-0.45, Math.min(0.5, m0 * p1x));
         tr.set_cubic_bezier_progress(points(p1x, p1y), points(0.62, 1.0));
     }
-    noteAnimation(target, prop, makeCompiled(m0), init, final, dur);
+    noteAnimation(target, prop, makeCompiled(m0), init, final, dur), () => target[prop.replaceAll('-', '_')]);
     tr.connect('stopped', () => {
         const r = record(target, prop);
         if (r)
