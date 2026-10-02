@@ -171,9 +171,9 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         settings.bind('idle-gc', idleGcRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         expander.add_row(idleGcRow);
 
-        const engineModel = new Gtk.StringList({
-            items: [_('Bridge (stable)'), _('Spring simulation (experimental)')],
-        });
+        const engineModel = new Gtk.StringList();
+        engineModel.append(_('Bridge (stable)'));
+        engineModel.append(_('Spring simulation (experimental)'));
         const engineRow = new Adw.ComboRow({
             title: _('Continuity engine'),
             subtitle: _('Bridge rebuilds motion state at each interruption. Spring runs every animated property as one persistent spring: an interruption only changes the target, so rapid chains stay perfectly smooth.'),
