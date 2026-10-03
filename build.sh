@@ -47,7 +47,7 @@ import glob, os, zipfile
 out = 'nonlinear-animation@nbgroup.zip'
 top_level = [
     'metadata.json', 'extension.js', 'prefs.js', 'easing.js',
-    'curves.js', 'continuity.js', 'LICENSE', 'README.md',
+    'curves.js', 'continuity.js', 'simengine.js', 'LICENSE', 'README.md',
 ]
 extra = sorted(glob.glob('ui/*.js') +
                glob.glob('schemas/*.gschema.xml') +

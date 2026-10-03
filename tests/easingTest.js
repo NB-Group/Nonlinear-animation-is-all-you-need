@@ -174,6 +174,17 @@ for (const [nick, f] of Object.entries(MODE_FUNCS)) {
             depth--;
     }
     check('extension.js brace balance', depth === 0);
+
+    // every local module the extension imports must be in the zip
+    // whitelist: simengine.js once shipped without itself and the shell
+    // put the extension in ERROR state at login.
+    const build = new TextDecoder().decode(
+        GLib.file_get_contents(here.slice(0, here.lastIndexOf('/') + 1) +
+            '../build.sh')[1]);
+    for (const m of text.matchAll(/from '\.\/([a-z-]+\.js)'/g)) {
+        check(`build.sh ships ${m[1]}`,
+            build.includes(`'${m[1]}'`));
+    }
 }
 
 // --- continuity.js loads and its registry round-trips -----------------------
