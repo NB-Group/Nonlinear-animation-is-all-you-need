@@ -451,6 +451,7 @@ export default class SpringEaseExtension extends Extension {
                 }))
                 : [];
 
+                `engine=${springEngine} actor=${isActor}`);
             return {curve: c, drivers, adjSeeds, simItems, numericProps};
         };
 
@@ -459,18 +460,29 @@ export default class SpringEaseExtension extends Extension {
             if (!plan || disposedTargets.has(target))
                 return;
             try {
-                for (const s of plan.simItems) {
+                const attachSim = s => {
                     // Hand the property to a persistent spring simulator.
                     // The native transition underneath still owns completion
                     // semantics; the sim owns the values, every frame.
                     const tr = target.get_transition?.(s.prop);
+                    // The transition may not have started playing yet at
+                    // postEase time (window map latency): retry once on
+                    // idle instead of dropping the engine for this ease.
+                    if (tr && !tr.is_playing?.() && !s._retried) {
+                        s._retried = true;
+                        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                            attachSim(s);
+                            return GLib.SOURCE_REMOVE;
+                        });
+                        return;
+                    }
                     if (!tr?.is_playing?.())
-                        continue;
+                        return;
                     const iv = tr.get_interval?.();
                     const final = iv?.peek_final_value?.();
                     const dur = tr.get_duration();
                     if (!Number.isFinite(final) || !(dur > 0))
-                        continue;
+                        return;
                     const gv = new GObject.Value();
                     gv.init(s.gtype);
                     const set = GVALUE_SETTERS[s.typeName];
@@ -509,14 +521,16 @@ export default class SpringEaseExtension extends Extension {
                         write(sim.pos);
                     } catch {
                         // actor gone between plan and post
-                        continue;
+                        return;
                     }
                     tr.connect('stopped', () => {
                         // settle only if nothing newer has taken the slot
                         if (target.get_transition?.(s.prop) === tr)
                             simSettle(target, s.prop, final);
                     });
-                }
+                };
+                for (const s of plan.simItems)
+                    attachSim(s);
                 for (const d of plan.drivers) {
                     // Write through the ClutterAnimatable interface — the same
                     // channel the transition itself uses. A plain property set
