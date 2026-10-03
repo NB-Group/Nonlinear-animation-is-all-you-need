@@ -451,7 +451,6 @@ export default class SpringEaseExtension extends Extension {
                 }))
                 : [];
 
-                `engine=${springEngine} actor=${isActor}`);
             return {curve: c, drivers, adjSeeds, simItems, numericProps};
         };
 
