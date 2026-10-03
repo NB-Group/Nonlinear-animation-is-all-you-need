@@ -39,10 +39,9 @@ import {
 import {
     simRetarget,
     simSeed,
+    simAdvance,
     simSettle,
     simDropActor,
-    startEngine,
-    stopEngine,
 } from './simengine.js';
 import {makeBezierEvaluator} from './easing.js';
 
@@ -177,28 +176,6 @@ export default class SpringEaseExtension extends Extension {
         }, this);
 
         const bootTime = Date.now();
-
-        // Spring-simulation engine lifecycle: one master timeline ticking
-        // every frame while any simulator is live (it idles itself down).
-        const makeFrameDriver = cb => {
-            const tl = new Clutter.Timeline({
-                duration: 1000000,
-                repeat_count: -1,
-            });
-            tl.connect('new-frame', () => cb());
-            return {
-                start: () => tl.start(),
-                stop: () => tl.stop(),
-            };
-        };
-        if (settings.get_string('engine') === 'spring')
-            startEngine(makeFrameDriver);
-        settings.connectObject('changed::engine', () => {
-            if (settings.get_string('engine') === 'spring')
-                startEngine(makeFrameDriver);
-            else
-                stopEngine();
-        }, this);
 
         // Idle garbage collection. The first animation after a quiet period
         // can stall for its whole duration and then snap to the end: the
@@ -504,11 +481,32 @@ export default class SpringEaseExtension extends Extension {
                         gv[set](round(v));
                         target.set_final_state(s.prop, gv);
                     };
-                    simRetarget(target, s.prop, s.initValue, final, dur,
-                        write);
-                    simSeed(target, s.prop, s.initValue, s.velocity);
+                    const {sim, fresh} = simRetarget(target, s.prop,
+                        s.initValue, final, dur, write);
+                    if (fresh)
+                        simSeed(target, s.prop, s.initValue, s.velocity);
+                    // Integrate from the transition's own new-frame, AFTER
+                    // the native write (same ordering guarantee as the
+                    // bridge driver): the sim is the only effective writer,
+                    // so there is nothing to flicker against.
+                    let lastElapsed = 0;
+                    const fh = tr.connect_after('new-frame',
+                        (timeline, elapsed) => {
+                            if (elapsed >= dur) {
+                                write(final);
+                                return;
+                            }
+                            if (simAdvance(target, s.prop,
+                                    elapsed - lastElapsed) === null) {
+                                tr.disconnect(fh);
+                                return;
+                            }
+                            lastElapsed = elapsed;
+                        });
                     try {
-                        write(s.initValue);
+                        // same-turn write: kill any reset frame; for an
+                        // existing sim this is its carried position
+                        write(sim.pos);
                     } catch {
                         // actor gone between plan and post
                         continue;
@@ -844,7 +842,6 @@ export default class SpringEaseExtension extends Extension {
             this._idleGcId = 0;
         }
         this._removeOverviewPatch();
-        stopEngine();
         this._orig = null;
         this._settings = null;
     }
