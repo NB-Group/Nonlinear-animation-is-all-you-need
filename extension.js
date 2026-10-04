@@ -381,13 +381,27 @@ export default class SpringEaseExtension extends Extension {
 
             const drivers = [];
             const adjSeeds = [];
+            // GNOME's native opacity fade collapses early inside a
+            // stretched duration (window vanished mid-animation with the
+            // curve library disabled): drive opacity with a late fade
+            // (progress^2.5) whenever the duration is scaled, in both
+            // engine modes.
+            const stretchFade = Math.abs(dscale - 1.0) > 0.01 &&
+                animated.some(([p]) => p === 'opacity');
+            if (stretchFade)
+                drivers.push({prop: 'opacity', isInt: true,
+                    typeName: 'guint', gtype: GObject.TYPE_UINT,
+                    seed: null, lateFade: true});
             for (const cand of candidates) {
+                if (cand.prop === 'opacity')
+                    continue;  // handled by the late-fade driver above
                 const seed = sharedV0 === null && cand.fromValue === undefined
                     ? null
                     : {fromValue: cand.fromValue, v0: sharedV0 ?? 0};
-                if (isActor && simpleCase && !springEngine && (seed !== null ||
-                    (applyCurve &&
-                        (c.kind === 'spline' || c.kind === 'spring')))) {
+                if (cand.lateFade || (isActor && simpleCase && !springEngine &&
+                    (seed !== null ||
+                        (applyCurve &&
+                            (c.kind === 'spline' || c.kind === 'spring'))))) {
                     drivers.push({...cand, seed});
                 } else if (!isActor && seed !== null) {
                     // Adjustments are never driven from JS (their value
@@ -545,7 +559,13 @@ export default class SpringEaseExtension extends Extension {
                         gv[set](round(v));
                         target.set_final_state(d.prop, gv);
                     };
-                    driveTransition(target, d.prop, plan.curve, write, d.seed);
+                    driveTransition(target, d.prop, plan.curve, write, d.seed,
+                        d.lateFade
+                            ? {
+                                eval: t => Math.pow(t, 2.5),
+                                deriv: t => 2.5 * Math.pow(t, 1.5),
+                            }
+                            : null);
                 }
                 for (const s of plan.adjSeeds) {
                     // Native continuity for adjustments: no JS per frame.
