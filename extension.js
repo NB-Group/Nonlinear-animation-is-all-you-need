@@ -497,7 +497,13 @@ export default class SpringEaseExtension extends Extension {
                         s.initValue, final, dur, write);
                     if (fresh)
                         simSeed(target, s.prop, s.initValue, s.velocity);
+                    // Rewrite the interval's initial to the sim's position:
+                    // the native class handler then interpolates FROM the
+                    // carried position, so its own writes can never restate
+                    // the caller's reset (the last full-size flash path).
                     try {
+                        gv[set](round(sim.pos));
+                        iv.set_initial(gv);
                         write(sim.pos);
                     } catch {
                         return;
