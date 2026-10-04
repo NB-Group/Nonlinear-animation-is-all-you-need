@@ -55,6 +55,18 @@ export default class SpringEasePrefs extends ExtensionPreferences {
             title: _('Animation curve'),
             description: _('Pick a curve — it applies instantly. Create your own, or share curves as files.'),
         });
+        this._settingSignalIds = [];
+        const customCurveRow = new Adw.SwitchRow({
+            title: _('Apply custom curves'),
+            subtitle: _('Off: GNOME own curves play untouched; interruption continuity still applies. The gallery is disabled while off.'),
+        });
+        settings.bind('custom-curves', customCurveRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        this._gallery.add(customCurveRow);
+        const syncGalleryDim = () =>
+            (this._gallery.sensitive = settings.get_boolean('custom-curves'));
+        syncGalleryDim();
+        this._settingSignalIds.push(
+            settings.connect('changed::custom-curves', syncGalleryDim));
         page.add(this._gallery);
 
         this._window = window;
@@ -63,10 +75,9 @@ export default class SpringEasePrefs extends ExtensionPreferences {
 
         // Gio.Settings in the prefs process has no connectObject (that's a
         // shell-process patch); track ids and clean up with the window.
-        this._settingSignalIds = [
+        this._settingSignalIds.push(
             settings.connect('changed::user-curves', () => this._rebuildGallery()),
-            settings.connect('changed::selected-curve', () => this._markSelected()),
-        ];
+            settings.connect('changed::selected-curve', () => this._markSelected()));
         window.connect('destroy', () => {
             for (const id of this._settingSignalIds)
                 settings.disconnect(id);
@@ -167,13 +178,6 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         });
         settings.bind('enabled', enableRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         switchGroup.add(enableRow);
-
-        const customCurveRow = new Adw.SwitchRow({
-            title: _('Apply custom curves'),
-            subtitle: _('Replace the selected easing curve over GNOME defaults. Off: GNOME curves play untouched; interruption continuity still applies.'),
-        });
-        settings.bind('custom-curves', customCurveRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-        switchGroup.add(customCurveRow);
 
         const magicLampRow = new Adw.SwitchRow({
             title: _('Ease magic-lamp minimize'),

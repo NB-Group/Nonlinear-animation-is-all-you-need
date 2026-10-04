@@ -332,3 +332,31 @@ msgstr "缓动 magic-lamp 最小化/还原"
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:92
 msgid "If compiz-alike-magic-lamp-effect is installed, curve its minimize/unminimize timeline with EASE_OUT_CUBIC so the window decelerates into the dock instead of stopping dead. No-op if magic-lamp isn't installed."
 msgstr "若安装了 compiz-alike-magic-lamp-effect，其最小化/还原时间线会改用 EASE_OUT_CUBIC，窗口减速滑入 Dock 而不是急停。未安装则无任何影响。"
+
+#: prefs.js
+msgid "Apply custom curves"
+msgstr "应用自定义曲线"
+
+msgid "Off: GNOME own curves play untouched; interruption continuity still applies. The gallery is disabled while off."
+msgstr "关闭时 GNOME 原生曲线原样播放，打断连续性依然生效；画廊随之停用。"
+
+msgid "Interruption momentum"
+msgstr "打断动量"
+
+msgid "Subtle"
+msgstr "轻微"
+
+msgid "Bouncy"
+msgstr "弹跳"
+
+msgid "Continuity engine"
+msgstr "连续性引擎"
+
+msgid "Bridge (stable)"
+msgstr "桥接（稳定）"
+
+msgid "Spring simulation (experimental)"
+msgstr "弹簧模拟（实验性）"
+
+msgid "Bridge rebuilds motion state at each interruption. Spring runs every animated property as one persistent spring: an interruption only changes the target, so rapid chains stay perfectly smooth."
+msgstr "桥接模式在每次打断时重建运动状态。弹簧模式为每个动画属性运行一个常驻弹簧：打断只是改变目标点，因此连续快速打断依然完美顺滑。"
