@@ -185,6 +185,27 @@ for (const [nick, f] of Object.entries(MODE_FUNCS)) {
         check(`build.sh ships ${m[1]}`,
             build.includes(`'${m[1]}'`));
     }
+
+    // every settings key referenced by prefs.js must exist in the schema:
+    // a removed key left in the prefs window crashed it on open.
+    {
+        const root = here.slice(0, here.lastIndexOf('/') + 1);
+        const prefs = new TextDecoder().decode(
+            GLib.file_get_contents(root + '../prefs.js')[1]);
+        const xml = new TextDecoder().decode(
+            GLib.file_get_contents(root +
+                '../schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml')[1]);
+        const keys = new Set([...xml.matchAll(/<key name="([^"]+)"/g)]
+            .map(k => k[1]));
+        const used = new Set();
+        for (const m of prefs.matchAll(/'(?:bind|get_|set_)\w+'\(\s*'([^']+)'/g))
+            used.add(m[1]);
+        for (const m of prefs.matchAll(/settings\.(?:bind|get_\w+|set_\w+)\('([^']+)'/g))
+            used.add(m[1]);
+        for (const k of used)
+            check(`prefs key '${k}' exists in schema`, keys.has(k));
+        check('prefs references some keys', used.size >= 8);
+    }
 }
 
 // --- continuity.js loads and its registry round-trips -----------------------
