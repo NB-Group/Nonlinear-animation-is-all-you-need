@@ -62,8 +62,12 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         });
         settings.bind('custom-curves', customCurveRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         this._gallery.add(customCurveRow);
-        const syncGalleryDim = () =>
-            (this._gallery.sensitive = settings.get_boolean('custom-curves'));
+        // Dim the CARD grid only — the switch must stay clickable to turn
+        // the feature back on (dimming the whole group self-locked it).
+        const syncGalleryDim = () => {
+            if (this._flow)
+                this._flow.sensitive = settings.get_boolean('custom-curves');
+        };
         syncGalleryDim();
         this._settingSignalIds.push(
             settings.connect('changed::custom-curves', syncGalleryDim));
@@ -297,6 +301,7 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         }
         this._flow = flow;
         this._gallery.add(flow);
+        flow.sensitive = this._settings.get_boolean('custom-curves');
 
         // action buttons under the gallery
         if (this._actionRow)
