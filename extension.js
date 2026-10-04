@@ -42,6 +42,8 @@ import {
     simAdvance,
     simLand,
     simDropActor,
+    simShutdown,
+    simStartup,
 } from './simengine.js';
 import {makeBezierEvaluator} from './easing.js';
 
@@ -101,6 +103,7 @@ const MAGIC_LAMP_UNMINIMIZE = 'unminimize-magic-lamp-effect';
 
 export default class SpringEaseExtension extends Extension {
     enable() {
+        simStartup();
         this._settings = this.getSettings();
         this._migrateSettings();
 
@@ -867,6 +870,7 @@ export default class SpringEaseExtension extends Extension {
             this._idleGcId = 0;
         }
         this._removeOverviewPatch();
+        simShutdown();
         this._orig = null;
         this._settings = null;
     }

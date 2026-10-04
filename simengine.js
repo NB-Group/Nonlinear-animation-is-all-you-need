@@ -30,6 +30,19 @@ import GLib from 'gi://GLib';
 
 // actor -> Map(prop -> sim)
 const sims = new WeakMap();
+// Set false by simShutdown(): handlers still attached to live transitions
+// stop writing so a disabled extension stops driving immediately instead
+// of finishing the animation it was in the middle of (the "still
+// interrupts after I turned it off" ghost).
+let live = true;
+
+export function simShutdown() {
+    live = false;
+}
+
+export function simStartup() {
+    live = true;
+}
 
 function integrate(sim, dt) {
     const k = sim.omega * sim.omega;
@@ -102,6 +115,8 @@ export function simSeed(actor, prop, value, velocity) {
 // stored closure and returns it (null if the sim is gone or the write
 // failed — the caller should then stop ticking).
 export function simAdvance(actor, prop, dtMs) {
+    if (!live)
+        return null;
     const sim = sims.get(actor)?.get(prop);
     if (!sim)
         return null;
@@ -124,6 +139,8 @@ export function simAdvance(actor, prop, dtMs) {
 // budgetMs; a newer retarget (transition replaced this one) simply takes
 // over — the tick detects it and exits.
 export function simLand(actor, prop, write, budgetMs = 250) {
+    if (!live)
+        return;
     const sim = sims.get(actor)?.get(prop);
     if (!sim)
         return;
