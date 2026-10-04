@@ -441,15 +441,21 @@ export default class SpringEaseExtension extends Extension {
             // engine never even sees a teleport. Records are still noted
             // (numericProps) so takeover velocity is available.
             const simItems = springEngine && isActor && simpleCase
-                ? candidates.map(cand => ({
-                    prop: cand.prop,
-                    isInt: cand.isInt,
-                    typeName: cand.typeName,
-                    gtype: cand.gtype,
-                    initValue: target[cand.prop.replaceAll('-', '_')],
-                    velocity: cand.stateVelocity ?? 0,
-                }))
+                ? candidates.filter(cand => cand.prop !== 'opacity')
+                    .map(cand => ({
+                        prop: cand.prop,
+                        isInt: cand.isInt,
+                        typeName: cand.typeName,
+                        gtype: cand.gtype,
+                        initValue: target[cand.prop.replaceAll('-', '_')],
+                        velocity: cand.stateVelocity ?? 0,
+                    }))
                 : [];
+            // Opacity stays native on purpose: GNOME fades windows out during
+            // minimize and hard-resets opacity at map; carrying the fade
+            // state across an interruption chain drained windows into ghosts
+            // (opacity 12 -> 1 while still on screen) and the map reset
+            // popped 47 -> 255. Native fades are short and reset cleanly.
 
             return {curve: c, drivers, adjSeeds, simItems, numericProps};
         };
