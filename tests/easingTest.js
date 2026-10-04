@@ -194,17 +194,16 @@ for (const [nick, f] of Object.entries(MODE_FUNCS)) {
     check('motionState null on unknown target', Continuity.motionState({}, 'x') === null);
     check('simengine module exports',
         typeof SimEngine.simRetarget === 'function' &&
-        typeof SimEngine.simSettle === 'function');
+        typeof SimEngine.simLand === 'function');
     {
-        // A persistent sim retargeted mid-flight keeps its exact state:
-        // integrate to some (pos, vel), retarget, state must be identical.
+        // A fresh sim retargeted away from its init must reach the target.
         let written = [];
         const fake = {};
-        SimEngine.simRetarget(fake, 'x', 0, 100, 1000,
-            v => written.push(v), () => {});
-        SimEngine.simSeed(fake, 'x', 0, 5);
-        SimEngine.simSettle(fake, 'x', 100);
-        check('sim settle writes target and retires', written.includes(100));
+        SimEngine.simRetarget(fake, 'x', 0, 100, 50,
+            v => written.push(v));
+        SimEngine.simSeed(fake, 'x', 0, 0);
+        SimEngine.simLand(fake, 'x', v => written.push(v), 300);
+        check('sim land writes target and retires', written.includes(100));
     }
 }
 

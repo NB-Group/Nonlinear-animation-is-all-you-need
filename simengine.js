@@ -24,7 +24,9 @@
 //     when it stops we settle the sim onto the target unless a newer
 //     transition has already retargeted it.
 //
-// No GI imports; writes go through a caller-supplied closure.
+// GLib only for the landing timer; writes go through a caller closure.
+
+import GLib from 'gi://GLib';
 
 // actor -> Map(prop -> sim)
 const sims = new WeakMap();
@@ -114,18 +116,44 @@ export function simAdvance(actor, prop, dtMs) {
     return sim.pos;
 }
 
-// The native transition completed (or was replaced): land exactly on the
-// target and retire the sim. Callers check currency before invoking.
-export function simSettle(actor, prop, target) {
+// The native transition completed: glide the sim onto the target instead
+// of snapping. The sim's phase does not align with the transition's clock
+// after mid-flight retargets, so a hard settle-write teleported whatever
+// residual was left (the tail-of-restore small jump). The sim keeps
+// integrating on a short timer until it is within epsilon, capped at
+// budgetMs; a newer retarget (transition replaced this one) simply takes
+// over — the tick detects it and exits.
+export function simLand(actor, prop, write, budgetMs = 250) {
     const sim = sims.get(actor)?.get(prop);
     if (!sim)
         return;
-    try {
-        sim.write(target);
-    } catch {
-        // actor gone
-    }
-    sims.get(actor)?.delete(prop);
+    const t0 = Date.now();
+    const tick = () => {
+        const cur = sims.get(actor)?.get(prop);
+        if (cur !== sim)
+            return;  // dropped, or a newer retarget owns the slot
+        integrate(sim, 0.016);
+        const done = Math.abs(sim.target - sim.pos) < 1e-3 &&
+            Math.abs(sim.vel) < 1e-3;
+        if (done || Date.now() - t0 > budgetMs) {
+            try {
+                write(sim.target);
+            } catch {
+                // actor gone
+            }
+            const m = sims.get(actor);
+            if (m?.get(prop) === sim)
+                m.delete(prop);
+            return;
+        }
+        try {
+            write(sim.pos);
+        } catch {
+            return;
+        }
+        GLib.timeout_add(GLib.PRIORITY_HIGH_IDLE, 16, tick);
+    };
+    tick();
 }
 
 export function simDropActor(actor) {

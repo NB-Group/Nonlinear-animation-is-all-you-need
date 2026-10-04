@@ -40,7 +40,7 @@ import {
     simRetarget,
     simSeed,
     simAdvance,
-    simSettle,
+    simLand,
     simDropActor,
 } from './simengine.js';
 import {makeBezierEvaluator} from './easing.js';
@@ -516,7 +516,7 @@ export default class SpringEaseExtension extends Extension {
                     const fh = tr.connect_after('new-frame',
                         (timeline, elapsed) => {
                             if (elapsed >= dur) {
-                                write(final);
+                                simLand(target, s.prop, write);
                                 return;
                             }
                             if (simAdvance(target, s.prop,
@@ -535,9 +535,9 @@ export default class SpringEaseExtension extends Extension {
                         return;
                     }
                     tr.connect('stopped', () => {
-                        // settle only if nothing newer has taken the slot
+                        // land only if nothing newer has taken the slot
                         if (target.get_transition?.(s.prop) === tr)
-                            simSettle(target, s.prop, final);
+                            simLand(target, s.prop, write);
                     });
                 };
                 for (const s of plan.simItems)
