@@ -33,6 +33,17 @@
       <summary>User curves</summary>
       <description>User-created and imported curves, one JSON object per entry.</description>
     </key>
+    <key name="custom-curves" type="b">
+      <default>true</default>
+      <summary>Apply custom curves</summary>
+      <description>Replace GNOME's easing curves with the selected curve. Off: GNOME's own curves play untouched; interruption continuity still applies.</description>
+    </key>
+    <key name="momentum" type="d">
+      <default>1.0</default>
+      <range min="0.0" max="2.0"/>
+      <summary>Interruption momentum</summary>
+      <description>How much velocity an interrupted animation carries into the new one. 0 = close to GNOME (barely a nod), 1 = balanced, 2 = exaggerated elastic bounce.</description>
+    </key>
     <key name="continuity" type="b">
       <default>true</default>
       <summary>Interruption continuity</summary>

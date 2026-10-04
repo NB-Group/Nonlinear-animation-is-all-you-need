@@ -118,6 +118,32 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         settings.bind('continuity', continuityRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         motionGroup.add(continuityRow);
 
+        const momentumRow = new Adw.ActionRow({
+            title: _('Interruption momentum'),
+        });
+        const momentumBox = new Gtk.Box({
+            orientation: Gtk.Orientation.HORIZONTAL, spacing: 8,
+            hexpand: true, valign: Gtk.Align.CENTER,
+        });
+        momentumBox.append(new Gtk.Label({
+            label: _('Subtle'), css_classes: ['caption', 'dim-label'],
+        }));
+        const momentumScale = new Gtk.Scale({
+            adjustment: Gtk.Adjustment.new(1.0, 0.0, 2.0, 0.05, 0.25, 0),
+            draw_value: true, digits: 2, hexpand: true,
+            valign: Gtk.Align.CENTER,
+        });
+        momentumScale.set_format_value_func((_s, v) => `×${v.toFixed(2)}`);
+        momentumBox.append(momentumScale);
+        momentumBox.append(new Gtk.Label({
+            label: _('Bouncy'), css_classes: ['caption', 'dim-label'],
+        }));
+        momentumRow.add_suffix(momentumBox);
+        momentumRow.activatable_widget = momentumScale;
+        settings.bind('momentum', momentumScale.adjustment, 'value',
+            Gio.SettingsBindFlags.DEFAULT);
+        motionGroup.add(momentumRow);
+
         const solverRow = new Adw.ComboRow({
             title: _('Spring fidelity'),
             subtitle: _('How spring curves are solved. Ultra integrates physics every frame: higher fidelity, more CPU.'),
@@ -141,6 +167,13 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         });
         settings.bind('enabled', enableRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         switchGroup.add(enableRow);
+
+        const customCurveRow = new Adw.SwitchRow({
+            title: _('Apply custom curves'),
+            subtitle: _('Replace the selected easing curve over GNOME defaults. Off: GNOME curves play untouched; interruption continuity still applies.'),
+        });
+        settings.bind('custom-curves', customCurveRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        switchGroup.add(customCurveRow);
 
         const magicLampRow = new Adw.SwitchRow({
             title: _('Ease magic-lamp minimize'),

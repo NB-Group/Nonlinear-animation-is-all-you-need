@@ -233,6 +233,8 @@ export default class SpringEaseExtension extends Extension {
                 return null;
 
             const springEngine = settings.get_string('engine') === 'spring';
+            const applyCurve = settings.get_boolean('custom-curves');
+            const momentum = settings.get_double('momentum');
 
             // The overview state adjustment is the choreography spine; the
             // shell sequences transitions around its native duration, and a
@@ -317,13 +319,14 @@ export default class SpringEaseExtension extends Extension {
                                  Math.abs(nowValue - state.final) < 0.1 * rangeAbs))
                                 fromValue = state.value;
                             const start = fromValue ?? state.value;
+                            const carried = state.velocity * momentum;
                             cand = {
                                 prop, isInt, typeName,
                                 gtype: pspec.value_type,
                                 fromValue,
                                 stateValue: state.value,
-                                stateVelocity: state.velocity,
-                                naturalV0: state.velocity * props.duration /
+                                stateVelocity: carried,
+                                naturalV0: carried * props.duration /
                                     (newTarget - start),
                                 span: Math.abs(newTarget - start),
                             };
@@ -383,7 +386,8 @@ export default class SpringEaseExtension extends Extension {
                     ? null
                     : {fromValue: cand.fromValue, v0: sharedV0 ?? 0};
                 if (isActor && simpleCase && !springEngine && (seed !== null ||
-                    c.kind === 'spline' || c.kind === 'spring')) {
+                    (applyCurve &&
+                        (c.kind === 'spline' || c.kind === 'spring')))) {
                     drivers.push({...cand, seed});
                 } else if (!isActor && seed !== null) {
                     // Adjustments are never driven from JS (their value
@@ -397,7 +401,7 @@ export default class SpringEaseExtension extends Extension {
                 }
             }
 
-            if (c.kind === 'mode') {
+            if (applyCurve && c.kind === 'mode') {
                 const mode = MODE_MAP[c.mode];
                 if (mode !== undefined)
                     props.mode = mode;
