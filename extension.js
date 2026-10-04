@@ -437,7 +437,8 @@ export default class SpringEaseExtension extends Extension {
             // popped 47 -> 255. Native fades are short and reset cleanly.
 
             return {curve: c, drivers, adjSeeds, simItems, numericProps,
-                animatedProps: animated.map(([p]) => p)};
+                animatedProps: animated.map(([p]) => p),
+                carryMomentum: continuityOn};
         };
 
         // --- after the original ease --------------------------------------
@@ -475,8 +476,13 @@ export default class SpringEaseExtension extends Extension {
                     };
                     const {sim, fresh} = simRetarget(target, s.prop,
                         s.initValue, final, dur, write);
-                    if (fresh)
+                    if (fresh && plan.carryMomentum)
                         simSeed(target, s.prop, s.initValue, s.velocity);
+                    // Interruption continuity OFF means "no buffering": the
+                    // engine keeps position continuity (restart from the
+                    // current visual, like native) but carries no velocity.
+                    if (!plan.carryMomentum)
+                        simSeed(target, s.prop, undefined, 0);
                     // Rewrite the interval's initial to the sim's position:
                     // the native class handler then interpolates FROM the
                     // carried position, so its own writes can never restate
