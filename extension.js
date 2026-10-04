@@ -470,24 +470,19 @@ export default class SpringEaseExtension extends Extension {
                     // The native transition underneath still owns completion
                     // semantics; the sim owns the values, every frame.
                     const tr = target.get_transition?.(s.prop);
-                    // The transition may not have started playing yet at
-                    // postEase time (window map latency): retry once on
-                    // idle instead of dropping the engine for this ease.
-                    if (tr && !tr.is_playing?.() && !s._retried) {
-                        s._retried = true;
-                        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                            attachSim(s);
-                            return GLib.SOURCE_REMOVE;
-                        });
-                        return;
-                    }
-                    if (!tr?.is_playing?.())
+                    if (!tr)
                         return;
                     const iv = tr.get_interval?.();
                     const final = iv?.peek_final_value?.();
                     const dur = tr.get_duration();
                     if (!Number.isFinite(final) || !(dur > 0))
                         return;
+                    // Retarget and same-turn write ALWAYS: while the
+                    // transition may not be playing yet (window map
+                    // latency), the shell's reset is already on the actor —
+                    // deferring the retarget left the reset value painted
+                    // for frames (the full-size flash at an early
+                    // interrupt).
                     const gv = new GObject.Value();
                     gv.init(s.gtype);
                     const set = GVALUE_SETTERS[s.typeName];
@@ -502,6 +497,22 @@ export default class SpringEaseExtension extends Extension {
                         s.initValue, final, dur, write);
                     if (fresh)
                         simSeed(target, s.prop, s.initValue, s.velocity);
+                    try {
+                        write(sim.pos);
+                    } catch {
+                        return;
+                    }
+                    // Frame wiring waits for playback; retry once on idle.
+                    if (!tr.is_playing?.()) {
+                        if (s._retried)
+                            return;
+                        s._retried = true;
+                        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                            attachSim(s);
+                            return GLib.SOURCE_REMOVE;
+                        });
+                        return;
+                    }
                     // Integrate from the transition's own new-frame, AFTER
                     // the native write (same ordering guarantee as the
                     // bridge driver): the sim is the only effective writer,
