@@ -502,17 +502,6 @@ export default class SpringEaseExtension extends Extension {
                     } catch {
                         return;
                     }
-                    // Frame wiring waits for playback; retry once on idle.
-                    if (!tr.is_playing?.()) {
-                        if (s._retried)
-                            return;
-                        s._retried = true;
-                        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                            attachSim(s);
-                            return GLib.SOURCE_REMOVE;
-                        });
-                        return;
-                    }
                     // Integrate from the transition's own new-frame, AFTER
                     // the native write (same ordering guarantee as the
                     // bridge driver): the sim is the only effective writer,
