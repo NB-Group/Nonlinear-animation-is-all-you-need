@@ -35,6 +35,7 @@ import {
     motionState,
     noteModeAnimation,
     seedAdjustmentTransition,
+    dropSamplersOf,
 } from './continuity.js';
 import {
     simRetarget,
@@ -145,6 +146,7 @@ export default class SpringEaseExtension extends Extension {
                 target.connect('destroy', () => {
                     disposedTargets.add(target);
                     simDropActor(target);
+                    dropSamplersOf(target);
                 });
             } catch {
                 // not a Clutter.Actor (e.g. St.Adjustment): no destroy
@@ -180,38 +182,6 @@ export default class SpringEaseExtension extends Extension {
 
         const bootTime = Date.now();
 
-        // Idle garbage collection. The first animation after a quiet period
-        // can stall for its whole duration and then snap to the end: the
-        // allocations of the animation trigger a major GC on a shell heap
-        // swollen by other extensions, and the main loop blocks through the
-        // collection. Forcing a full GC pays that cost where nobody can see
-        // it, but "nobody is watching" must mean the USER is away, not just
-        // that nothing is animating (a synchronous full GC on a large heap
-        // stalls for seconds and must never land mid-interaction), so the
-        // input idle time from MetaIdleMonitor gates it, not just ease
-        // activity. System.gc() on a huge heap is not cheap; run it only when
-        // the user has touched nothing for a full minute.
-        let lastEaseAt = 0;
-        let lastGcAt = Date.now();
-        this._idleGcId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 30000, () => {
-            const now = Date.now();
-            const idleMonitor = global.backend?.get_core_idle_monitor?.();
-            const inputIdleMs = idleMonitor?.get_idletime?.() ?? 0;
-            if (settings.get_boolean('idle-gc') &&
-                lastEaseAt > lastGcAt &&
-                // "Nobody is watching" must also mean nothing animated
-                // recently: a user staring at an animation without touching
-                // input is still watching, and a full GC during/right after
-                // that froze the shell for seconds.
-                now - lastEaseAt > 30000 &&
-                now - bootTime > 60000 &&
-                inputIdleMs > 60000) {
-                System.gc();
-                lastGcAt = now;
-            }
-            return GLib.SOURCE_CONTINUE;
-        });
-
         // --- shared plan for one ease call ---------------------------------
         // Runs BEFORE the original ease: mutates params (mode/duration) and
         // collects what postEase() must do afterwards (per-prop drivers with
@@ -242,7 +212,6 @@ export default class SpringEaseExtension extends Extension {
 
             const grace = settings.get_int('gesture-grace-ms');
             const inGrace = grace > 0 && Date.now() - lastGestureTime < grace;
-            lastEaseAt = Date.now();
             if (inGrace) {
                 // Gesture-driven motion already carries the finger's momentum.
                 // For the wrap-up we ONLY decelerate (ease-out): an in-out curve
@@ -864,10 +833,6 @@ export default class SpringEaseExtension extends Extension {
         if (this._deferredEaseId) {
             GLib.source_remove(this._deferredEaseId);
             this._deferredEaseId = 0;
-        }
-        if (this._idleGcId) {
-            GLib.source_remove(this._idleGcId);
-            this._idleGcId = 0;
         }
         this._removeOverviewPatch();
         simShutdown();

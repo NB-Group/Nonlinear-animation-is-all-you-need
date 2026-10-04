@@ -90,11 +90,6 @@
       <summary>Instant overview close</summary>
       <description>Route a close requested while the overview is still animating through the gesture channel, so the drawer reverses immediately instead of finishing its opening first. Turn off if overview open/close misbehaves.</description>
     </key>
-    <key name="idle-gc" type="b">
-      <default>false</default>
-      <summary>Idle garbage collection</summary>
-      <description>Force a garbage collection after you have been away for a while, so the first animation afterwards does not stall on one. Off by default: on a heavily loaded shell a full collection can freeze everything for seconds while you are merely reading without touching input.</description>
-    </key>
     <key name="magic-lamp-easing" type="b">
       <default>true</default>
       <summary>Ease magic-lamp minimize/unminimize</summary>

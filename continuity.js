@@ -63,7 +63,7 @@ function pumpSamplers() {
         }
         let v;
         try {
-            v = s.read();
+            v = s.read(t);
         } catch {
             samplers.delete(s);
             continue;
@@ -84,6 +84,12 @@ function pumpSamplers() {
         samplerId = 0;
     }
     return GLib.SOURCE_CONTINUE;
+}
+
+export function dropSamplersOf(actor) {
+    for (const s of [...samplers])
+        if (s.ref.deref() === actor)
+            samplers.delete(s);
 }
 
 function startSampler(target, rec, read) {
@@ -264,7 +270,7 @@ export function driveTransition(target, prop, curve, write, seed = null) {
         write(init + range * compiled.eval(0));
 
     noteAnimation(target, prop, compiled, init, final, dur,
-        () => target[prop.replaceAll('-', '_')]);
+        t => t[prop.replaceAll('-', '_')]);
     tr.connect('stopped', (timeline, finished) => {
         tr.disconnect(handler);
         // keep the record for STATE_GRACE_MS so a re-trigger right after the
@@ -308,7 +314,7 @@ export function noteModeAnimation(target, prop, curve, getTransition) {
     if (!Number.isFinite(init) || !Number.isFinite(final))
         return;
     noteAnimation(target, prop, compileCurve(curve), init, final, dur,
-        () => target[prop.replaceAll('-', '_')]);
+        t => t[prop.replaceAll('-', '_')]);
     tr.connect('stopped', () => {
         const r = record(target, prop);
         if (r)
@@ -353,7 +359,7 @@ export function seedAdjustmentTransition(target, prop, seed, makeCompiled,
         tr.set_cubic_bezier_progress(points(p1x, p1y), points(0.62, 1.0));
     }
     noteAnimation(target, prop, makeCompiled(m0), init, final, dur,
-        () => target[prop.replaceAll('-', '_')]);
+        t => t[prop.replaceAll('-', '_')]);
     tr.connect('stopped', () => {
         const r = record(target, prop);
         if (r)

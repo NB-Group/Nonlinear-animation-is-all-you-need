@@ -164,12 +164,6 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         settings.bind('overview-patch', overviewPatchRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         expander.add_row(overviewPatchRow);
 
-        const idleGcRow = new Adw.SwitchRow({
-            title: _('Idle garbage collection'),
-            subtitle: _('Collect garbage after you have been away for a while, so the first animation afterwards does not stall. Turn off if you see pauses while the screen is idle.'),
-        });
-        settings.bind('idle-gc', idleGcRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-        expander.add_row(idleGcRow);
 
         const engineModel = new Gtk.StringList();
         engineModel.append(_('Bridge (stable)'));
