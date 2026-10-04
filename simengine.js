@@ -35,6 +35,16 @@ function integrate(sim, dt) {
     const dx = sim.target - sim.pos;
     const a = k * dx - c * sim.vel;
     sim.vel += a * dt;
+    // Energy damper on carried velocity: an interruption early in a restore
+    // inherits a huge positional velocity (px/ms) and the spring then flung
+    // the window PAST its target ("thrown out"). A normal spring of this
+    // stiffness never exceeds ~travel*omega, so this cap is invisible to
+    // legitimate motion and only clips pathological carry-overs.
+    const maxV = 1.5 * Math.abs(dx) * sim.omega;
+    if (sim.vel > maxV)
+        sim.vel = maxV;
+    else if (sim.vel < -maxV)
+        sim.vel = -maxV;
     sim.pos += sim.vel * dt;
 }
 
