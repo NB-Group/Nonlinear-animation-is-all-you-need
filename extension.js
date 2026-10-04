@@ -381,31 +381,16 @@ export default class SpringEaseExtension extends Extension {
 
             const drivers = [];
             const adjSeeds = [];
-            // GNOME's native opacity fade collapses early inside a
-            // stretched duration (window vanished mid-animation with the
-            // curve library disabled): drive opacity with a late fade
-            // (progress^2.5) whenever the duration is scaled, in both
-            // engine modes. Window actors ONLY: overview clones and chrome
-            // fade for a living with their native curves (a late fade on
-            // the outgoing workspace preview kept it opaque through the
-            // whole slide and flashed out at the end).
-            const stretchFade = Math.abs(dscale - 1.0) > 0.01 &&
-                target.meta_window !== undefined &&
-                animated.some(([p]) => p === 'opacity');
-            if (stretchFade)
-                drivers.push({prop: 'opacity', isInt: true,
-                    typeName: 'guint', gtype: GObject.TYPE_UINT,
-                    seed: null, lateFade: true});
             for (const cand of candidates) {
                 if (cand.prop === 'opacity')
-                    continue;  // handled by the late-fade driver above
+                    continue;  // opacity is fully native (see below)
                 const seed = sharedV0 === null && cand.fromValue === undefined
                     ? null
                     : {fromValue: cand.fromValue, v0: sharedV0 ?? 0};
-                if (cand.lateFade || (isActor && simpleCase && !springEngine &&
+                if (isActor && simpleCase && !springEngine &&
                     (seed !== null ||
                         (applyCurve &&
-                            (c.kind === 'spline' || c.kind === 'spring'))))) {
+                            (c.kind === 'spline' || c.kind === 'spring')))) {
                     drivers.push({...cand, seed});
                 } else if (!isActor && seed !== null) {
                     // Adjustments are never driven from JS (their value
@@ -451,7 +436,8 @@ export default class SpringEaseExtension extends Extension {
             // (opacity 12 -> 1 while still on screen) and the map reset
             // popped 47 -> 255. Native fades are short and reset cleanly.
 
-            return {curve: c, drivers, adjSeeds, simItems, numericProps};
+            return {curve: c, drivers, adjSeeds, simItems, numericProps,
+                animatedProps: animated.map(([p]) => p)};
         };
 
         // --- after the original ease --------------------------------------
@@ -536,20 +522,57 @@ export default class SpringEaseExtension extends Extension {
                 };
                 for (const s of plan.simItems)
                     attachSim(s);
-                for (const d of plan.drivers) {
-                    if (d.lateFade) {
-                        // Late fade is for fade-OUT only (keep the window
-                        // visible while it travels). A fade-IN driven late
-                        // holds the window near-invisible for most of a
-                        // stretched restore — the "disappears for a while
-                        // on double interrupts". Native fade-ins are
-                        // prompt; leave them alone.
-                        const ftr = target.get_transition?.(d.prop);
-                        const fiv = ftr?.get_interval?.();
-                        if (!fiv || fiv.peek_final_value?.() >=
-                                fiv.peek_initial_value?.())
-                            continue;
+                // Opacity is a function of POSITION, not time: the window
+                // fades in proportion to how far it has traveled along its
+                // minimize/restore path, so whatever the velocity profile
+                // does — interruptions, reversals, spring overshoot — the
+                // fade stays glued to the motion instead of fighting it on
+                // an independent timeline. Ride the opacity transition's
+                // own frames (guaranteed the last write after its class
+                // handler) and derive the value from the current scale.
+                if (target.meta_window !== undefined &&
+                    plan.animatedProps?.includes('opacity') &&
+                    plan.animatedProps?.includes('scale-x')) {
+                    const sIv = target.get_transition?.('scale-x')
+                        ?.get_interval?.();
+                    const oTr = target.get_transition?.('opacity');
+                    const lo = Math.min(sIv?.peek_initial_value?.() ?? 0,
+                        sIv?.peek_final_value?.() ?? 1);
+                    const hi = Math.max(sIv?.peek_initial_value?.() ?? 0,
+                        sIv?.peek_final_value?.() ?? 1);
+                    if (oTr?.is_playing?.() && hi - lo > 1e-6) {
+                        const gv = new GObject.Value();
+                        gv.init(GObject.TYPE_UINT);
+                        const writeOp = v => {
+                            gv.set_uint(Math.max(0, Math.min(255,
+                                Math.round(v))));
+                            target.set_final_state('opacity', gv);
+                        };
+                        let oh = 0;
+                        const derive = () => {
+                            try {
+                                const s = target.scale_x;
+                                if (typeof s !== 'number' ||
+                                        !Number.isFinite(s))
+                                    return;
+                                const p = Math.max(0, Math.min(1,
+                                    (s - lo) / (hi - lo)));
+                                writeOp(255 * p);
+                            } catch {
+                                if (oh)
+                                    oTr.disconnect(oh);
+                            }
+                        };
+                        derive();
+                        oh = oTr.connect_after('new-frame', derive);
+                        oTr.connect('stopped', () => {
+                            if (oh)
+                                oTr.disconnect(oh);
+                            derive();
+                        });
                     }
+                }
+                for (const d of plan.drivers) {
                     // Write through the ClutterAnimatable interface — the same
                     // channel the transition itself uses. A plain property set
                     // emits notify, which invalidates stage views and makes
@@ -576,13 +599,7 @@ export default class SpringEaseExtension extends Extension {
                         gv[set](round(v));
                         target.set_final_state(d.prop, gv);
                     };
-                    driveTransition(target, d.prop, plan.curve, write, d.seed,
-                        d.lateFade
-                            ? {
-                                eval: t => Math.pow(t, 2.5),
-                                deriv: t => 2.5 * Math.pow(t, 1.5),
-                            }
-                            : null);
+                    driveTransition(target, d.prop, plan.curve, write, d.seed);
                 }
                 for (const s of plan.adjSeeds) {
                     // Native continuity for adjustments: no JS per frame.

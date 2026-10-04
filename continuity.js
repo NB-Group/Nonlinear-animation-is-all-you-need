@@ -216,8 +216,7 @@ function retargetCompiled(v0, _durationMs) {
 // property. `seed` optionally carries continuity from an interrupted
 // animation: {fromValue, v0}. Returns the transition or null when driving
 // isn't possible.
-export function driveTransition(target, prop, curve, write, seed = null,
-    compiledOverride = null) {
+export function driveTransition(target, prop, curve, write, seed = null) {
     const tr = target.get_transition?.(prop);
     // a Clutter.Transition IS a Clutter.Timeline — use it directly
     if (!tr?.is_playing?.())
