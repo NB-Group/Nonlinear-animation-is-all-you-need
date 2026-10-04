@@ -151,13 +151,39 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         momentumScale.set_format_value_func((_s, v) => `×${v.toFixed(2)}`);
         momentumBox.append(momentumScale);
         momentumBox.append(new Gtk.Label({
-            label: _('Bouncy'), css_classes: ['caption', 'dim-label'],
+            label: _('Strong'), css_classes: ['caption', 'dim-label'],
         }));
         momentumRow.add_suffix(momentumBox);
         momentumRow.activatable_widget = momentumScale;
         settings.bind('momentum', momentumScale.adjustment, 'value',
             Gio.SettingsBindFlags.DEFAULT);
         motionGroup.add(momentumRow);
+
+        const reversalRow = new Adw.ActionRow({
+            title: _('Reversal buffering'),
+        });
+        const reversalBox = new Gtk.Box({
+            orientation: Gtk.Orientation.HORIZONTAL, spacing: 8,
+            hexpand: true, valign: Gtk.Align.CENTER,
+        });
+        reversalBox.append(new Gtk.Label({
+            label: _('Hard'), css_classes: ['caption', 'dim-label'],
+        }));
+        const reversalScale = new Gtk.Scale({
+            adjustment: Gtk.Adjustment.new(1.0, 0.0, 2.0, 0.05, 0.25, 0),
+            draw_value: true, digits: 2, hexpand: true,
+            valign: Gtk.Align.CENTER,
+        });
+        reversalScale.set_format_value_func((_s, v) => `×${v.toFixed(2)}`);
+        reversalBox.append(reversalScale);
+        reversalBox.append(new Gtk.Label({
+            label: _('Bouncy'), css_classes: ['caption', 'dim-label'],
+        }));
+        reversalRow.add_suffix(reversalBox);
+        reversalRow.activatable_widget = reversalScale;
+        settings.bind('reversal', reversalScale.adjustment, 'value',
+            Gio.SettingsBindFlags.DEFAULT);
+        motionGroup.add(reversalRow);
 
         const solverRow = new Adw.ComboRow({
             title: _('Spring fidelity'),

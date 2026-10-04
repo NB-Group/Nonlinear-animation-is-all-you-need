@@ -235,6 +235,10 @@ export default class SpringEaseExtension extends Extension {
             const springEngine = settings.get_string('engine') === 'spring';
             const applyCurve = settings.get_boolean('custom-curves');
             const momentum = settings.get_double('momentum');
+            // Direction-aware inertia scaling: same-direction carry (app
+            // list paging) and reversal buffering (minimize/restore bounce)
+            // are different phenomena and are tuned independently.
+            const reversal = settings.get_double('reversal');
 
             // The overview state adjustment is the choreography spine; the
             // shell sequences transitions around its native duration, and a
@@ -319,7 +323,8 @@ export default class SpringEaseExtension extends Extension {
                                  Math.abs(nowValue - state.final) < 0.1 * rangeAbs))
                                 fromValue = state.value;
                             const start = fromValue ?? state.value;
-                            const carried = state.velocity * momentum;
+                            const carried = state.velocity *
+                                (state.velocity >= 0 ? momentum : reversal);
                             cand = {
                                 prop, isInt, typeName,
                                 gtype: pspec.value_type,

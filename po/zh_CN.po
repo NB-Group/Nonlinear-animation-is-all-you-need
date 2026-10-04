@@ -360,3 +360,12 @@ msgstr "弹簧模拟（实验性）"
 
 msgid "Bridge rebuilds motion state at each interruption. Spring runs every animated property as one persistent spring: an interruption only changes the target, so rapid chains stay perfectly smooth."
 msgstr "桥接模式在每次打断时重建运动状态。弹簧模式为每个动画属性运行一个常驻弹簧：打断只是改变目标点，因此连续快速打断依然完美顺滑。"
+
+msgid "Reversal buffering"
+msgstr "反向缓冲"
+
+msgid "Hard"
+msgstr "生硬"
+
+msgid "Strong"
+msgstr "强劲"
