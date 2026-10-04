@@ -537,6 +537,19 @@ export default class SpringEaseExtension extends Extension {
                 for (const s of plan.simItems)
                     attachSim(s);
                 for (const d of plan.drivers) {
+                    if (d.lateFade) {
+                        // Late fade is for fade-OUT only (keep the window
+                        // visible while it travels). A fade-IN driven late
+                        // holds the window near-invisible for most of a
+                        // stretched restore — the "disappears for a while
+                        // on double interrupts". Native fade-ins are
+                        // prompt; leave them alone.
+                        const ftr = target.get_transition?.(d.prop);
+                        const fiv = ftr?.get_interval?.();
+                        if (!fiv || fiv.peek_final_value?.() >=
+                                fiv.peek_initial_value?.())
+                            continue;
+                    }
                     // Write through the ClutterAnimatable interface — the same
                     // channel the transition itself uses. A plain property set
                     // emits notify, which invalidates stage views and makes
