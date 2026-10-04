@@ -385,8 +385,12 @@ export default class SpringEaseExtension extends Extension {
             // stretched duration (window vanished mid-animation with the
             // curve library disabled): drive opacity with a late fade
             // (progress^2.5) whenever the duration is scaled, in both
-            // engine modes.
+            // engine modes. Window actors ONLY: overview clones and chrome
+            // fade for a living with their native curves (a late fade on
+            // the outgoing workspace preview kept it opaque through the
+            // whole slide and flashed out at the end).
             const stretchFade = Math.abs(dscale - 1.0) > 0.01 &&
+                target.meta_window !== undefined &&
                 animated.some(([p]) => p === 'opacity');
             if (stretchFade)
                 drivers.push({prop: 'opacity', isInt: true,
