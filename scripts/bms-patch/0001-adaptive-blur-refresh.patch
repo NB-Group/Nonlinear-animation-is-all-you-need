@@ -1,30 +1,35 @@
 --- a/src/conveniences/paint_signals.js
 +++ b/src/conveniences/paint_signals.js
-@@ -1,8 +1,44 @@
+@@ -1,8 +1,49 @@
  import GObject from 'gi://GObject';
 +import GLib from 'gi://GLib';
  import Clutter from 'gi://Clutter';
  
  const PAINTS_BETWEEN_REPAINTS = 2;
  
-+// True when opaque window actors cover every sample point of the surface's
-+// region: the surface's pixels cannot reach the screen, so freezing it is
-+// visually identical. Universal geometric rule, no per-component logic.
-+function fullyCoveredByOpaqueWindows(actor) {
++// True when fullscreen windows cover every sample point of the surface's
++// region. A fullscreen window fills its whole monitor, so a surface ≥98%
++// covered by them is not visible to the user and refreshing it is pure
++// waste. Pixel-translucent windows (terminals, editors with background
++// opacity) cannot be told apart from opaque ones through public APIs, but
++// they are almost never fullscreen: restricting the freeze to fullscreen
++// cover keeps the blur behind them refreshing.
++function coveredByFullscreenWindows(actor) {
 +    let [ax, ay] = actor.get_transformed_position();
 +    let [w, h] = actor.get_transformed_size();
 +    if (!(w > 0 && h > 0) || !Number.isFinite(ax) || !Number.isFinite(ay))
 +        return false;
 +    ax = Math.round(ax); ay = Math.round(ay);
 +    w = Math.round(w); h = Math.round(h);
-+    const wins = global.get_window_actors().map(wa => {
++    const rects = global.get_window_actors().map(wa => {
 +        const m = wa.meta_window;
-+        if (!m || m.minimized)
++        if (!m || m.minimized || !m.is_fullscreen() || !wa.visible)
 +            return null;
-+        const r = m.get_frame_rect();
-+        return {r, op: wa.opacity, map: m.get_window_type() === 0};
-+    }).filter(x => x && x.map && x.op >= 250);
-+    if (!wins.length)
++        if (wa.opacity < 250)
++            return null;
++        return m.get_frame_rect();
++    }).filter(r => r);
++    if (!rects.length)
 +        return false;
 +    const GRID = 8;
 +    let covered = 0, total = 0;
@@ -33,9 +38,9 @@
 +            total++;
 +            const px = ax + (gx + 0.5) * w / GRID;
 +            const py = ay + (gy + 0.5) * h / GRID;
-+            if (wins.some(win =>
-+                px >= win.r.x && px < win.r.x + win.r.width &&
-+                py >= win.r.y && py < win.r.y + win.r.height))
++            if (rects.some(r =>
++                px >= r.x && px < r.x + r.width &&
++                py >= r.y && py < r.y + r.height))
 +                covered++;
 +        }
 +    }
@@ -45,7 +50,7 @@
  export const PaintSignals = class PaintSignals {
      constructor(connections) {
          this.entries = new Map();
-@@ -12,24 +48,79 @@
+@@ -12,24 +53,80 @@
      connect(actor, blur_effect) {
          this.disconnect_all_for_actor(actor);
  
@@ -87,25 +92,26 @@
 +            if (now - last_refresh < min_interval)
 +                return;
 +            last_refresh = now;
-+            // Coverage freeze: when opaque windows fully cover this
-+            // surface its pixels never reach the screen, so stop
-+            // painting (and blurring) entirely; a slow poll thaws it
-+            // the moment coverage ends.
-+            if (megapixels > 0.2 &&
-+                    fullyCoveredByOpaqueWindows(actor)) {
++            // Coverage freeze: when fullscreen windows fully cover this
++            // surface its blurred pixels cannot be seen changing, so stop
++            // recomputing the blur. The last blurred frame stays in place
++            // (the surface itself is never hidden); a slow poll thaws the
++            // refresh the moment coverage ends or the feature is off.
++            if (megapixels > 0.2 && coveredByFullscreenWindows(actor)) {
 +                st.frozen = true;
-+                actor.visible = false;
 +                st.thawPoll = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
 +                    500, () => {
 +                        try {
-+                            if (!fullyCoveredByOpaqueWindows(actor)) {
++                            if (!adaptive_enabled() ||
++                                    !coveredByFullscreenWindows(actor)) {
 +                                st.frozen = false;
-+                                actor.visible = true;
 +                                st.thawPoll = 0;
 +                                return GLib.SOURCE_REMOVE;
 +                            }
 +                            return GLib.SOURCE_CONTINUE;
 +                        } catch (e) {
++                            st.frozen = false;
++                            st.thawPoll = 0;
 +                            return GLib.SOURCE_REMOVE;
 +                        }
 +                    });
@@ -130,7 +136,7 @@
      }
  
      disconnect_all_for_actor(actor) {
-@@ -39,6 +130,15 @@
+@@ -39,6 +136,10 @@
  
          this.entries.delete(actor);
          entry.paint_effect.set_callback(null);
@@ -138,11 +144,6 @@
 +            GLib.source_remove(entry.st.thawPoll);
 +            entry.st.thawPoll = 0;
 +        }
-+        // Un-freeze: a settings-triggered reconnect reuses this actor,
-+        // and a surface left invisible by the coverage freeze would
-+        // lose its blur for good.
-+        if (entry.st.frozen)
-+            actor.visible = true;
          this.connections.disconnect(actor, entry.destroy_id);
          actor.remove_effect(entry.paint_effect);
      }

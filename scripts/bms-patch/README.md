@@ -25,6 +25,21 @@ install == master except these edits).
 Requires relogin to load (GJS caches extension modules per session; BMS
 disable/enable does NOT reload them).
 
+## V2.1 (2026-10-10): freeze redesign after the translucency incident
+
+V2 froze surfaces hidden (`actor.visible = false`) whenever opaque-looking
+windows covered them. VS Code / terminals have translucent pixels but
+window-actor opacity 255, and no public API separates the two, so the
+backdrop behind them was frozen AND hidden — blur vanished. V2.1:
+
+- never touches actor visibility (a false freeze shows a stale blurred
+  frame, never a missing blur)
+- freezes only under ≥98% coverage by FULLSCREEN windows (they fill their
+  monitor; translucent windows are almost never fullscreen, so their
+  backdrops keep refreshing)
+- skips hidden window actors (overview shows clones, real actors hidden)
+- the thaw poll also unfreezes when adaptive-refresh is switched off
+
 ## Measurement ledger (shell CPU, instantaneous via /proc deltas, this machine)
 
 - no plugins: ~9%
