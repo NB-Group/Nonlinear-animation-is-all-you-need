@@ -159,8 +159,16 @@ export default class SpringEasePrefs extends ExtensionPreferences {
             Gio.SettingsBindFlags.DEFAULT);
         motionGroup.add(momentumRow);
 
-        const reversalRow = new Adw.ActionRow({
+        const reversalSwitchRow = new Adw.SwitchRow({
             title: _('Reversal buffering'),
+            subtitle: _('When an animation is interrupted into the opposite direction, it decelerates and rebounds instead of changing direction instantly. Turn off for native hard reversals.'),
+        });
+        settings.bind('reversal-enabled', reversalSwitchRow, 'active',
+            Gio.SettingsBindFlags.DEFAULT);
+        motionGroup.add(reversalSwitchRow);
+
+        const reversalRow = new Adw.ActionRow({
+            title: _('Reversal depth'),
         });
         const reversalBox = new Gtk.Box({
             orientation: Gtk.Orientation.HORIZONTAL, spacing: 8,

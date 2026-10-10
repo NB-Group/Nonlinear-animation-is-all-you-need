@@ -1,0 +1,11 @@
+
+ Performance counter stats for process id '3235':
+
+         19,329.04 msec task-clock:u                                                          
+    31,302,715,085      cpu_atom/cycles/u                                                       (6.17%)
+    39,392,395,298      cpu_core/cycles/u                                                       (93.83%)
+    15,857,865,561      cpu_atom/instructions/u                                                 (6.17%)
+    25,616,178,550      cpu_core/instructions/u                                                 (93.83%)
+
+      20.001001348 seconds time elapsed
+

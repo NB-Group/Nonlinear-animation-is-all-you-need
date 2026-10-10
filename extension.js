@@ -236,7 +236,8 @@ export default class SpringEaseExtension extends Extension {
             // Direction-aware inertia scaling: same-direction carry (app
             // list paging) and reversal buffering (minimize/restore bounce)
             // are different phenomena and are tuned independently.
-            const reversal = settings.get_double('reversal');
+            const reversal = settings.get_boolean('reversal-enabled')
+                ? settings.get_double('reversal') : 0;
 
             // The overview state adjustment is the choreography spine; the
             // shell sequences transitions around its native duration, and a

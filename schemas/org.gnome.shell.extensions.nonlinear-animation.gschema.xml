@@ -50,6 +50,11 @@
       <summary>Reversal buffering</summary>
       <description>Reversal inertia: the decelerate-and-rebound feel when an animation is interrupted into the opposite direction (minimize right after starting a restore). 0 = hard reversal, 1 = balanced bounce, 2 = deep elastic compression.</description>
     </key>
+    <key name="reversal-enabled" type="b">
+      <default>true</default>
+      <summary>Reversal buffering enabled</summary>
+      <description>Master switch for the reversal bounce, independent of the same-direction momentum. Off = interrupted reversals change direction immediately (native behavior).</description>
+    </key>
     <key name="continuity" type="b">
       <default>true</default>
       <summary>Interruption continuity</summary>
