@@ -201,8 +201,6 @@ export default class SpringEaseExtension extends Extension {
             }
         };
         const planEaseInner = (target, props, forcedProp, forcedValue) => {
-            if (!settings.get_boolean('enabled'))
-                return null;
             if (!props || typeof props !== 'object' || props.duration === undefined)
                 return null;
             if (props.duration < settings.get_int('threshold-ms'))
@@ -443,7 +441,8 @@ export default class SpringEaseExtension extends Extension {
 
             return {curve: c, drivers, adjSeeds, simItems, numericProps,
                 animatedProps: animated.map(([p]) => p),
-                carryMomentum: continuityOn};
+                carryMomentum: continuityOn,
+                momentum, reversal};
         };
 
         // --- after the original ease --------------------------------------
@@ -483,9 +482,15 @@ export default class SpringEaseExtension extends Extension {
                         s.initValue, final, dur, write);
                     if (fresh && plan.carryMomentum)
                         simSeed(target, s.prop, s.initValue, s.velocity);
-                    // Interruption continuity OFF means "no buffering": the
-                    // engine keeps position continuity (restart from the
-                    // current visual, like native) but carries no velocity.
+                    // The momentum/reversal knobs must steer the CARRIED
+                    // state too, not only fresh takeovers: an existing sim
+                    // keeps its velocity across a retarget, so rescale it
+                    // per direction here. This is also what makes
+                    // "reversal = 0" a true off switch for the buffering,
+                    // and continuity OFF zeroes it entirely.
+                    if (!fresh && Number.isFinite(sim.vel))
+                        simSeed(target, s.prop, undefined, sim.vel *
+                            (sim.vel >= 0 ? plan.momentum : plan.reversal));
                     if (!plan.carryMomentum)
                         simSeed(target, s.prop, undefined, 0);
                     // Rewrite the interval's initial to the sim's position:

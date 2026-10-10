@@ -202,12 +202,10 @@ export default class SpringEasePrefs extends ExtensionPreferences {
 
         // ---- Behavior ----
         const switchGroup = new Adw.PreferencesGroup({title: _('Behavior')});
-        const enableRow = new Adw.SwitchRow({
-            title: _('Enabled'),
-            subtitle: _('Quick A/B compare; off = GNOME default easing.'),
-        });
-        settings.bind('enabled', enableRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-        switchGroup.add(enableRow);
+        // No "Enabled" master switch here on purpose: disabling the
+        // extension in the Extensions manager is the A/B path, and a
+        // second switch left off silently killed all effects after a
+        // manager toggle (lived once, never again).
 
         const magicLampRow = new Adw.SwitchRow({
             title: _('Ease magic-lamp minimize'),
