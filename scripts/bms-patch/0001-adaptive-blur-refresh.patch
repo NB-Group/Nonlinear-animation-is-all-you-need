@@ -1,0 +1,215 @@
+--- a/src/conveniences/paint_signals.js
++++ b/src/conveniences/paint_signals.js
+@@ -1,8 +1,44 @@
+ import GObject from 'gi://GObject';
++import GLib from 'gi://GLib';
+ import Clutter from 'gi://Clutter';
+ 
+ const PAINTS_BETWEEN_REPAINTS = 2;
+ 
++// True when opaque window actors cover every sample point of the surface's
++// region: the surface's pixels cannot reach the screen, so freezing it is
++// visually identical. Universal geometric rule, no per-component logic.
++function fullyCoveredByOpaqueWindows(actor) {
++    let [ax, ay] = actor.get_transformed_position();
++    let [w, h] = actor.get_transformed_size();
++    if (!(w > 0 && h > 0) || !Number.isFinite(ax) || !Number.isFinite(ay))
++        return false;
++    ax = Math.round(ax); ay = Math.round(ay);
++    w = Math.round(w); h = Math.round(h);
++    const wins = global.get_window_actors().map(wa => {
++        const m = wa.meta_window;
++        if (!m || m.minimized)
++            return null;
++        const r = m.get_frame_rect();
++        return {r, op: wa.opacity, map: m.get_window_type() === 0};
++    }).filter(x => x && x.map && x.op >= 250);
++    if (!wins.length)
++        return false;
++    const GRID = 8;
++    let covered = 0, total = 0;
++    for (let gy = 0; gy < GRID; gy++) {
++        for (let gx = 0; gx < GRID; gx++) {
++            total++;
++            const px = ax + (gx + 0.5) * w / GRID;
++            const py = ay + (gy + 0.5) * h / GRID;
++            if (wins.some(win =>
++                px >= win.r.x && px < win.r.x + win.r.width &&
++                py >= win.r.y && py < win.r.y + win.r.height))
++                covered++;
++        }
++    }
++    return covered >= total * 0.98;
++}
++
+ export const PaintSignals = class PaintSignals {
+     constructor(connections) {
+         this.entries = new Map();
+@@ -12,24 +48,79 @@
+     connect(actor, blur_effect) {
+         this.disconnect_all_for_actor(actor);
+ 
++        // Adaptive refresh, one rule for every surface: the minimum
++        // interval between forced refreshes scales with the surface's
++        // area. Small surfaces (panel, dock) are the interactive hot
++        // spots and keep the full rate; large backdrops are effectively
++        // low-frequency (a blur stacked over blurred content converges
++        // toward static), so refreshing them slowly is visually free.
++        // Hidden or minimized surfaces never paint and thus never
++        // refresh at all. Clamped to [42ms, 250ms] so nothing lags
++        // behind interactive use and nothing spins.
++        const MS_PER_MEGAPIXEL = 100;
++        let last_refresh = 0;
+         let paints_to_skip = 0;
++        const st = { frozen: false, thawPoll: 0 };
++        const adaptive_enabled = () =>
++            global.blur_my_shell?._settings?.ADAPTIVE_REFRESH ?? true;
+         const paint_effect = new PaintCallbackEffect();
+         paint_effect.set_callback(() => {
+-            if (paints_to_skip > 0) {
+-                paints_to_skip--;
++            if (st.frozen)
++                return;
++            // Off switch: upstream behavior, repaint every 3rd paint.
++            if (!adaptive_enabled()) {
++                if (paints_to_skip > 0) {
++                    paints_to_skip--;
++                    return;
++                }
++                paints_to_skip = PAINTS_BETWEEN_REPAINTS;
++                blur_effect.queue_repaint();
++                return;
++            }
++            const now = Date.now();
++            const megapixels = (actor.width * actor.height) / 1000000;
++            const min_interval = Math.max(42,
++                Math.min(250, megapixels * MS_PER_MEGAPIXEL));
++            if (now - last_refresh < min_interval)
++                return;
++            last_refresh = now;
++            // Coverage freeze: when opaque windows fully cover this
++            // surface its pixels never reach the screen, so stop
++            // painting (and blurring) entirely; a slow poll thaws it
++            // the moment coverage ends.
++            if (megapixels > 0.2 &&
++                    fullyCoveredByOpaqueWindows(actor)) {
++                st.frozen = true;
++                actor.visible = false;
++                st.thawPoll = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
++                    500, () => {
++                        try {
++                            if (!fullyCoveredByOpaqueWindows(actor)) {
++                                st.frozen = false;
++                                actor.visible = true;
++                                st.thawPoll = 0;
++                                return GLib.SOURCE_REMOVE;
++                            }
++                            return GLib.SOURCE_CONTINUE;
++                        } catch (e) {
++                            return GLib.SOURCE_REMOVE;
++                        }
++                    });
+                 return;
+             }
+-
+-            paints_to_skip = PAINTS_BETWEEN_REPAINTS;
+             blur_effect.queue_repaint();
+         });
+ 
+         actor.add_effect(paint_effect);
+         const destroy_id = this.connections.connect(actor, 'destroy', () => {
+             paint_effect.set_callback(null);
++            if (st.thawPoll) {
++                GLib.source_remove(st.thawPoll);
++                st.thawPoll = 0;
++            }
+             this.entries.delete(actor);
+         });
+-        this.entries.set(actor, { paint_effect, destroy_id });
++        this.entries.set(actor, { paint_effect, destroy_id, st });
+     }
+ 
+     disconnect_all_for_actor(actor) {
+@@ -39,6 +130,15 @@
+ 
+         this.entries.delete(actor);
+         entry.paint_effect.set_callback(null);
++        if (entry.st.thawPoll) {
++            GLib.source_remove(entry.st.thawPoll);
++            entry.st.thawPoll = 0;
++        }
++        // Un-freeze: a settings-triggered reconnect reuses this actor,
++        // and a surface left invisible by the coverage freeze would
++        // lose its blur for good.
++        if (entry.st.frozen)
++            actor.visible = true;
+         this.connections.disconnect(actor, entry.destroy_id);
+         actor.remove_effect(entry.paint_effect);
+     }
+--- a/src/conveniences/keys.js
++++ b/src/conveniences/keys.js
+@@ -8,6 +8,7 @@
+             { type: Type.I, name: "hacks-level" },
+             { type: Type.B, name: "rounded-blur-found" },
+             { type: Type.B, name: "debug" },
++            { type: Type.B, name: "adaptive-refresh" },
+         ]
+     },
+     {
+--- a/schemas/org.gnome.shell.extensions.blur-my-shell.gschema.xml
++++ b/schemas/org.gnome.shell.extensions.blur-my-shell.gschema.xml
+@@ -94,6 +94,11 @@
+             <default>false</default>
+             <summary>Boolean, set to true to activate debug mode (more verbose journalctl logs)</summary>
+         </key>
++        <!-- ADAPTIVE BLUR REFRESH -->
++        <key type="b" name="adaptive-refresh">
++            <default>true</default>
++            <summary>Boolean, whether dynamic blur refreshes are throttled by surface area and paused when fully covered by opaque windows</summary>
++        </key>
+ 
+         <child name='overview' schema='org.gnome.shell.extensions.blur-my-shell.overview'></child>
+         <child name='appfolder' schema='org.gnome.shell.extensions.blur-my-shell.appfolder'></child>
+--- a/src/preferences/other.js
++++ b/src/preferences/other.js
+@@ -22,6 +22,7 @@
+         'coverflow_alt_tab_pipeline_choose_row',
+ 
+         'hack_level',
++        'adaptive_blur_refresh',
+         'debug',
+         'reset'
+     ],
+@@ -77,6 +78,10 @@
+             Gio.SettingsBindFlags.DEFAULT
+         );
+         this.preferences.settings.bind(
++            'adaptive-refresh', this._adaptive_blur_refresh, 'active',
++            Gio.SettingsBindFlags.DEFAULT
++        );
++        this.preferences.settings.bind(
+             'debug', this._debug, 'active',
+             Gio.SettingsBindFlags.DEFAULT
+         );
+--- a/resources/ui/other.ui
++++ b/resources/ui/other.ui
+@@ -120,6 +120,19 @@
+ 
+         <child>
+           <object class="AdwActionRow">
++            <property name="title" translatable="yes">Adaptive blur refresh</property>
++            <property name="subtitle" translatable="yes">Throttles dynamic blur refreshes by surface area, and stops repainting surfaces entirely covered by opaque windows. The rendered result is unchanged; turn this off if you suspect otherwise.</property>
++            <property name="activatable-widget">adaptive_blur_refresh</property>
++            <child>
++              <object class="GtkSwitch" id="adaptive_blur_refresh">
++                <property name="valign">center</property>
++              </object>
++            </child>
++          </object>
++        </child>
++
++        <child>
++          <object class="AdwActionRow">
+             <property name="title" translatable="yes">Artifact handling</property>
+             <property name="subtitle" translatable="yes">Controls how aggressively dynamic blur is repainted. The “No artifact” option disables clipped redraws globally and can reduce GNOME Shell performance.</property>
+             <property name="activatable-widget">hack_level</property>
