@@ -20,10 +20,28 @@ Files touched (installed ← repo path):
 - ui/other.ui ← resources/ui/other.ui (Performance group row)
 
 `upstream/` holds pristine master copies fetched 2026-10-10 (verified: local v74
-install == master except these edits).
+install == master except these edits). 2026-10-12: BMS auto-updated to v75 and
+wiped the patch (third wipe); all five files were byte-identical in v75, patch
+re-applied cleanly via the build-dir procedure below. Expect further wipes on
+every EGO update — re-run it after each.
 
-Requires relogin to load (GJS caches extension modules per session; BMS
-disable/enable does NOT reload them).
+```sh
+# re-apply after a BMS update (from this directory):
+B=~/.local/share/gnome-shell/extensions/blur-my-shell@aunetx
+rm -rf build && mkdir -p build/src/conveniences build/src/preferences \
+    build/resources/ui build/schemas
+cp $B/conveniences/paint_signals.js $B/conveniences/keys.js build/src/conveniences/
+cp $B/preferences/other.js build/src/preferences/
+cp $B/ui/other.ui build/resources/ui/
+cp $B/schemas/org.gnome.shell.extensions.blur-my-shell.gschema.xml build/schemas/
+cd build && patch -p1 --fuzz=0 < ../0001-adaptive-blur-refresh.patch \
+    && cp src/conveniences/paint_signals.js src/conveniences/keys.js $B/conveniences/ \
+    && cp src/preferences/other.js $B/preferences/ \
+    && cp resources/ui/other.ui $B/ui/ \
+    && cp schemas/*.xml $B/schemas/ \
+    && glib-compile-schemas $B/schemas/
+```
+Then a relogin is required (module cache; disable/enable does NOT reload).
 
 ## V2.1 (2026-10-10): freeze redesign after the translucency incident
 
