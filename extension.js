@@ -903,12 +903,18 @@ export default class SpringEaseExtension extends Extension {
         // The deferral is PER ACTOR: several windows can be minimized in one
         // dispatch, and a single shared id would cancel every window's
         // deferral but the last (that one kept the native full-speed drop).
+        // The deferral is PER ACTOR: several windows can be minimized in one
+        // dispatch, and a single shared id would cancel every window's
+        // deferral but the last (that one kept the native full-speed drop).
+        // A plain Map (not a WeakMap) so disable() can enumerate and remove
+        // every pending id — eGo review requires a matching source_remove
+        // for each scheduled source (v0.1 rejection, finding 4).
         if (!this._lampDefers)
-            this._lampDefers = new WeakMap();
+            this._lampDefers = new Map();
         const prevId = this._lampDefers.get(actor);
         if (prevId)
             GLib.source_remove(prevId);
-        this._lampDefers.set(actor, GLib.idle_add(GLib.PRIORITY_HIGH_IDLE, () => {
+        const id = GLib.idle_add(GLib.PRIORITY_HIGH_IDLE, () => {
             this._lampDefers.delete(actor);
             if (!this._magicLampTimers)
                 this._magicLampTimers = new WeakMap();
@@ -934,7 +940,8 @@ export default class SpringEaseExtension extends Extension {
                 }
             }
             return GLib.SOURCE_REMOVE;
-        }));
+        });
+        this._lampDefers.set(actor, id);
     }
 
     disable() {
@@ -946,8 +953,13 @@ export default class SpringEaseExtension extends Extension {
         global.stage.disconnectObject(this);
         global.window_manager.disconnectObject(this);
         this._settings.disconnectObject(this);
-        // Pending magic-lamp deferrals are one-shot HIGH_IDLEs whose bodies
-        // feature-test every step; if one fires after disable it no-ops.
+        // Paired source_remove for every pending magic-lamp deferral (eGo
+        // rule since v0.1's finding 4; the Map lets us enumerate them all).
+        if (this._lampDefers) {
+            for (const id of this._lampDefers.values())
+                GLib.source_remove(id);
+            this._lampDefers.clear();
+        }
         this._removeOverviewPatch();
         simShutdown();
         bridgeShutdown();
