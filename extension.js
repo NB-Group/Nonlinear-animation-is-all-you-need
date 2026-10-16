@@ -322,8 +322,20 @@ export default class SpringEaseExtension extends Extension {
                                  Math.abs(nowValue - state.final) < 0.1 * rangeAbs))
                                 fromValue = state.value;
                             const start = fromValue ?? state.value;
+                            // Which inertia applies is a property of THIS
+                            // interruption, not of the velocity's sign: a
+                            // reversal is when the old velocity opposes the
+                            // NEW travel direction. Selecting the knob by
+                            // sign(state.velocity) alone made a
+                            // restore-then-minimize interrupt (positive
+                            // velocity, downward travel) take the momentum
+                            // channel, so switching reversal buffering off
+                            // still bounced in that direction.
+                            const opposing = (newTarget - start) !== 0 &&
+                                state.velocity *
+                                    (newTarget - start) < 0;
                             const carried = state.velocity *
-                                (state.velocity >= 0 ? momentum : reversal);
+                                (opposing ? reversal : momentum);
                             cand = {
                                 prop, isInt, typeName,
                                 gtype: pspec.value_type,
@@ -486,12 +498,16 @@ export default class SpringEaseExtension extends Extension {
                     // The momentum/reversal knobs must steer the CARRIED
                     // state too, not only fresh takeovers: an existing sim
                     // keeps its velocity across a retarget, so rescale it
-                    // per direction here. This is also what makes
+                    // per direction here. The channel is chosen by whether
+                    // the carried velocity opposes the NEW travel (see the
+                    // plan-side comment), which is also what makes
                     // "reversal = 0" a true off switch for the buffering,
                     // and continuity OFF zeroes it entirely.
-                    if (!fresh && Number.isFinite(sim.vel))
+                    if (!fresh && Number.isFinite(sim.vel)) {
+                        const opposing = (final - sim.pos) * sim.vel < 0;
                         simSeed(target, s.prop, undefined, sim.vel *
-                            (sim.vel >= 0 ? plan.momentum : plan.reversal));
+                            (opposing ? plan.momentum : plan.reversal));
+                    }
                     if (!plan.carryMomentum)
                         simSeed(target, s.prop, undefined, 0);
                     // Rewrite the interval's initial to the sim's position:

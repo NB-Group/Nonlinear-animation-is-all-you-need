@@ -369,3 +369,27 @@ msgstr "生硬"
 
 msgid "Strong"
 msgstr "强劲"
+
+msgid "Reversal depth"
+msgstr "反向缓冲深度"
+
+msgid "When an animation is interrupted into the opposite direction, it decelerates and rebounds instead of changing direction instantly. Turn off for native hard reversals."
+msgstr "动画被打断为相反方向时，先减速回弹再折返，而不是瞬间变向。关闭后恢复原版的生硬反转。"
+
+msgid "Reversal buffering enabled"
+msgstr "启用反向缓冲"
+
+msgid "Master switch for the reversal bounce, independent of the same-direction momentum. Off = interrupted reversals change direction immediately (native behavior)."
+msgstr "反向回弹的总开关，独立于同向动量。关闭后打断的反向动画立即变向（原版行为）。"
+
+msgid "Reversal inertia: the decelerate-and-rebound feel when an animation is interrupted into the opposite direction (minimize right after starting a restore). 0 = hard reversal, 1 = balanced bounce, 2 = deep elastic compression."
+msgstr "反向惯性：动画被打断为相反方向时的减速回弹手感（例如恢复动画刚开始就最小化）。0 = 生硬反转，1 = 均衡回弹，2 = 深度弹性压缩。"
+
+msgid "Same-direction inertia: how much velocity carries over when the new animation continues the old direction (e.g. flipping two app-grid pages quickly). 0 = GNOME-like re-acceleration, 1 = balanced, 2 = exaggerated."
+msgstr "同向惯性：新动画延续原方向时速度保留多少（例如应用列表快速连翻两页）。0 = 原版式重新加速，1 = 均衡，2 = 夸张。"
+
+msgid "Replace GNOME's easing curves with the selected curve. Off: GNOME's own curves play untouched; interruption continuity still applies."
+msgstr "用选中的曲线替换 GNOME 的缓动曲线。关闭时 GNOME 原生曲线原样播放，打断连续性仍然生效。"
+
+msgid "Bridge rebuilds motion state per interruption (stable, default). Spring runs every animated property as one persistent spring simulation: interrupting only changes the target, so any number of rapid interruptions stays perfectly smooth (experimental)."
+msgstr "桥接模式在每次打断时重建运动状态（稳定，默认）。弹簧模式为每个动画属性运行一个常驻弹簧模拟：打断只是改变目标点，因此任意次数的连续快速打断都完美顺滑（实验性）。"
