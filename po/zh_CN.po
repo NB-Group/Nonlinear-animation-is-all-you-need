@@ -393,3 +393,6 @@ msgstr "用选中的曲线替换 GNOME 的缓动曲线。关闭时 GNOME 原生�
 
 msgid "Bridge rebuilds motion state per interruption (stable, default). Spring runs every animated property as one persistent spring simulation: interrupting only changes the target, so any number of rapid interruptions stays perfectly smooth (experimental)."
 msgstr "桥接模式在每次打断时重建运动状态（稳定，默认）。弹簧模式为每个动画属性运行一个常驻弹簧模拟：打断只是改变目标点，因此任意次数的连续快速打断都完美顺滑（实验性）。"
+
+msgid "A curve can have at most 24 points."
+msgstr "一条曲线最多 24 个控制点。"

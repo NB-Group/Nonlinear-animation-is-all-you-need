@@ -312,6 +312,11 @@ export const CurveEditorDialog = GObject.registerClass({
 });
 
 function validatePointsLocal(points) {
+    // Mirrors Curves.validatePoints' cap: the library silently drops curves
+    // with more than 24 points, so the editor must refuse them here instead
+    // of letting a save vanish on the next parse.
+    if (points.length > 24)
+        return _('A curve can have at most 24 points.');
     let prevX = -Infinity;
     for (const p of points) {
         if (p[0] <= prevX)

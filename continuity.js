@@ -36,6 +36,24 @@ import {compileCurve} from './easing.js';
 // target (GObject) -> Map(propName -> record)
 const registry = new WeakMap();
 
+// Same contract as simengine's `live`: set false by bridgeShutdown() so
+// per-frame handlers still attached to live transitions stop writing the
+// moment the extension is disabled (the "still animating after I turned it
+// off" ghost — simengine had this, the bridge path did not).
+let live = true;
+
+export function bridgeShutdown() {
+    live = false;
+}
+
+export function bridgeStartup() {
+    live = true;
+}
+
+export function bridgeLive() {
+    return live;
+}
+
 // Visual sampler: the analytic reconstruction (wall clock since the ease
 // call plus the assumed curve) runs AHEAD of what is actually painted —
 // window restores start measurably later than their ease call and the
@@ -246,6 +264,12 @@ export function driveTransition(target, prop, curve, write, seed = null) {
     const range = final - init;
 
     const handler = tr.connect_after('new-frame', (timeline, elapsed) => {
+        if (!live) {
+            // extension disabled mid-animation: stop driving; the native
+            // transition underneath finishes on its own
+            tr.disconnect(handler);
+            return;
+        }
         if (elapsed >= dur) {
             // final frame: land exactly on the target instead of leaving the
             // curve's last sampled (≈1) value
@@ -286,6 +310,8 @@ export function driveTransition(target, prop, curve, write, seed = null) {
             // taken over by the next idle tick, settle on the target. A
             // real handoff has already installed its own transition.
             GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                if (!live)
+                    return GLib.SOURCE_REMOVE;
                 try {
                     if (target.get_transition?.(prop) === null ||
                         target.get_transition?.(prop) === undefined)

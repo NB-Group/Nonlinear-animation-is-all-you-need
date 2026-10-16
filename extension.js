@@ -31,6 +31,9 @@ import * as Curves from './curves.js';
 import {
     MAX_V0,
     MIN_V0,
+    bridgeLive,
+    bridgeShutdown,
+    bridgeStartup,
     driveTransition,
     motionState,
     noteModeAnimation,
@@ -105,6 +108,7 @@ const MAGIC_LAMP_UNMINIMIZE = 'unminimize-magic-lamp-effect';
 export default class SpringEaseExtension extends Extension {
     enable() {
         simStartup();
+        bridgeStartup();
         this._settings = this.getSettings();
         this._migrateSettings();
 
@@ -217,12 +221,14 @@ export default class SpringEaseExtension extends Extension {
                 // velocity. We keep GNOME's velocity-matched EASE_OUT_CUBIC (its
                 // t=0 derivative matches the release velocity) but stretch the
                 // duration a touch so the deceleration phase reads more.
-                // gesture-duration-scale defaults 1.3; 1.0 = fully native.
-                props.mode = Clutter.AnimationMode.EASE_OUT_CUBIC;
+                // gscale defaults 1.3; 1.0 = gestures fully native (the schema
+                // documents that value as untouched, so nothing is forced).
                 const gscale = settings.get_double('gesture-duration-scale');
-                if (gscale !== 1.0)
+                if (gscale !== 1.0) {
+                    props.mode = Clutter.AnimationMode.EASE_OUT_CUBIC;
                     props.duration = Math.min(5000,
                         Math.round(props.duration * gscale));
+                }
                 return null;  // native path, no driver, no continuity
             }
 
@@ -506,7 +512,7 @@ export default class SpringEaseExtension extends Extension {
                     if (!fresh && Number.isFinite(sim.vel)) {
                         const opposing = (final - sim.pos) * sim.vel < 0;
                         simSeed(target, s.prop, undefined, sim.vel *
-                            (opposing ? plan.momentum : plan.reversal));
+                            (opposing ? plan.reversal : plan.momentum));
                     }
                     if (!plan.carryMomentum)
                         simSeed(target, s.prop, undefined, 0);
@@ -584,6 +590,11 @@ export default class SpringEaseExtension extends Extension {
                         let oh = 0;
                         const derive = () => {
                             try {
+                                if (!bridgeLive()) {
+                                    if (oh)
+                                        oTr.disconnect(oh);
+                                    return;
+                                }
                                 const s = target.scale_x;
                                 if (typeof s !== 'number' ||
                                         !Number.isFinite(s))
@@ -709,7 +720,6 @@ export default class SpringEaseExtension extends Extension {
 
         // Optional: ease the compiz-alike-magic-lamp-effect minimize/unminimize
         // timeline so it decelerates instead of stopping dead. Live-toggleable.
-        this._deferredEaseId = 0;
         this._installMagicLampHooks();
         this._settings.connectObject(
             'changed::magic-lamp-easing', () => this._installMagicLampHooks(),
@@ -760,6 +770,11 @@ export default class SpringEaseExtension extends Extension {
             if (this._visible && this._animationInProgress &&
                 this._shownState === 'HIDING') {
                 try {
+                    // Stock _animateVisible sets this flag; without it
+                    // Main.overview.closing stays true for the takeover's
+                    // duration and window animations misjudge the overview
+                    // state around the reversal.
+                    this._visibleTarget = true;
                     this._changeShownState('SHOWING');
                     this._overview.controls.gestureEnd(state, 250,
                         () => this._showDone());
@@ -881,10 +896,16 @@ export default class SpringEaseExtension extends Extension {
         // before magic-lamp has called add_effect_with_name(). By the next
         // HIGH_IDLE the effect (and the timeline created in its vfunc_set_actor)
         // is in place, and the timeline's first new-frame has not fired yet.
-        if (this._deferredEaseId)
-            GLib.source_remove(this._deferredEaseId);
-        this._deferredEaseId = GLib.idle_add(GLib.PRIORITY_HIGH_IDLE, () => {
-            this._deferredEaseId = 0;
+        // The deferral is PER ACTOR: several windows can be minimized in one
+        // dispatch, and a single shared id would cancel every window's
+        // deferral but the last (that one kept the native full-speed drop).
+        if (!this._lampDefers)
+            this._lampDefers = new WeakMap();
+        const prevId = this._lampDefers.get(actor);
+        if (prevId)
+            GLib.source_remove(prevId);
+        this._lampDefers.set(actor, GLib.idle_add(GLib.PRIORITY_HIGH_IDLE, () => {
+            this._lampDefers.delete(actor);
             if (!this._magicLampTimers)
                 this._magicLampTimers = new WeakMap();
             const prev = this._magicLampTimers.get(actor);
@@ -909,7 +930,7 @@ export default class SpringEaseExtension extends Extension {
                 }
             }
             return GLib.SOURCE_REMOVE;
-        });
+        }));
     }
 
     disable() {
@@ -921,12 +942,11 @@ export default class SpringEaseExtension extends Extension {
         global.stage.disconnectObject(this);
         global.window_manager.disconnectObject(this);
         this._settings.disconnectObject(this);
-        if (this._deferredEaseId) {
-            GLib.source_remove(this._deferredEaseId);
-            this._deferredEaseId = 0;
-        }
+        // Pending magic-lamp deferrals are one-shot HIGH_IDLEs whose bodies
+        // feature-test every step; if one fires after disable it no-ops.
         this._removeOverviewPatch();
         simShutdown();
+        bridgeShutdown();
         this._orig = null;
         this._settings = null;
     }

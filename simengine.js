@@ -83,6 +83,11 @@ export function simRetarget(actor, prop, initValue, target, durationMs,
         prev.omega = omega;
         prev.zeta = zeta;
         prev.write = write;
+        // Retargets reuse THIS object, so object identity cannot tell a
+        // landing glide from a live takeover (the old `cur !== sim` check
+        // never fired for them, and the glide's budget-expiry settle wrote
+        // the NEW target mid-flight). A generation counter can.
+        prev.gen = (prev.gen ?? 0) + 1;
         return {sim: prev, fresh: false};
     }
     const sim = {
@@ -144,11 +149,12 @@ export function simLand(actor, prop, write, budgetMs = 250) {
     const sim = sims.get(actor)?.get(prop);
     if (!sim)
         return;
+    const gen = sim.gen ?? 0;
     const t0 = Date.now();
     const tick = () => {
         const cur = sims.get(actor)?.get(prop);
-        if (cur !== sim)
-            return;  // dropped, or a newer retarget owns the slot
+        if (cur !== sim || (sim.gen ?? 0) !== gen)
+            return;  // dropped, or a newer retarget took the sim over
         integrate(sim, 0.016);
         const done = Math.abs(sim.target - sim.pos) < 1e-3 &&
             Math.abs(sim.vel) < 1e-3;
