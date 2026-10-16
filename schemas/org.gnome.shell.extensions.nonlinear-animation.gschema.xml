@@ -100,8 +100,8 @@
     </key>
     <key name="enabled" type="b">
       <default>true</default>
-      <summary>Enabled</summary>
-      <description>Master switch (A/B without disabling the whole extension).</description>
+      <summary>Enabled (legacy)</summary>
+      <description>Legacy key from earlier versions, no longer read. Pause the extension from the Extensions manager instead.</description>
     </key>
     <key name="engine" type="s">
       <choices>

@@ -35,9 +35,17 @@ const sims = new WeakMap();
 // of finishing the animation it was in the middle of (the "still
 // interrupts after I turned it off" ghost).
 let live = true;
+// Pending landing-glide timers, so simShutdown can remove every one of
+// them (eGo review requires a matching source_remove for each scheduled
+// source; the chain self-drains within one 16ms tick on disable anyway,
+// but the pairing is explicit).
+const landTimers = new Set();
 
 export function simShutdown() {
     live = false;
+    for (const id of landTimers)
+        GLib.source_remove(id);
+    landTimers.clear();
 }
 
 export function simStartup() {
@@ -151,7 +159,17 @@ export function simLand(actor, prop, write, budgetMs = 250) {
         return;
     const gen = sim.gen ?? 0;
     const t0 = Date.now();
+    let id = 0;  // current pending timer for this glide (0 = first, sync tick)
     const tick = () => {
+        if (!live) {
+            // disabled mid-glide: stop rescheduling and stop writing, the
+            // same contract the module header promises
+            landTimers.delete(id);
+            const m = sims.get(actor);
+            if (m?.get(prop) === sim)
+                m.delete(prop);
+            return;
+        }
         const cur = sims.get(actor)?.get(prop);
         if (cur !== sim || (sim.gen ?? 0) !== gen)
             return;  // dropped, or a newer retarget took the sim over
@@ -167,14 +185,20 @@ export function simLand(actor, prop, write, budgetMs = 250) {
             const m = sims.get(actor);
             if (m?.get(prop) === sim)
                 m.delete(prop);
+            landTimers.delete(id);
             return;
         }
         try {
             write(sim.pos);
         } catch {
+            // actor gone: stop the glide
+            landTimers.delete(id);
             return;
         }
-        GLib.timeout_add(GLib.PRIORITY_HIGH_IDLE, 16, tick);
+        const tid = GLib.timeout_add(GLib.PRIORITY_HIGH_IDLE, 16, tick);
+        landTimers.delete(id);
+        id = tid;
+        landTimers.add(tid);
     };
     tick();
 }

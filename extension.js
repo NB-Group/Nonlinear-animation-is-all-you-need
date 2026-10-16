@@ -529,6 +529,7 @@ export default class SpringEaseExtension extends Extension {
                         iv.set_initial(gv);
                         write(sim.pos);
                     } catch {
+                        // interval or actor gone between plan and attach
                         return;
                     }
                     // Integrate from the transition's own new-frame, AFTER
@@ -607,6 +608,7 @@ export default class SpringEaseExtension extends Extension {
                                     (s - lo) / (hi - lo)));
                                 writeOp(255 * p);
                             } catch {
+                                // target destroyed mid-derive: stop riding
                                 if (oh)
                                     oTr.disconnect(oh);
                             }
@@ -770,6 +772,9 @@ export default class SpringEaseExtension extends Extension {
         // Symmetric takeover: a show requested during an animation ALSO exits
         // through the gesture channel (reopening mid-close works, and the
         // deferred show of a triple-click reverses instead of queueing).
+        // Deliberately NOT gated on the continuity setting: the hide takeover
+        // is the fix for the reported complaint (so it honors the switch),
+        // while the show direction has no native defect to opt out of.
         ov._animateVisible = function (state) {
             if (this._visible && this._animationInProgress &&
                 this._shownState === 'HIDING') {
@@ -831,6 +836,8 @@ export default class SpringEaseExtension extends Extension {
             // settles the state machine whenever the takeover's transition
             // ends without completing; a newer takeover has already moved the
             // shown state, which makes the guard a no-op for stale watchers.
+            // The connection is transition-scoped: it dies with the
+            // stateAdjustment's 'value' transition, nothing to disconnect.
             const tr = ov._overview.controls._stateAdjustment
                 ?.get_transition?.('value');
             tr?.connect('stopped', (t, finished) => {
@@ -868,6 +875,7 @@ export default class SpringEaseExtension extends Extension {
                 return {...c, solver: settings.get_string('spring-solver')};
             return c;
         } catch {
+            // malformed user-curve data in GSettings: fall back to default
             return null;
         }
     }
@@ -900,9 +908,6 @@ export default class SpringEaseExtension extends Extension {
         // before magic-lamp has called add_effect_with_name(). By the next
         // HIGH_IDLE the effect (and the timeline created in its vfunc_set_actor)
         // is in place, and the timeline's first new-frame has not fired yet.
-        // The deferral is PER ACTOR: several windows can be minimized in one
-        // dispatch, and a single shared id would cancel every window's
-        // deferral but the last (that one kept the native full-speed drop).
         // The deferral is PER ACTOR: several windows can be minimized in one
         // dispatch, and a single shared id would cancel every window's
         // deferral but the last (that one kept the native full-speed drop).

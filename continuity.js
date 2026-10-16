@@ -44,6 +44,17 @@ let live = true;
 
 export function bridgeShutdown() {
     live = false;
+    // Stop the repeating sampler timer and drop every pending entry: a
+    // pending heal idle otherwise lingers up to the animation cap. Every
+    // scheduled source gets a matching source_remove (eGo rule).
+    samplers.clear();
+    if (samplerId) {
+        GLib.source_remove(samplerId);
+        samplerId = 0;
+    }
+    for (const id of healIds)
+        GLib.source_remove(id);
+    healIds.clear();
 }
 
 export function bridgeStartup() {
@@ -66,6 +77,9 @@ const SAMPLE_MS = 25;
 const SAMPLE_FRESH_MS = 150;
 const samplers = new Set();  // {ref: WeakRef(target), read(), rec}
 let samplerId = 0;
+// Pending one-shot settle heals, removed on fire and swept by
+// bridgeShutdown (matching source_remove for every scheduled source).
+const healIds = new Set();
 
 function pumpSamplers() {
     const now = Date.now();
@@ -83,6 +97,7 @@ function pumpSamplers() {
         try {
             v = s.read(t);
         } catch {
+            // reading the property threw: target disposed mid-sample
             samplers.delete(s);
             continue;
         }
@@ -309,7 +324,8 @@ export function driveTransition(target, prop, curve, write, seed = null) {
             // and the restored window stayed translucent). If nothing has
             // taken over by the next idle tick, settle on the target. A
             // real handoff has already installed its own transition.
-            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+            const healId = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                healIds.delete(healId);
                 if (!live)
                     return GLib.SOURCE_REMOVE;
                 try {
@@ -321,7 +337,7 @@ export function driveTransition(target, prop, curve, write, seed = null) {
                 }
                 return GLib.SOURCE_REMOVE;
             });
-        }
+            healIds.add(healId);        }
     });
     return tr;
 }
