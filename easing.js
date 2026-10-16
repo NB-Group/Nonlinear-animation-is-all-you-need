@@ -11,7 +11,7 @@
 // couple of trig calls (springs) or a dozen multiply/adds (splines).
 
 // ---------------------------------------------------------------------------
-// Native Clutter modes — closed forms for value and derivative.
+// Native Clutter modes: closed forms for value and derivative.
 // Used for gallery thumbnails, velocity readback of in-flight animations we
 // wrapped with a plain mode, and the continuity engine's entry-velocity math.
 // tau is normalized time in [0, 1]; value is progress (may exceed [0, 1] for
@@ -112,7 +112,7 @@ export function sampleBezier(p1x, p1y, p2x, p2y, n = 20) {
 }
 
 // ---------------------------------------------------------------------------
-// Monotone cubic Hermite spline (Fritsch–Carlson tangents).
+// Monotone cubic Hermite spline (Fritsch-Carlson tangents).
 // points: [[x, y], ...] with x strictly increasing; x in [0, 1] is normalized
 // time, y is progress and may exceed [0, 1] (overshoot).
 // makeSpline() precomputes everything once; eval/deriv are allocation-free.
@@ -140,7 +140,7 @@ export function makeSpline(points) {
                 const w1 = 2 * (xs[i] - xs[i - 1]) + (xs[i + 1] - xs[i]);
                 const w2 = (xs[i] - xs[i - 1]) + 2 * (xs[i + 1] - xs[i]);
                 ms[i] = (d[i - 1] * w1 + d[i] * w2) / (w1 + w2);
-                // Fritsch–Carlson clamp keeps the segment monotone
+                // Fritsch-Carlson clamp keeps the segment monotone
                 const lim = 3 * Math.min(Math.abs(d[i - 1]), Math.abs(d[i]));
                 if (Math.abs(ms[i]) > lim)
                     ms[i] = Math.sign(ms[i]) * lim;
@@ -148,7 +148,7 @@ export function makeSpline(points) {
         }
     }
 
-    // closure state — no allocation inside eval/deriv
+    // closure state; no allocation inside eval/deriv
     let seg = 0;
 
     const findSeg = x => {
@@ -190,7 +190,7 @@ export function makeSpline(points) {
 }
 
 // ---------------------------------------------------------------------------
-// Springs — damped harmonic oscillator, target 1, start 0, initial velocity
+// Springs: damped harmonic oscillator, target 1, start 0, initial velocity
 // v0 (progress units per second of real time). All evaluators work on
 // normalized time tau in [0, 1], mapped to `periodSec` of real time; the
 // caller passes the transition's duration. Overshoot beyond 1 is intentional

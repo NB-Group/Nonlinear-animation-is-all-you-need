@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
 // Preferences for "Nonlinear animation is all you need". Everything here is
-// live — the extension reads GSettings on every animation, so changes apply
+// live: the extension reads GSettings on every animation, so changes apply
 // instantly.
 //
 // Layout: a curve gallery (pick a preset, craft your own, import/export),
@@ -53,7 +53,7 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         // ---- Curve gallery ----
         this._gallery = new Adw.PreferencesGroup({
             title: _('Animation curve'),
-            description: _('Pick a curve — it applies instantly. Create your own, or share curves as files.'),
+            description: _('Pick a curve and it applies instantly. Create your own, or share curves as files.'),
         });
         this._settingSignalIds = [];
         const customCurveRow = new Adw.SwitchRow({
@@ -62,7 +62,7 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         });
         settings.bind('custom-curves', customCurveRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         this._gallery.add(customCurveRow);
-        // Dim the CARD grid only — the switch must stay clickable to turn
+        // Dim the CARD grid only; the switch must stay clickable to turn
         // the feature back on (dimming the whole group self-locked it).
         const syncGalleryDim = () => {
             if (this._flow)
@@ -255,7 +255,7 @@ export default class SpringEasePrefs extends ExtensionPreferences {
 
         const gestureScaleRow = new Adw.SpinRow({
             title: _('Gesture duration scale'),
-            subtitle: _('Stretches gesture commits (workspace switch, paging) — curve stays velocity-matched so no jolt. 1.0 = native.'),
+            subtitle: _('Stretches gesture commits (workspace switch, paging). The curve stays velocity-matched, so there is no jolt. 1.0 = native.'),
             adjustment: Gtk.Adjustment.new(1.3, 1.0, 3.0, 0.1, 0.5, 2),
             digits: 2,
         });

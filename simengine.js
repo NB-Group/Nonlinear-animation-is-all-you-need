@@ -13,7 +13,7 @@
 // This module implements that model for actor properties:
 //   - one sim per (actor, property), surviving across transitions;
 //   - a retarget changes the target (and re-tunes stiffness from the new
-//     requested duration); position and velocity carry over untouched —
+//     requested duration); position and velocity carry over untouched;
 //     initValue from the caller is applied ONLY at first takeover, because
 //     by then the shell's reset has already happened;
 //   - integration runs per transition via the caller's
@@ -72,7 +72,7 @@ function integrate(sim, dt) {
 }
 
 // Hand one animation to the engine. Returns {sim, fresh}: an EXISTING sim
-// keeps its position/velocity (the interruption case — that state is the
+// keeps its position/velocity (the interruption case: that state is the
 // whole point); a fresh one starts at initValue.
 export function simRetarget(actor, prop, initValue, target, durationMs,
     write) {
@@ -126,7 +126,7 @@ export function simSeed(actor, prop, value, velocity) {
 // One frame of the simulation, driven from the transition's own
 // connect_after('new-frame'). Writes the integrated position through the
 // stored closure and returns it (null if the sim is gone or the write
-// failed — the caller should then stop ticking).
+// failed; the caller should then stop ticking).
 export function simAdvance(actor, prop, dtMs) {
     if (!live)
         return null;
@@ -150,7 +150,7 @@ export function simAdvance(actor, prop, dtMs) {
 // residual was left (the tail-of-restore small jump). The sim keeps
 // integrating on a short timer until it is within epsilon, capped at
 // budgetMs; a newer retarget (transition replaced this one) simply takes
-// over — the tick detects it and exits.
+// over; the tick detects it and exits.
 export function simLand(actor, prop, write, budgetMs = 250) {
     if (!live)
         return;

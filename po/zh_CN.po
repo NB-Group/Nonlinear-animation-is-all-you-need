@@ -26,7 +26,7 @@ msgid "Animation curve"
 msgstr "动画曲线"
 
 #: prefs.js:56
-msgid "Pick a curve — it applies instantly. Create your own, or share curves as files."
+msgid "Pick a curve and it applies instantly. Create your own, or share curves as files."
 msgstr "选一条曲线即可，立即生效。也可以自己画，或用文件分享曲线。"
 
 #: prefs.js:77
@@ -148,7 +148,7 @@ msgid "Gesture duration scale"
 msgstr "手势时长倍数"
 
 #: prefs.js:193
-msgid "Stretches gesture commits (workspace switch, paging) — curve stays velocity-matched so no jolt. 1.0 = native."
+msgid "Stretches gesture commits (workspace switch, paging). The curve stays velocity-matched, so there is no jolt. 1.0 = native."
 msgstr "拉长手势收尾动画（工作区切换、翻页），曲线保持速度匹配所以不顿挫。1.0 = 原生。"
 
 #: prefs.js:259
@@ -250,8 +250,8 @@ msgid "Easing curve (legacy)"
 msgstr "缓动曲线（旧版）"
 
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:19
-msgid "Legacy curve key from v1–v5. Still read once for migration to selected-curve; otherwise unused."
-msgstr "v1–v5 的旧曲线键。仅在迁移到 selected-curve 时读取一次，其余情况不再使用。"
+msgid "Legacy curve key from v1-v5. Still read once for migration to selected-curve; otherwise unused."
+msgstr "v1-v5 的旧曲线键。仅在迁移到 selected-curve 时读取一次，其余情况不再使用。"
 
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:23
 msgid "Settings schema version"

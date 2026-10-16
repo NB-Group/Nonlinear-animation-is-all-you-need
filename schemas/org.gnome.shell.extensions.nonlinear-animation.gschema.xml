@@ -16,7 +16,7 @@
       </choices>
       <default>"ease-in-out-cubic"</default>
       <summary>Easing curve (legacy)</summary>
-      <description>Legacy curve key from v1–v5. Still read once for migration to selected-curve; otherwise unused.</description>
+      <description>Legacy curve key from v1-v5. Still read once for migration to selected-curve; otherwise unused.</description>
     </key>
     <key name="schema-version" type="i">
       <default>1</default>

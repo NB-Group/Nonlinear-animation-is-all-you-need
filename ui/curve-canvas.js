@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// Shared curve painting for "Nonlinear animation is all you need" — used by
+// Shared curve painting for "Nonlinear animation is all you need", used by
 // the gallery thumbnails and the curve editor in prefs. Pure GTK4/cairo, no
 // Clutter, so the preview and the real shell animation share the exact same
 // evaluators from easing.js.

@@ -9,7 +9,7 @@
 //   {id, name, kind: 'spline', points: [[0,0], [0.3,1.06], [1,1]]}
 //   {id, name, kind: 'spring', damping: 0.62, omega: 8}
 // Built-in ids are 'preset:<slug>'; user curves get 'user:<hex>'.
-// This module has no GI imports — it is shared by the shell and prefs sides.
+// This module has no GI imports; it is shared by the shell and prefs sides.
 
 import {sampleBezier} from './easing.js';
 
@@ -21,7 +21,7 @@ export const FORMAT_TAG = 'nonlinear-animation/curve';
 export const FORMAT_VERSION = 1;
 export const MAX_USER_CURVES = 100;
 
-// The curated gallery — deliberately tiny: two done-for-you presets plus
+// The curated gallery, deliberately tiny: two done-for-you presets plus
 // whatever the user creates/imports. Springs are intentionally NOT presets:
 // macOS's lesson is that springs belong in the physics layer (interruption
 // momentum), picked for you, not in the picker.
@@ -75,7 +75,7 @@ export function validateCurve(curve) {
 
 export function validatePoints(points) {
     if (!Array.isArray(points) || points.length < 2 || points.length > 24)
-        return 'need 2–24 points';
+        return 'need 2-24 points';
     let prevX = -Infinity;
     for (const p of points) {
         if (!Array.isArray(p) || p.length !== 2 ||

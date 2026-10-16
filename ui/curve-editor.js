@@ -4,7 +4,7 @@
 //
 // Interactions (kept deliberately small):
 //   drag a point          move it (x stays strictly between its neighbors,
-//                          endpoints are pinned — interruption continuity
+//                          endpoints are pinned; interruption continuity
 //                          relies on a normalized [0,1] domain)
 //   double-click empty    add a point at that x
 //   right-click a point   remove it (down to endpoints-only = linear)
@@ -292,7 +292,7 @@ export const CurveEditorDialog = GObject.registerClass({
             return;
         }
         const pts = this._points.map(p => [+p[0].toFixed(4), +p[1].toFixed(4)]);
-        // pin endpoint values exactly — x pinning is enforced during drag,
+        // pin endpoint values exactly; x pinning is enforced during drag,
         // but y on the first/last point must also be exactly 0/1
         pts[0][1] = 0;
         pts[pts.length - 1][1] = 1;

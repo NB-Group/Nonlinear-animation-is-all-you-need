@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// Nonlinear animation is all you need — make GNOME's overview/workspace/window
+// Nonlinear animation is all you need: make GNOME's overview/workspace/window
 // animations feel more macOS-like (smooth easing curves, springs, velocity
 // continuity) by wrapping the prototype ease methods gnome-shell adds in
 // js/ui/environment.js.
 //
 // Curve model (curves.js): native-mode presets, N-point monotone splines and
-// damped springs. Native modes are applied by just swapping params.mode —
-// zero overhead. Custom curves are driven per-frame: the transition is left
+// damped springs. Native modes are applied by just swapping params.mode
+// (zero overhead). Custom curves are driven per-frame: the transition is left
 // fully native (completion signals, remove-on-complete, the shell's own
 // callbacks all keep working) and a connect_after('new-frame') handler writes
 // the eased value right after the class handler each frame (continuity.js).
 //
 // Interruption continuity: when a new ease replaces a still-playing one,
-// gnome-shell restarts from the current position with zero velocity — the
+// gnome-shell restarts from the current position with zero velocity: the
 // "second app-grid page re-accelerates from standstill" jolt. We read the old
 // animation's velocity from our registry and seed the new curve with it.
 //
@@ -173,7 +173,7 @@ export default class SpringEaseExtension extends Extension {
                 lastGestureTime = Date.now();
             } else if (t === Clutter.EventType.SCROLL) {
                 // 2-finger touchpad scroll (app-grid / overview paging) arrives as
-                // a SCROLL event whose source is FINGER/CONTINUOUS — NOT a mouse
+                // a SCROLL event whose source is FINGER/CONTINUOUS, NOT a mouse
                 // wheel. Without this, 2-finger pages aren't seen as gestures and
                 // get the full in-out+scaled treatment (the "stutter").
                 const src = event.get_scroll_source?.();
@@ -198,7 +198,7 @@ export default class SpringEaseExtension extends Extension {
                 return planEaseInner(target, props, forcedProp, forcedValue);
             } catch (e) {
                 // Never let a settings/read hiccup break the caller's ease,
-                // but never swallow it silently again either — a dead
+                // but never swallow it silently again either; a dead
                 // engine shipped for four days behind a quiet catch.
                 console.warn(`nonlinear-animation: ${e.message}`);
                 return null;
@@ -319,7 +319,7 @@ export default class SpringEaseExtension extends Extension {
                             // left the whole upper half of a scale travel
                             // (range ~0.85) unprotected: interrupts past the
                             // halfway point bridged nothing and the driver
-                            // started from the reset value — the window
+                            // started from the reset value, so the window
                             // instantly grew to full size. Any jump larger
                             // than ~1% of the old travel is a reset.
                             if (typeof nowValue === 'number' &&
@@ -487,7 +487,7 @@ export default class SpringEaseExtension extends Extension {
                         return;
                     // Retarget and same-turn write ALWAYS: while the
                     // transition may not be playing yet (window map
-                    // latency), the shell's reset is already on the actor —
+                    // latency), the shell's reset is already on the actor;
                     // deferring the retarget left the reset value painted
                     // for frames (the full-size flash at an early
                     // interrupt).
@@ -569,7 +569,7 @@ export default class SpringEaseExtension extends Extension {
                 // Opacity is a function of POSITION, not time: the window
                 // fades in proportion to how far it has traveled along its
                 // minimize/restore path, so whatever the velocity profile
-                // does — interruptions, reversals, spring overshoot — the
+                // does (interruptions, reversals, spring overshoot); the
                 // fade stays glued to the motion instead of fighting it on
                 // an independent timeline. Ride the opacity transition's
                 // own frames (guaranteed the last write after its class
@@ -623,7 +623,7 @@ export default class SpringEaseExtension extends Extension {
                     }
                 }
                 for (const d of plan.drivers) {
-                    // Write through the ClutterAnimatable interface — the same
+                    // Write through the ClutterAnimatable interface, the same
                     // channel the transition itself uses. A plain property set
                     // emits notify, which invalidates stage views and makes
                     // mutter kill the very transition we are driving; the
@@ -912,7 +912,7 @@ export default class SpringEaseExtension extends Extension {
         // dispatch, and a single shared id would cancel every window's
         // deferral but the last (that one kept the native full-speed drop).
         // A plain Map (not a WeakMap) so disable() can enumerate and remove
-        // every pending id — eGo review requires a matching source_remove
+        // every pending id; eGo review requires a matching source_remove
         // for each scheduled source (v0.1 rejection, finding 4).
         if (!this._lampDefers)
             this._lampDefers = new Map();

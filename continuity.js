@@ -11,7 +11,7 @@
 //
 // We keep a registry of every animation we wrapped (WeakMap keyed by the
 // animatable, one record per property) holding its curve, interval and start
-// time — enough to reconstruct the on-screen POSITION and VELOCITY
+// time: enough to reconstruct the on-screen POSITION and VELOCITY
 // analytically at any moment, even after the transition is gone. Records
 // survive for a short grace after stopping, so a re-trigger can bridge over
 // the reset:
@@ -19,7 +19,7 @@
 //   anti-teleport  new animation is driven from the old visual position
 //                  instead of the caller's reset value (the driver writes
 //                  after the class handler, so no teleport frame is painted);
-//   momentum       the new curve is a spring seeded with the old velocity —
+//   momentum       the new curve is a spring seeded with the old velocity;
 //                  same-direction AND reversal: a reversal just means the
 //                  spring starts moving "backwards" before physics pulls it
 //                  to the new target, exactly like the real world.
@@ -39,7 +39,7 @@ const registry = new WeakMap();
 // Same contract as simengine's `live`: set false by bridgeShutdown() so
 // per-frame handlers still attached to live transitions stop writing the
 // moment the extension is disabled (the "still animating after I turned it
-// off" ghost — simengine had this, the bridge path did not).
+// off" ghost; simengine had this, the bridge path did not).
 let live = true;
 
 export function bridgeShutdown() {
@@ -66,7 +66,7 @@ export function bridgeLive() {
 }
 
 // Visual sampler: the analytic reconstruction (wall clock since the ease
-// call plus the assumed curve) runs AHEAD of what is actually painted —
+// call plus the assumed curve) runs AHEAD of what is actually painted:
 // window restores start measurably later than their ease call and the
 // effective curve differs from the assumed one. Bridging an interrupt from
 // the analytic position teleported the window UPWARD (the long-standing
@@ -223,7 +223,7 @@ export function motionState(target, prop, now = Date.now()) {
 // degenerates to smoothstep.
 function retargetCompiled(v0, _durationMs) {
     // Asymmetric: same-direction momentum carries ~fully. A reversal also
-    // carries ~85% of the measured speed now — a shallow clamp (-0.3) killed
+    // carries ~85% of the measured speed now; a shallow clamp (-0.3) killed
     // the incoming speed within one frame, which read as an instant stop;
     // a deeper nod spreads the deceleration over visible frames. The cap
     // keeps the nod around a fifth of the travel.
@@ -251,7 +251,7 @@ function retargetCompiled(v0, _durationMs) {
 // isn't possible.
 export function driveTransition(target, prop, curve, write, seed = null) {
     const tr = target.get_transition?.(prop);
-    // a Clutter.Transition IS a Clutter.Timeline — use it directly
+    // a Clutter.Transition IS a Clutter.Timeline, use it directly
     if (!tr?.is_playing?.())
         return null;
     const iv = tr.get_interval?.();
@@ -368,7 +368,7 @@ export function noteModeAnimation(target, prop, curve, getTransition) {
 // mechanics: rewriting the interval's initial value bridges over a
 // reset-to-start (anti-teleport), and a native cubic-bezier progress curve
 // whose initial slope equals the measured velocity carries the momentum.
-// No JS runs per frame on adjustments — their value writes go through
+// No JS runs per frame on adjustments: their value writes go through
 // notify::value, and the controls layer's reaction to that makes mutter kill
 // any transition we drive from connect_after.
 // `gv` is a preallocated GValue typed to the property's GType; `bezier` is a
