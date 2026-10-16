@@ -238,7 +238,11 @@ export default class SpringEaseExtension extends Extension {
 
             const springEngine = settings.get_string('engine') === 'spring';
             const applyCurve = settings.get_boolean('custom-curves');
-            const momentum = settings.get_double('momentum');
+            // Momentum is a fixed behavior (the slider is gone from the
+            // UI): the switch is a fuse for isolating bugs, not a tuner.
+            // The stored double still honors anyone who tuned it by hand.
+            const momentum = settings.get_boolean('momentum-enabled')
+                ? settings.get_double('momentum') : 0;
             // Direction-aware inertia scaling: same-direction carry (app
             // list paging) and reversal buffering (minimize/restore bounce)
             // are different phenomena and are tuned independently.

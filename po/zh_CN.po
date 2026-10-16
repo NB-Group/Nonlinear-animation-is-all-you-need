@@ -396,3 +396,15 @@ msgstr "桥接模式在每次打断时重建运动状态（稳定，默认）。
 
 msgid "A curve can have at most 24 points."
 msgstr "一条曲线最多 24 个控制点。"
+
+msgid "Recommended on. An interrupted animation keeps its speed when the new animation continues the same direction (e.g. flipping two app-grid pages quickly). Turning it off is only meant for isolating unexpected behavior."
+msgstr "建议开启。同方向打断时保留当前速度，而不是从静止重新加速（如应用列表快速连翻两页）。关闭仅用于隔离意外问题。"
+
+msgid "Recommended on. An interruption into the opposite direction decelerates and rebounds instead of changing direction instantly. Turning it off is only meant for isolating unexpected behavior; you then get the native hard reversal."
+msgstr "建议开启。被打断为相反方向时先减速回弹再折返，而不是瞬间变向。关闭仅用于隔离意外问题，将回到原版的生硬反转。"
+
+msgid "Interruption momentum enabled"
+msgstr "启用打断动量"
+
+msgid "Master switch for same-direction momentum. Recommended on; turning it off is only meant for isolating unexpected behavior."
+msgstr "同向动量总开关。建议开启；关闭仅用于隔离意外问题。"

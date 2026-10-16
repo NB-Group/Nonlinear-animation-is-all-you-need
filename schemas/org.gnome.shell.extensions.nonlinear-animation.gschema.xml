@@ -44,6 +44,11 @@
       <summary>Interruption momentum</summary>
       <description>Same-direction inertia: how much velocity carries over when the new animation continues the old direction (e.g. flipping two app-grid pages quickly). 0 = GNOME-like re-acceleration, 1 = balanced, 2 = exaggerated.</description>
     </key>
+    <key name="momentum-enabled" type="b">
+      <default>true</default>
+      <summary>Interruption momentum enabled</summary>
+      <description>Master switch for same-direction momentum. Recommended on; turning it off is only meant for isolating unexpected behavior.</description>
+    </key>
     <key name="reversal" type="d">
       <default>1.0</default>
       <range min="0.0" max="2.0"/>

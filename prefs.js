@@ -133,35 +133,17 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         settings.bind('continuity', continuityRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         motionGroup.add(continuityRow);
 
-        const momentumRow = new Adw.ActionRow({
+        const momentumRow = new Adw.SwitchRow({
             title: _('Interruption momentum'),
+            subtitle: _('Recommended on. An interrupted animation keeps its speed when the new animation continues the same direction (e.g. flipping two app-grid pages quickly). Turning it off is only meant for isolating unexpected behavior.'),
         });
-        const momentumBox = new Gtk.Box({
-            orientation: Gtk.Orientation.HORIZONTAL, spacing: 8,
-            hexpand: true, valign: Gtk.Align.CENTER,
-        });
-        momentumBox.append(new Gtk.Label({
-            label: _('Subtle'), css_classes: ['caption', 'dim-label'],
-        }));
-        const momentumScale = new Gtk.Scale({
-            adjustment: Gtk.Adjustment.new(1.0, 0.0, 2.0, 0.05, 0.25, 0),
-            draw_value: true, digits: 2, hexpand: true,
-            valign: Gtk.Align.CENTER,
-        });
-        momentumScale.set_format_value_func((_s, v) => `×${v.toFixed(2)}`);
-        momentumBox.append(momentumScale);
-        momentumBox.append(new Gtk.Label({
-            label: _('Strong'), css_classes: ['caption', 'dim-label'],
-        }));
-        momentumRow.add_suffix(momentumBox);
-        momentumRow.activatable_widget = momentumScale;
-        settings.bind('momentum', momentumScale.adjustment, 'value',
+        settings.bind('momentum-enabled', momentumRow, 'active',
             Gio.SettingsBindFlags.DEFAULT);
         motionGroup.add(momentumRow);
 
         const reversalSwitchRow = new Adw.SwitchRow({
             title: _('Reversal buffering'),
-            subtitle: _('When an animation is interrupted into the opposite direction, it decelerates and rebounds instead of changing direction instantly. Turn off for native hard reversals.'),
+            subtitle: _('Recommended on. An interruption into the opposite direction decelerates and rebounds instead of changing direction instantly. Turning it off is only meant for isolating unexpected behavior; you then get the native hard reversal.'),
         });
         settings.bind('reversal-enabled', reversalSwitchRow, 'active',
             Gio.SettingsBindFlags.DEFAULT);
