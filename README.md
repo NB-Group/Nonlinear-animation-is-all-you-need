@@ -87,7 +87,7 @@ Then log out and back in (Wayland reloads extensions only at login).
 
 ## Compatibility
 
-GNOME Shell 50. The wrapped API is stable across 46-50 in practice; only 50 is declared until the newer code paths are tested on older shells.
+GNOME Shell 49, 50 and 51. The wrapped API is stable across 45-51 in practice; these three are declared because their internals were read side by side. The ease entry points, the overview state machine and the workspace animation internals are unchanged across them. GNOME 51 adds a reduced-motion preference and a completion-signal fix; the extension honors the former and is unaffected by the latter.
 
 ## Known limits
 

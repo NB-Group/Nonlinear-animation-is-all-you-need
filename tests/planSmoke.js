@@ -37,6 +37,12 @@ const state = {
     MODE_MAP: {'ease-in-out-expo': 19},
     Main: {overview: {_overview: {controls: {_stateAdjustment: {}}}}},
     Clutter: {AnimationMode: {EASE_OUT_CUBIC: 6}, Actor: function Actor() {}},
+    // Stub for the accessibility gate: animations enabled, and the
+    // reduced-motion enum absent exactly like GNOME 49/50.
+    St: {
+        Settings: {get: () => ({enableAnimations: true})},
+        ReducedMotion: undefined,
+    },
 };
 const fn = new Function(...Object.keys(state),
     `${body}\nreturn planEaseInner;`)(...Object.values(state));

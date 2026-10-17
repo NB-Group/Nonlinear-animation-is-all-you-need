@@ -211,6 +211,17 @@ export default class SpringEaseExtension extends Extension {
                 return null;
             if (Date.now() - bootTime < BOOT_GRACE_MS)
                 return null;
+            // Accessibility: when the user asks the system to reduce motion
+            // or disable animations, play exactly as GNOME would. GNOME 51
+            // wires the reduced-motion preference into its own window
+            // animations; easing them anyway would stretch the very motion
+            // the setting removes. enable-animations exists on 49-51;
+            // St.ReducedMotion is 51-only, so it is feature-tested.
+            const stSettings = St.Settings.get();
+            if (!stSettings.enableAnimations ||
+                (St.ReducedMotion !== undefined &&
+                 stSettings.reducedMotion === St.ReducedMotion.REDUCE))
+                return null;
 
             const grace = settings.get_int('gesture-grace-ms');
             const inGrace = grace > 0 && Date.now() - lastGestureTime < grace;
