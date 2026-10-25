@@ -146,16 +146,16 @@ export default class SpringEaseExtension extends Extension {
             if (disposeHooked.has(target))
                 return;
             disposeHooked.add(target);
-            try {
-                target.connect('destroy', () => {
-                    disposedTargets.add(target);
-                    simDropActor(target);
-                    dropSamplersOf(target);
-                });
-            } catch {
-                // not a Clutter.Actor (e.g. St.Adjustment): no destroy
-                // signal; those are never disposed mid-note in practice
-            }
+            // Only Clutter.Actor has a destroy signal; St.Adjustment
+            // (the other animated target type) is a plain GObject, and
+            // adjustments are never disposed mid-note in practice.
+            if (!(target instanceof Clutter.Actor))
+                return;
+            target.connect('destroy', () => {
+                disposedTargets.add(target);
+                simDropActor(target);
+                dropSamplersOf(target);
+            });
         };
 
         // Touchpad-gesture exclusion: when the user drives an overview/workspace
