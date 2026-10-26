@@ -51,11 +51,11 @@ import {
 } from './simengine.js';
 import {makeBezierEvaluator} from './easing.js';
 
-// WorkspaceAnimation drives one MonitorGroup per monitor to slide workspaces.
-// Those actors size themselves from the monitor layout while animating, and a
-// changed duration/curve there has been reported to make secondary monitors
-// flicker on multi-head fractional-scale setups (issue #1), so we leave them
-// entirely alone.
+// WorkspaceAnimation drives one MonitorGroup per monitor through a custom
+// 'progress' property (gdouble) eased via ease_property. Easing it used to
+// flicker secondary monitors on multi-head fractional-scale setups (issue
+// #1), so it is gated behind the workspace-switch setting; users on that
+// hardware can turn it off while everyone else keeps the eased switch.
 import * as WorkspaceAnimation from
     'resource:///org/gnome/shell/ui/workspaceAnimation.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -249,11 +249,7 @@ export default class SpringEaseExtension extends Extension {
 
             const springEngine = settings.get_string('engine') === 'spring';
             const applyCurve = settings.get_boolean('custom-curves');
-            // Momentum is a fixed behavior (the slider is gone from the
-            // UI): the switch is a fuse for isolating bugs, not a tuner.
-            // The stored double still honors anyone who tuned it by hand.
-            const momentum = settings.get_boolean('momentum-enabled')
-                ? settings.get_double('momentum') : 0;
+            const momentum = settings.get_double('momentum');
             // Direction-aware inertia scaling: same-direction carry (app
             // list paging) and reversal buffering (minimize/restore bounce)
             // are different phenomena and are tuned independently.
@@ -611,6 +607,15 @@ export default class SpringEaseExtension extends Extension {
                                         oTr.disconnect(oh);
                                     return;
                                 }
+                                // The window actor can be destroyed while
+                                // its opacity transition still ticks (panel
+                                // workspace dots during rapid switches);
+                                // reading it then floods CRITICALs, so bail.
+                                if (disposedTargets.has(target)) {
+                                    if (oh)
+                                        oTr.disconnect(oh);
+                                    return;
+                                }
                                 const s = target.scale_x;
                                 if (typeof s !== 'number' ||
                                         !Number.isFinite(s))
@@ -699,8 +704,11 @@ export default class SpringEaseExtension extends Extension {
             }
         };
 
+        // MonitorGroup (workspace switching) is eased only when the
+        // workspace-switch setting allows it; see the import note above.
         const skipActor = actor =>
-            MonitorGroup && actor instanceof MonitorGroup;
+            MonitorGroup && actor instanceof MonitorGroup &&
+            !settings.get_boolean('workspace-switch');
 
         Clutter.Actor.prototype.ease = function (props) {
             if (skipActor(this))
@@ -747,6 +755,14 @@ export default class SpringEaseExtension extends Extension {
             'changed::overview-patch', () => {
                 this._removeOverviewPatch();
                 this._installOverviewPatch();
+            },
+            this);
+
+        this._installWorkspacePatch();
+        this._settings.connectObject(
+            'changed::workspace-switch', () => {
+                this._removeWorkspacePatch();
+                this._installWorkspacePatch();
             },
             this);
     }
@@ -876,6 +892,109 @@ export default class SpringEaseExtension extends Extension {
         this._overviewPatched = false;
     }
 
+    // Workspace switching continuity. Stock GNOME tears the whole switch
+    // down when a second switch arrives mid-flight: mutter emits
+    // kill-switch-workspace, the controller destroys the animation groups,
+    // and the new switch replays from its own base workspace, so the slide
+    // teleports home and restarts. With the workspace-switch setting on,
+    // two things change. Fresh groups are built over EVERY workspace (the
+    // layout the touchpad-gesture path already uses), so any later target
+    // exists inside them. And a kill is deferred for one main-loop turn:
+    // the new switch arrives in that same batch, the existing groups are
+    // simply retargeted, and the slide keeps its position and velocity
+    // through the interruption. Nothing following the kill (animation
+    // killed for real) still cancels via the idle fallback.
+    _installWorkspacePatch() {
+        const Controller = WorkspaceAnimation.WorkspaceAnimationController;
+        if (!this._settings.get_boolean('workspace-switch') ||
+            !Controller?.prototype?.animateSwitch ||
+            !Controller?.prototype?.cancelSwitchAnimation ||
+            !Controller?.prototype?._prepareWorkspaceSwitch ||
+            !Controller?.prototype?._finishWorkspaceSwitch) {
+            this._workspacePatched = false;
+            return;
+        }
+        this._workspacePatched = true;
+        const proto = Controller.prototype;
+        this._origAnimateSwitch = proto.animateSwitch;
+        this._origCancelSwitch = proto.cancelSwitchAnimation;
+        const origAnimateSwitch = this._origAnimateSwitch;
+        const origCancelSwitch = this._origCancelSwitch;
+
+        proto.cancelSwitchAnimation = function () {
+            if (!this._switchData || this._switchData.gestureActivated) {
+                origCancelSwitch.call(this);
+                return;
+            }
+            // Defer the teardown: a switch-workspace follows this kill in
+            // the same mutter batch, and the patched animateSwitch below
+            // retargets instead of rebuilding.
+            if (!this._wsDeferKillId) {
+                this._wsDeferKillId = GLib.idle_add(GLib.PRIORITY_DEFAULT,
+                    () => {
+                        this._wsDeferKillId = 0;
+                        if (this._switchData &&
+                                !this._switchData.gestureActivated)
+                            origCancelSwitch.call(this);
+                        return GLib.SOURCE_REMOVE;
+                    });
+            }
+        };
+
+        proto.animateSwitch = function (from, to, direction, onComplete) {
+            if (this._wsDeferKillId && this._switchData &&
+                    !this._switchData.gestureActivated) {
+                // The interrupted switch: retarget the live groups to the
+                // new workspace. Skipping the rebuild is the whole point;
+                // the ease wrapper's continuity engine bridges the
+                // retarget with the measured velocity.
+                GLib.source_remove(this._wsDeferKillId);
+                this._wsDeferKillId = 0;
+                const toWs = global.workspace_manager
+                    .get_workspace_by_index(to);
+                this._swipeTracker.enabled = false;
+                for (const monitorGroup of this._switchData.monitors) {
+                    const params = {
+                        duration: WorkspaceAnimation.WINDOW_ANIMATION_TIME,
+                        mode: Clutter.AnimationMode.EASE_OUT_CUBIC,
+                    };
+                    if (monitorGroup.index ===
+                            Main.layoutManager.primaryIndex) {
+                        params.onComplete = () => {
+                            this._finishWorkspaceSwitch(this._switchData);
+                            if (onComplete)
+                                onComplete();
+                            this._swipeTracker.enabled = true;
+                        };
+                    }
+                    monitorGroup.ease_property('progress',
+                        monitorGroup.getWorkspaceProgress(toWs), params);
+                }
+                return;
+            }
+            // Fresh switch: stock path, but the groups cover every
+            // workspace so a later interrupt can retarget inside them.
+            const origPrepare = this._prepareWorkspaceSwitch;
+            this._prepareWorkspaceSwitch = () => origPrepare.call(this);
+            try {
+                origAnimateSwitch.call(this, from, to, direction,
+                    onComplete);
+            } finally {
+                this._prepareWorkspaceSwitch = origPrepare;
+            }
+        };
+    }
+
+    _removeWorkspacePatch() {
+        if (!this._workspacePatched)
+            return;
+        const proto = WorkspaceAnimation.WorkspaceAnimationController
+            .prototype;
+        proto.animateSwitch = this._origAnimateSwitch;
+        proto.cancelSwitchAnimation = this._origCancelSwitch;
+        this._workspacePatched = false;
+    }
+
     _resolveCurve(settings) {
         try {
             const userCurves = Curves.parseUserCurves(settings.get_strv('user-curves'));
@@ -977,6 +1096,7 @@ export default class SpringEaseExtension extends Extension {
             this._lampDefers.clear();
         }
         this._removeOverviewPatch();
+        this._removeWorkspacePatch();
         simShutdown();
         bridgeShutdown();
         this._orig = null;

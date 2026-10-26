@@ -133,14 +133,6 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         settings.bind('continuity', continuityRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         motionGroup.add(continuityRow);
 
-        const momentumRow = new Adw.SwitchRow({
-            title: _('Interruption momentum'),
-            subtitle: _('Recommended on. An interrupted animation keeps its speed when the new animation continues the same direction (e.g. flipping two app-grid pages quickly). Turning it off is only meant for isolating unexpected behavior.'),
-        });
-        settings.bind('momentum-enabled', momentumRow, 'active',
-            Gio.SettingsBindFlags.DEFAULT);
-        motionGroup.add(momentumRow);
-
         const reversalSwitchRow = new Adw.SwitchRow({
             title: _('Reversal buffering'),
             subtitle: _('Recommended on. An interruption into the opposite direction decelerates and rebounds instead of changing direction instantly. Turning it off is only meant for isolating unexpected behavior; you then get the native hard reversal.'),
@@ -174,6 +166,14 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         settings.bind('reversal', reversalScale.adjustment, 'value',
             Gio.SettingsBindFlags.DEFAULT);
         motionGroup.add(reversalRow);
+
+        const workspaceRow = new Adw.SwitchRow({
+            title: _('Workspace switching'),
+            subtitle: _('Ease the workspace switch animation. Turn off if secondary monitors flicker during switches on multi-monitor fractional-scale setups.'),
+        });
+        settings.bind('workspace-switch', workspaceRow, 'active',
+            Gio.SettingsBindFlags.DEFAULT);
+        motionGroup.add(workspaceRow);
 
         const solverRow = new Adw.ComboRow({
             title: _('Spring fidelity'),

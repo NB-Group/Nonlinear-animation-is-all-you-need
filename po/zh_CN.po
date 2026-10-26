@@ -408,3 +408,15 @@ msgstr "启用打断动量"
 
 msgid "Master switch for same-direction momentum. Recommended on; turning it off is only meant for isolating unexpected behavior."
 msgstr "同向动量总开关。建议开启；关闭仅用于隔离意外问题。"
+
+msgid "Workspace switching"
+msgstr "工作区切换"
+
+msgid "Ease the workspace switch animation. Turn off if secondary monitors flicker during switches on multi-monitor fractional-scale setups."
+msgstr "对工作区切换动画应用曲线。多显示器分数缩放环境下切换时若副屏闪烁，请关闭。"
+
+msgid "Ease workspace switching"
+msgstr "缓动工作区切换"
+
+msgid "Apply the curve and duration to workspace switch animations. Turn off if secondary monitors flicker during switches on multi-monitor fractional-scale setups."
+msgstr "对工作区切换动画应用曲线和时长。多显示器分数缩放环境下切换时若副屏闪烁，请关闭。"

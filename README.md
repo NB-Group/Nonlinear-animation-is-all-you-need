@@ -27,6 +27,7 @@ All settings are live: change one and the next animation already uses it, no rel
 - Animation curve: pick from the gallery, create, import, export.
 - Animation duration: 1.0 = GNOME default, 1.8 ≈ macOS, higher is slower and more luxurious.
 - Interruption continuity: on by default, with the momentum and reversal-buffering switches under it.
+- Workspace switching: eased like everything else, with a switch to turn it off on fractional-scale multi-monitor setups where it may flicker.
 - Spring fidelity: `Efficient` (analytic, default) or `Ultra` (frame integration).
 - Behavior: easing the magic-lamp minimize effect when compiz-alike-magic-lamp-effect is installed.
 - Advanced: continuity engine choice, threshold below which short animations are left alone, and the touchpad-gesture exception window.
@@ -91,7 +92,7 @@ GNOME Shell 49, 50 and 51. The wrapped API is stable across 45-51 in practice; t
 
 ## Known limits
 
-- All hooking happens in JS: animations driven directly by mutter's C code (some workspace-transition internals) are untouched. WorkspaceAnimation's MonitorGroup is deliberately left alone, because changing it flickered secondary monitors on fractional-scale setups.
+- All hooking happens in JS: animations driven directly by mutter's C code (some workspace-transition internals) are untouched. Workspace switching IS eased through WorkspaceAnimation's MonitorGroup; if that ever flickers secondary monitors on a fractional-scale setup, the Workspace switching switch in Motion turns it off.
 - The first login after install has an 8-second grace period where nothing is eased, so the boot sequence stays predictable on multi-monitor setups.
 - Custom curves don't apply to animations GNOME plays with `repeatCount` or `delay` (rare in shell chrome); those fall back to native curves.
 

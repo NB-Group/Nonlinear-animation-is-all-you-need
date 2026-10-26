@@ -44,11 +44,6 @@
       <summary>Interruption momentum</summary>
       <description>Same-direction inertia: how much velocity carries over when the new animation continues the old direction (e.g. flipping two app-grid pages quickly). 0 = GNOME-like re-acceleration, 1 = balanced, 2 = exaggerated.</description>
     </key>
-    <key name="momentum-enabled" type="b">
-      <default>true</default>
-      <summary>Interruption momentum enabled</summary>
-      <description>Master switch for same-direction momentum. Recommended on; turning it off is only meant for isolating unexpected behavior.</description>
-    </key>
     <key name="reversal" type="d">
       <default>1.0</default>
       <range min="0.0" max="2.0"/>
@@ -59,6 +54,11 @@
       <default>true</default>
       <summary>Reversal buffering enabled</summary>
       <description>Master switch for the reversal bounce, independent of the same-direction momentum. Off = interrupted reversals change direction immediately (native behavior).</description>
+    </key>
+    <key name="workspace-switch" type="b">
+      <default>true</default>
+      <summary>Ease workspace switching</summary>
+      <description>Apply the curve and duration to workspace switch animations. Turn off if secondary monitors flicker during switches on multi-monitor fractional-scale setups.</description>
     </key>
     <key name="continuity" type="b">
       <default>true</default>
