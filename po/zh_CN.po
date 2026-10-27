@@ -221,6 +221,38 @@ msgstr "均衡"
 msgid "Dramatic"
 msgstr "夸张"
 
+#: curves.js:31
+msgid "Quick settle"
+msgstr "快速收尾"
+
+#: curves.js:32
+msgid "Firm settle"
+msgstr "坚定收尾"
+
+#: curves.js:33
+msgid "Hard settle"
+msgstr "强力收尾"
+
+#: curves.js:34
+msgid "Whip"
+msgstr "疾停"
+
+#: curves.js:35
+msgid "Smooth"
+msgstr "平顺"
+
+#: curves.js:36
+msgid "Gliding"
+msgstr "滑行"
+
+#: curves.js:37
+msgid "Overshoot"
+msgstr "回弹"
+
+#: curves.js:38
+msgid "Elastic"
+msgstr "弹性"
+
 #: ui/curve-editor.js:64
 msgid "Save"
 msgstr "保存"

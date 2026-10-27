@@ -366,10 +366,28 @@ export default class SpringEaseExtension extends Extension {
                         }
                     }
                 }
-                if (cand)
+                if (cand) {
                     candidates.push(cand);
-                else
+                } else if (applyCurve && !springEngine &&
+                        isActor && simpleCase && prop !== 'opacity' &&
+                        (c.kind === 'spline' || c.kind === 'spring')) {
+                    // A custom spline/spring has no native Clutter mode; it
+                    // can only play through the JS driver, and the bridged
+                    // candidates above exist only when a PREVIOUS animation
+                    // left motion state. Without this branch every fresh
+                    // animation (idle -> first overview open) ran GNOME's own
+                    // curve underneath and the user's custom curve only ever
+                    // showed on interruptions, which reads as "does nothing".
+                    // Minimal candidate: no bridge state, zero velocity;
+                    // driveTransition takes init/final from the transition.
+                    candidates.push({
+                        prop, isInt, typeName,
+                        gtype: pspec.value_type,
+                        naturalV0: 0, span: 0,
+                    });
+                } else {
                     numericProps.push(prop);
+                }
             }
 
             // Pass 2: properties of one ease must move along ONE shared

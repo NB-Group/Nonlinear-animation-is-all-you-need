@@ -60,3 +60,24 @@ if (props.mode !== 19)
 if (!Array.isArray(plan.drivers) || !Array.isArray(plan.numericProps))
     throw new Error('plan missing arrays');
 console.log('planEaseInner smoke: ALIVE (mode=19, dur=' + props.duration + ')');
+
+// Regression (EGO user report on the curve-library version): a FRESH
+// animation (no prior motion state) with a custom SPLINE curve selected
+// must still produce a driver. The spline has no native Clutter mode, so
+// without a driver it never plays at all; before the fix only
+// interruptions ever drove it, which reads as "custom curves do nothing".
+const actorCtor = state.Clutter.Actor;
+const splineActor = new actorCtor();
+splineActor.find_property = () => ({value_type: {name: 'gfloat'}});
+const splineState = {...state, curve: {kind: 'spline',
+    points: [[0, 0], [0.4, 1.06], [1, 1]]}};
+const splineFn = new Function(...Object.keys(splineState),
+    `${body}\nreturn planEaseInner;`)(...Object.values(splineState));
+const plan2 = splineFn(splineActor, {x: 400, duration: 400}, null, null);
+if (plan2 === null)
+    throw new Error('spline planEaseInner returned null');
+if (plan2.drivers.length !== 1 || plan2.drivers[0].prop !== 'x')
+    throw new Error(`fresh spline not driven (drivers=${plan2.drivers.length})`);
+if (plan2.numericProps.length !== 0)
+    throw new Error('fresh spline prop left in numericProps');
+console.log('planEaseInner smoke: fresh spline driven');

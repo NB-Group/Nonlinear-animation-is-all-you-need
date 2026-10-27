@@ -21,26 +21,38 @@ export const FORMAT_TAG = 'nonlinear-animation/curve';
 export const FORMAT_VERSION = 1;
 export const MAX_USER_CURVES = 100;
 
-// The curated gallery, deliberately tiny: two done-for-you presets plus
-// whatever the user creates/imports. Springs are intentionally NOT presets:
-// macOS's lesson is that springs belong in the physics layer (interruption
-// momentum), picked for you, not in the picker.
+// Every curve mode from the pre-library versions stays selectable. Cutting
+// them to two presets stranded users whose favorite was folded into a
+// bucket (an EGO reviewer asked for his back), and mode presets cost
+// nothing: they ride GNOME's own C-evaluated animation modes. Springs stay
+// out of the picker on purpose: macOS's lesson is that springs belong in
+// the physics layer (interruption momentum), picked for you.
 export const BUILTIN_CURVES = [
     {id: 'preset:ease-in-out-cubic', builtin: true, name: N_('Balanced'), kind: 'mode', mode: 'ease-in-out-cubic'},
     {id: 'preset:ease-in-out-expo', builtin: true, name: N_('Dramatic'), kind: 'mode', mode: 'ease-in-out-expo'},
+    {id: 'preset:ease-out-cubic', builtin: true, name: N_('Quick settle'), kind: 'mode', mode: 'ease-out-cubic'},
+    {id: 'preset:ease-out-quart', builtin: true, name: N_('Firm settle'), kind: 'mode', mode: 'ease-out-quart'},
+    {id: 'preset:ease-out-quint', builtin: true, name: N_('Hard settle'), kind: 'mode', mode: 'ease-out-quint'},
+    {id: 'preset:ease-out-expo', builtin: true, name: N_('Whip'), kind: 'mode', mode: 'ease-out-expo'},
+    {id: 'preset:ease-in-out-quart', builtin: true, name: N_('Smooth'), kind: 'mode', mode: 'ease-in-out-quart'},
+    {id: 'preset:ease-in-out-quint', builtin: true, name: N_('Gliding'), kind: 'mode', mode: 'ease-in-out-quint'},
+    {id: 'preset:ease-out-back', builtin: true, name: N_('Overshoot'), kind: 'mode', mode: 'ease-out-back'},
+    {id: 'preset:ease-out-elastic', builtin: true, name: N_('Elastic'), kind: 'mode', mode: 'ease-out-elastic'},
 ];
 
+// One-to-one: every legacy mode key maps to the preset of the SAME curve,
+// so an upgrading user lands on exactly what he had before.
 export const MIGRATION_MAP = {
-    'ease-out-cubic': 'preset:ease-in-out-cubic',
-    'ease-out-expo': 'preset:ease-in-out-expo',
-    'ease-out-quart': 'preset:ease-in-out-cubic',
-    'ease-out-quint': 'preset:ease-in-out-cubic',
+    'ease-out-cubic': 'preset:ease-out-cubic',
+    'ease-out-expo': 'preset:ease-out-expo',
+    'ease-out-quart': 'preset:ease-out-quart',
+    'ease-out-quint': 'preset:ease-out-quint',
     'ease-in-out-cubic': 'preset:ease-in-out-cubic',
-    'ease-in-out-quart': 'preset:ease-in-out-expo',
-    'ease-in-out-quint': 'preset:ease-in-out-expo',
+    'ease-in-out-quart': 'preset:ease-in-out-quart',
+    'ease-in-out-quint': 'preset:ease-in-out-quint',
     'ease-in-out-expo': 'preset:ease-in-out-expo',
-    'ease-out-back': 'preset:ease-in-out-expo',
-    'ease-out-elastic': 'preset:ease-in-out-expo',
+    'ease-out-back': 'preset:ease-out-back',
+    'ease-out-elastic': 'preset:ease-out-elastic',
 };
 
 // --- validation -----------------------------------------------------------
