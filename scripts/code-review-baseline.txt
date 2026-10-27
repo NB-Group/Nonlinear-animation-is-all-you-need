@@ -1,2 +1,4 @@
 0cf4c9e2208fb0b0c0bb0ae4e51e852379f375ea 2026-10-16 7 findings fixed (1 high, 1 medium, 5 low)
 ef6b12bc6d3ca4e82d120af2160bbc3752d6e011 2026-10-16 round 2: zip staleness + glide live check + source pairing; 8 findings fixed
+9437f04 2026-10-26 round 3 delta review (d31bec0..9437f04) was clean of new defects; workspace patch itself reviewed
+3133a58 2026-10-27 round 4 deep-water review of workspace patch (e3e3fed..9437f04): 5 findings, 4 fixed (retarget covered-check + GNOME49 constant fallback, deferred-kill idle source_remove on disable, opacity derive double-disconnect), 1 accepted inherited (finding 4)
