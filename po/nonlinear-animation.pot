@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: nonlinear-animation 6\n"
+"Project-Id-Version: nonlinear-animation 9\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-24 21:26+0800\n"
+"POT-Creation-Date: 2026-10-27 23:34+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,218 +27,295 @@ msgstr ""
 
 #: prefs.js:56
 msgid ""
-"Pick a curve — it applies instantly. Create your own, or share curves as "
+"Pick a curve and it applies instantly. Create your own, or share curves as "
 "files."
 msgstr ""
 
-#: prefs.js:77
+#: prefs.js:60
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:38
+msgid "Apply custom curves"
+msgstr ""
+
+#: prefs.js:61
+msgid ""
+"Off: GNOME own curves play untouched; interruption continuity still applies. "
+"The gallery is disabled while off."
+msgstr ""
+
+#: prefs.js:92
 msgid "Speed"
 msgstr ""
 
-#: prefs.js:78
+#: prefs.js:93
 msgid ""
 "How long eased animations take to play. Dragging right slows them down: 1.0 "
 "= GNOME default, 1.8 ≈ macOS."
 msgstr ""
 
-#: prefs.js:80
+#: prefs.js:95
 msgid "Animation duration"
 msgstr ""
 
-#: prefs.js:88
+#: prefs.js:103
 msgid "Faster"
 msgstr ""
 
-#: prefs.js:100
+#: prefs.js:115
 msgid "Slower"
 msgstr ""
 
-#: prefs.js:111
+#: prefs.js:126
 msgid "Motion"
 msgstr ""
 
-#: prefs.js:115
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:38
+#: prefs.js:130
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:65
 msgid "Interruption continuity"
 msgstr ""
 
-#: prefs.js:116
+#: prefs.js:131
 msgid ""
 "Interrupted animations keep their momentum instead of restarting from "
 "standstill (e.g. flipping two app-grid pages quickly)."
 msgstr ""
 
-#: prefs.js:122
+#: prefs.js:137
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:50
+msgid "Reversal buffering"
+msgstr ""
+
+#: prefs.js:138
+msgid ""
+"Recommended on. An interruption into the opposite direction decelerates and "
+"rebounds instead of changing direction instantly. Turning it off is only "
+"meant for isolating unexpected behavior; you then get the native hard "
+"reversal."
+msgstr ""
+
+#: prefs.js:145
+msgid "Reversal depth"
+msgstr ""
+
+#: prefs.js:152
+msgid "Hard"
+msgstr ""
+
+#: prefs.js:162
+msgid "Bouncy"
+msgstr ""
+
+#: prefs.js:171
+msgid "Workspace switching"
+msgstr ""
+
+#: prefs.js:172
+msgid ""
+"Ease the workspace switch animation. Turn off if secondary monitors flicker "
+"during switches on multi-monitor fractional-scale setups."
+msgstr ""
+
+#: prefs.js:179
 msgid "Spring fidelity"
 msgstr ""
 
-#: prefs.js:123
+#: prefs.js:180
 msgid ""
 "How spring curves are solved. Ultra integrates physics every frame: higher "
 "fidelity, more CPU."
 msgstr ""
 
-#: prefs.js:126
+#: prefs.js:183
 msgid "Efficient (analytic)"
 msgstr ""
 
-#: prefs.js:127
+#: prefs.js:184
 msgid "Ultra (frame integration)"
 msgstr ""
 
-#: prefs.js:137
+#: prefs.js:194
 msgid "Behavior"
 msgstr ""
 
-#: prefs.js:139
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:76
-msgid "Enabled"
-msgstr ""
-
-#: prefs.js:140
-msgid "Quick A/B compare; off = GNOME default easing."
-msgstr ""
-
-#: prefs.js:146
+#: prefs.js:201
 msgid "Ease magic-lamp minimize"
 msgstr ""
 
-#: prefs.js:147
+#: prefs.js:202
 msgid ""
 "If compiz-alike-magic-lamp-effect is installed, decelerate its minimize/"
 "unminimize into the dock. No-op otherwise."
 msgstr ""
 
-#: prefs.js:156
+#: prefs.js:211
 msgid "Advanced"
 msgstr ""
 
-#: prefs.js:157
+#: prefs.js:212
 msgid "Toggles for the deeper interventions, and rarely-touched tuning."
 msgstr ""
 
-#: prefs.js:161
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:81
+#: prefs.js:216
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:117
 msgid "Instant overview close"
 msgstr ""
 
-#: prefs.js:162
+#: prefs.js:217
 msgid ""
 "A close requested mid-animation reverses the overview immediately instead of "
 "finishing its opening first. Turn off if overview open/close misbehaves."
 msgstr ""
 
-#: prefs.js:168
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:86
-msgid "Idle garbage collection"
+#: prefs.js:224
+msgid "Bridge (stable)"
 msgstr ""
 
-#: prefs.js:169
+#: prefs.js:225
+msgid "Spring simulation (experimental)"
+msgstr ""
+
+#: prefs.js:227
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:112
+msgid "Continuity engine"
+msgstr ""
+
+#: prefs.js:228
 msgid ""
-"Collect garbage after you have been away for a while, so the first animation "
-"afterwards does not stall. Turn off if you see pauses while the screen is "
-"idle."
+"Bridge rebuilds motion state at each interruption. Spring runs every "
+"animated property as one persistent spring: an interruption only changes the "
+"target, so rapid chains stay perfectly smooth."
 msgstr ""
 
-#: prefs.js:176
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:53
+#: prefs.js:241
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:80
 msgid "Threshold (ms)"
 msgstr ""
 
-#: prefs.js:177
+#: prefs.js:242
 msgid ""
 "Only animations ≥ this get eased (hovers ~100ms). Lower = more things eased."
 msgstr ""
 
-#: prefs.js:184
+#: prefs.js:249
 msgid "Gesture grace (ms)"
 msgstr ""
 
-#: prefs.js:185
+#: prefs.js:250
 msgid ""
 "After a 3-finger swipe/pinch, animations play native for this long. 0 = ease "
 "everything."
 msgstr ""
 
-#: prefs.js:192
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:65
+#: prefs.js:257
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:92
 msgid "Gesture duration scale"
 msgstr ""
 
-#: prefs.js:193
+#: prefs.js:258
 msgid ""
-"Stretches gesture commits (workspace switch, paging) — curve stays velocity-"
-"matched so no jolt. 1.0 = native."
+"Stretches gesture commits (workspace switch, paging). The curve stays "
+"velocity-matched, so there is no jolt. 1.0 = native."
 msgstr ""
 
-#: prefs.js:259
+#: prefs.js:325
 msgid "New curve"
 msgstr ""
 
-#: prefs.js:265
+#: prefs.js:331
 msgid "Import"
 msgstr ""
 
-#: prefs.js:271
+#: prefs.js:337
 msgid "Export"
 msgstr ""
 
-#: prefs.js:277 prefs.js:454
+#: prefs.js:343 prefs.js:520
 msgid "Delete"
 msgstr ""
 
-#: prefs.js:324
+#: prefs.js:390
 msgid "Library full"
 msgstr ""
 
-#: prefs.js:325 prefs.js:375
+#: prefs.js:391 prefs.js:441
 #, javascript-format
 msgid "At most %d user curves can be stored."
 msgstr ""
 
-#: prefs.js:348
+#: prefs.js:414
 msgid "Import curves"
 msgstr ""
 
-#: prefs.js:363 prefs.js:369 prefs.js:374
+#: prefs.js:429 prefs.js:435 prefs.js:440
 msgid "Import failed"
 msgstr ""
 
-#: prefs.js:363
+#: prefs.js:429
 msgid "Could not read the file."
 msgstr ""
 
-#: prefs.js:402
+#: prefs.js:468
 msgid "Export curve"
 msgstr ""
 
-#: prefs.js:424
+#: prefs.js:490
 #, javascript-format
 msgid "Delete “%s”?"
 msgstr ""
 
-#: prefs.js:433
+#: prefs.js:499
 msgid "Nonlinear animation curves"
 msgstr ""
 
-#: prefs.js:444
+#: prefs.js:510
 msgid "OK"
 msgstr ""
 
-#: prefs.js:451
+#: prefs.js:517
 msgid "This cannot be undone."
 msgstr ""
 
-#: prefs.js:453 ui/curve-editor.js:62
+#: prefs.js:519 ui/curve-editor.js:62
 msgid "Cancel"
 msgstr ""
 
-#: curves.js:29
+#: curves.js:31
 msgid "Balanced"
 msgstr ""
 
-#: curves.js:30
+#: curves.js:32
 msgid "Dramatic"
+msgstr ""
+
+#: curves.js:33
+msgid "Quick settle"
+msgstr ""
+
+#: curves.js:34
+msgid "Firm settle"
+msgstr ""
+
+#: curves.js:35
+msgid "Hard settle"
+msgstr ""
+
+#: curves.js:36
+msgid "Whip"
+msgstr ""
+
+#: curves.js:37
+msgid "Smooth"
+msgstr ""
+
+#: curves.js:38
+msgid "Gliding"
+msgstr ""
+
+#: curves.js:39
+msgid "Overshoot"
+msgstr ""
+
+#: curves.js:40
+msgid "Elastic"
 msgstr ""
 
 #: ui/curve-editor.js:64
@@ -259,11 +336,15 @@ msgstr ""
 msgid "Give the curve a name first."
 msgstr ""
 
-#: ui/curve-editor.js:318
+#: ui/curve-editor.js:319
+msgid "A curve can have at most 24 points."
+msgstr ""
+
+#: ui/curve-editor.js:323
 msgid "Points must stay ordered left to right."
 msgstr ""
 
-#: ui/curve-editor.js:320
+#: ui/curve-editor.js:325
 msgid "Keep points between -0.5 and 1.5 vertically."
 msgstr ""
 
@@ -273,7 +354,7 @@ msgstr ""
 
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:19
 msgid ""
-"Legacy curve key from v1–v5. Still read once for migration to selected-"
+"Legacy curve key from v1-v5. Still read once for migration to selected-"
 "curve; otherwise unused."
 msgstr ""
 
@@ -306,39 +387,86 @@ msgstr ""
 
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:39
 msgid ""
+"Replace GNOME's easing curves with the selected curve. Off: GNOME's own "
+"curves play untouched; interruption continuity still applies."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:44
+msgid "Interruption momentum"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:45
+msgid ""
+"Same-direction inertia: how much velocity carries over when the new "
+"animation continues the old direction (e.g. flipping two app-grid pages "
+"quickly). 0 = GNOME-like re-acceleration, 1 = balanced, 2 = exaggerated."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:51
+msgid ""
+"Reversal inertia: the decelerate-and-rebound feel when an animation is "
+"interrupted into the opposite direction (minimize right after starting a "
+"restore). 0 = hard reversal, 1 = balanced bounce, 2 = deep elastic "
+"compression."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:55
+msgid "Reversal buffering enabled"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:56
+msgid ""
+"Master switch for the reversal bounce, independent of the same-direction "
+"momentum. Off = interrupted reversals change direction immediately (native "
+"behavior)."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:60
+msgid "Ease workspace switching"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:61
+msgid ""
+"Apply the curve and duration to workspace switch animations. Turn off if "
+"secondary monitors flicker during switches on multi-monitor fractional-scale "
+"setups."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:66
+msgid ""
 "When an animation is interrupted (e.g. flipping two app-grid pages quickly), "
 "carry the current velocity into the new animation instead of re-accelerating "
 "from standstill, using a velocity-matched spring."
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:47
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:74
 msgid "Spring solver"
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:48
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:75
 msgid ""
 "How spring curves are evaluated. analytic (default): closed-form solution, a "
 "few math calls per frame. numeric: Ultra mode, per-frame physics integration "
 "for maximum fidelity at a slightly higher CPU cost."
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:54
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:81
 msgid ""
 "Only animations at or above this duration get the easing curve. Lower = more "
 "things eased (hovers ~100ms); higher = fewer."
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:59
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:86
 msgid "Duration scale"
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:60
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:87
 msgid ""
 "Multiplier for the duration of eased animations. 1.0 = GNOME's default "
 "(quick); 1.8 ≈ macOS; 2.5 = slow/luxurious."
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:66
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:93
 msgid ""
 "Duration multiplier for animations during/after a touchpad gesture "
 "(workspace switch, app-grid paging). The easing curve is kept at GNOME's "
@@ -347,11 +475,11 @@ msgid ""
 "native."
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:71
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:98
 msgid "Touchpad gesture grace (ms)"
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:72
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:99
 msgid ""
 "Window after a touchpad gesture (3-finger swipe/pinch) during which "
 "animations play at GNOME's native speed. Touchpad-driven overview/workspace "
@@ -359,29 +487,36 @@ msgid ""
 "to disable the exception (ease everything, including gestures)."
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:77
-msgid "Master switch (A/B without disabling the whole extension)."
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:103
+msgid "Enabled (legacy)"
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:82
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:104
+msgid ""
+"Legacy key from earlier versions, no longer read. Pause the extension from "
+"the Extensions manager instead."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:113
+msgid ""
+"Bridge rebuilds motion state per interruption (stable, default). Spring runs "
+"every animated property as one persistent spring simulation: interrupting "
+"only changes the target, so any number of rapid interruptions stays "
+"perfectly smooth (experimental)."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:118
 msgid ""
 "Route a close requested while the overview is still animating through the "
 "gesture channel, so the drawer reverses immediately instead of finishing its "
 "opening first. Turn off if overview open/close misbehaves."
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:87
-msgid ""
-"Force a garbage collection after the user has been away for a while, so the "
-"first animation afterwards does not stall on one. Turn off if you see pauses "
-"while the screen is idle."
-msgstr ""
-
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:91
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:122
 msgid "Ease magic-lamp minimize/unminimize"
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:92
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:123
 msgid ""
 "If compiz-alike-magic-lamp-effect is installed, curve its minimize/"
 "unminimize timeline with EASE_OUT_CUBIC so the window decelerates into the "

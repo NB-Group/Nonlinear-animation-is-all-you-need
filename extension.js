@@ -368,18 +368,23 @@ export default class SpringEaseExtension extends Extension {
                 }
                 if (cand) {
                     candidates.push(cand);
-                } else if (applyCurve && !springEngine &&
-                        isActor && simpleCase && prop !== 'opacity' &&
-                        (c.kind === 'spline' || c.kind === 'spring')) {
-                    // A custom spline/spring has no native Clutter mode; it
-                    // can only play through the JS driver, and the bridged
-                    // candidates above exist only when a PREVIOUS animation
-                    // left motion state. Without this branch every fresh
-                    // animation (idle -> first overview open) ran GNOME's own
-                    // curve underneath and the user's custom curve only ever
-                    // showed on interruptions, which reads as "does nothing".
+                } else if (isActor && simpleCase && prop !== 'opacity' &&
+                        (springEngine ||
+                            (applyCurve &&
+                                (c.kind === 'spline' || c.kind === 'spring')))) {
+                    // Two gaps share this branch, both about FRESH
+                    // animations (no previous animation left motion state):
+                    // 1. A custom spline/spring has no native Clutter
+                    //    mode, so it can only play through the JS driver;
+                    //    without a candidate here the user's curve only
+                    //    showed on interruptions, which reads as
+                    //    "does nothing".
+                    // 2. The spring engine is documented to run "every
+                    //    animated property"; letting only bridged props
+                    //    into simItems left first animations stock.
                     // Minimal candidate: no bridge state, zero velocity;
-                    // driveTransition takes init/final from the transition.
+                    // the driver reads init/final from the transition, the
+                    // sim engine from the current value.
                     candidates.push({
                         prop, isInt, typeName,
                         gtype: pspec.value_type,
