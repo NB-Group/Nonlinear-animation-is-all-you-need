@@ -600,11 +600,21 @@ export default class SpringEaseExtension extends Extension {
                             target.set_final_state('opacity', gv);
                         };
                         let oh = 0;
+                        // Zero the id on every disconnect: Clutter stops
+                        // an actor's transitions after it leaves the tree,
+                        // so the 'stopped' handler and a guard branch can
+                        // both try to drop the same handler id (a stale
+                        // id logs a GObject CRITICAL).
+                        const dropOh = () => {
+                            if (oh) {
+                                oTr.disconnect(oh);
+                                oh = 0;
+                            }
+                        };
                         const derive = () => {
                             try {
                                 if (!bridgeLive()) {
-                                    if (oh)
-                                        oTr.disconnect(oh);
+                                    dropOh();
                                     return;
                                 }
                                 // The window actor can be destroyed while
@@ -612,8 +622,7 @@ export default class SpringEaseExtension extends Extension {
                                 // workspace dots during rapid switches);
                                 // reading it then floods CRITICALs, so bail.
                                 if (disposedTargets.has(target)) {
-                                    if (oh)
-                                        oTr.disconnect(oh);
+                                    dropOh();
                                     return;
                                 }
                                 const s = target.scale_x;
@@ -625,15 +634,13 @@ export default class SpringEaseExtension extends Extension {
                                 writeOp(255 * p);
                             } catch {
                                 // target destroyed mid-derive: stop riding
-                                if (oh)
-                                    oTr.disconnect(oh);
+                                dropOh();
                             }
                         };
                         derive();
                         oh = oTr.connect_after('new-frame', derive);
                         oTr.connect('stopped', () => {
-                            if (oh)
-                                oTr.disconnect(oh);
+                            dropOh();
                             derive();
                         });
                     }
@@ -952,25 +959,42 @@ export default class SpringEaseExtension extends Extension {
                 this._wsDeferKillId = 0;
                 const toWs = global.workspace_manager
                     .get_workspace_by_index(to);
-                this._swipeTracker.enabled = false;
-                for (const monitorGroup of this._switchData.monitors) {
-                    const params = {
-                        duration: WorkspaceAnimation.WINDOW_ANIMATION_TIME,
-                        mode: Clutter.AnimationMode.EASE_OUT_CUBIC,
-                    };
-                    if (monitorGroup.index ===
-                            Main.layoutManager.primaryIndex) {
-                        params.onComplete = () => {
-                            this._finishWorkspaceSwitch(this._switchData);
-                            if (onComplete)
-                                onComplete();
-                            this._swipeTracker.enabled = true;
+                // Groups that the STOCK animateSwitch armed (possible when
+                // this switch was already in flight before the setting or
+                // the extension turned on) only cover [from, to]; asking
+                // those for an outside workspace throws inside stock
+                // code. Tear them down and take the fresh path below.
+                const covered = toWs !== null && this._switchData.monitors.every(
+                    mg => mg._workspaceGroups.some(
+                        g => g.workspace.index() === to));
+                if (covered) {
+                    this._swipeTracker.enabled = false;
+                    for (const monitorGroup of this._switchData.monitors) {
+                        const params = {
+                            // WINDOW_ANIMATION_TIME is module-private on
+                            // GNOME 49 and only exported from 50 on; a
+                            // missing export would hand stock an undefined
+                            // duration and make the retarget instant.
+                            duration:
+                                WorkspaceAnimation.WINDOW_ANIMATION_TIME ??
+                                250,
+                            mode: Clutter.AnimationMode.EASE_OUT_CUBIC,
                         };
+                        if (monitorGroup.index ===
+                                Main.layoutManager.primaryIndex) {
+                            params.onComplete = () => {
+                                this._finishWorkspaceSwitch(this._switchData);
+                                if (onComplete)
+                                    onComplete();
+                                this._swipeTracker.enabled = true;
+                            };
+                        }
+                        monitorGroup.ease_property('progress',
+                            monitorGroup.getWorkspaceProgress(toWs), params);
                     }
-                    monitorGroup.ease_property('progress',
-                        monitorGroup.getWorkspaceProgress(toWs), params);
+                    return;
                 }
-                return;
+                origCancelSwitch.call(this);
             }
             // Fresh switch: stock path, but the groups cover every
             // workspace so a later interrupt can retarget inside them.
@@ -988,6 +1012,14 @@ export default class SpringEaseExtension extends Extension {
     _removeWorkspacePatch() {
         if (!this._workspacePatched)
             return;
+        // Paired source_remove for a pending deferred kill (the project's
+        // eGo rule since v0.1 finding 4): dropping it lets the in-flight
+        // switch simply run to its own completion.
+        const controller = Main.wm?._workspaceAnimation;
+        if (controller?._wsDeferKillId) {
+            GLib.source_remove(controller._wsDeferKillId);
+            controller._wsDeferKillId = 0;
+        }
         const proto = WorkspaceAnimation.WorkspaceAnimationController
             .prototype;
         proto.animateSwitch = this._origAnimateSwitch;
