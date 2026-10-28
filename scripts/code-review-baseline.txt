@@ -5,3 +5,4 @@ ef6b12bc6d3ca4e82d120af2160bbc3752d6e011 2026-10-16 round 2: zip staleness + gli
 5ba6ab8 2026-10-27 round 5 (fresh agent, delta 3133a58..5ba6ab8, full files + shell 50.4 sources): no high/medium; 2 low fixed in b7b0c73 (spring engine fresh-animation gap, pot template stale)
 b7b0c73 2026-10-28 v9: round-5 fixes + version bump; EGO has v8 in queue
 9a1c847 2026-10-28 v10: spring ENGINE removed (curves untouched); engine key bridge-only with startup migration; NOT yet adversarially reviewed as a delta (removal-only change, tests green, zip reconciled) - include in the next review round
+221b281+ curve-cut commit 2026-10-28 round 6 (delta 3133a58..221b281): no high/medium; 4 LOW (2 accepted: caller-mode-under-driver, whole-ease clamp; 2 fixed: po staleness, README count). All 7 user-contract items verified FIXED with file:line evidence.
