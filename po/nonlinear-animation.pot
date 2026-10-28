@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nonlinear-animation 10\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-28 19:50+0800\n"
+"POT-Creation-Date: 2026-10-28 20:31+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -275,22 +275,14 @@ msgid "Firm settle"
 msgstr ""
 
 #: curves.js:35
-msgid "Hard settle"
-msgstr ""
-
-#: curves.js:36
 msgid "Whip"
 msgstr ""
 
-#: curves.js:37
+#: curves.js:36
 msgid "Smooth"
 msgstr ""
 
-#: curves.js:38
-msgid "Gliding"
-msgstr ""
-
-#: curves.js:39
+#: curves.js:37
 msgid "Overshoot"
 msgstr ""
 

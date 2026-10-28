@@ -6,7 +6,7 @@ This extension puts the accel/decel back. It wraps the same ease methods gnome-s
 
 ## What you get
 
-Two done-for-you presets, Balanced and Dramatic, plus a gallery that fills up with whatever you draw or import. The editor is a canvas: drag control points, double-click to add one, right-click to remove, endpoints stay pinned. Values above 1 give you overshoot, and a replay button previews the motion. Curves import and export as small JSON files, so you can trade them like themes; the format is documented below.
+Seven presets covering the distinct feels (Balanced and Dramatic up front, plus settle, smooth and overshoot variants), and a gallery that fills up with whatever you draw or import. The editor is a canvas: drag control points, double-click to add one, right-click to remove, endpoints stay pinned. Values above 1 give you overshoot, and a replay button previews the motion. Curves import and export as small JSON files, so you can trade them like themes; the format is documented below.
 
 Interruption continuity is the headline feature. Flip two app-grid pages quickly, or click the dock while a window is still minimizing: instead of teleporting back to the start or re-accelerating from standstill, the interrupted animation keeps its position and momentum, carried over by a spring seeded with the measured velocity. Same idea as Apple's animation stack. On by default.
 

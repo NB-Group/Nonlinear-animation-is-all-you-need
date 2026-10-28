@@ -32,10 +32,8 @@ export const BUILTIN_CURVES = [
     {id: 'preset:ease-in-out-expo', builtin: true, name: N_('Dramatic'), kind: 'mode', mode: 'ease-in-out-expo'},
     {id: 'preset:ease-out-cubic', builtin: true, name: N_('Quick settle'), kind: 'mode', mode: 'ease-out-cubic'},
     {id: 'preset:ease-out-quart', builtin: true, name: N_('Firm settle'), kind: 'mode', mode: 'ease-out-quart'},
-    {id: 'preset:ease-out-quint', builtin: true, name: N_('Hard settle'), kind: 'mode', mode: 'ease-out-quint'},
     {id: 'preset:ease-out-expo', builtin: true, name: N_('Whip'), kind: 'mode', mode: 'ease-out-expo'},
     {id: 'preset:ease-in-out-quart', builtin: true, name: N_('Smooth'), kind: 'mode', mode: 'ease-in-out-quart'},
-    {id: 'preset:ease-in-out-quint', builtin: true, name: N_('Gliding'), kind: 'mode', mode: 'ease-in-out-quint'},
     {id: 'preset:ease-out-back', builtin: true, name: N_('Overshoot'), kind: 'mode', mode: 'ease-out-back'},
 ];
 
@@ -45,10 +43,13 @@ export const MIGRATION_MAP = {
     'ease-out-cubic': 'preset:ease-out-cubic',
     'ease-out-expo': 'preset:ease-out-expo',
     'ease-out-quart': 'preset:ease-out-quart',
-    'ease-out-quint': 'preset:ease-out-quint',
+    'ease-out-quint': 'preset:ease-out-quart',
     'ease-in-out-cubic': 'preset:ease-in-out-cubic',
     'ease-in-out-quart': 'preset:ease-in-out-quart',
-    'ease-in-out-quint': 'preset:ease-in-out-quint',
+    // in-out-quint is indistinguishable from in-out-expo at gallery
+    // thumbnail size (identical to 3 decimals at t=.25/.5/.75), so the
+    // pair keeps one entry; same for out-quint next to out-quart.
+    'ease-in-out-quint': 'preset:ease-in-out-expo',
     'ease-in-out-expo': 'preset:ease-in-out-expo',
     'ease-out-back': 'preset:ease-out-back',
     // Elastic is gone (see the gallery note); its closest surviving feel
