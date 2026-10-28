@@ -40,15 +40,6 @@ import {
     seedAdjustmentTransition,
     dropSamplersOf,
 } from './continuity.js';
-import {
-    simRetarget,
-    simSeed,
-    simAdvance,
-    simLand,
-    simDropActor,
-    simShutdown,
-    simStartup,
-} from './simengine.js';
 import {makeBezierEvaluator} from './easing.js';
 
 // WorkspaceAnimation drives one MonitorGroup per monitor through a custom
@@ -107,7 +98,6 @@ const MAGIC_LAMP_UNMINIMIZE = 'unminimize-magic-lamp-effect';
 
 export default class SpringEaseExtension extends Extension {
     enable() {
-        simStartup();
         bridgeStartup();
         this._settings = this.getSettings();
         this._migrateSettings();
@@ -153,7 +143,6 @@ export default class SpringEaseExtension extends Extension {
                 return;
             target.connect('destroy', () => {
                 disposedTargets.add(target);
-                simDropActor(target);
                 dropSamplersOf(target);
             });
         };
@@ -247,7 +236,6 @@ export default class SpringEaseExtension extends Extension {
             if (!c)
                 return null;
 
-            const springEngine = settings.get_string('engine') === 'spring';
             const applyCurve = settings.get_boolean('custom-curves');
             const momentum = settings.get_double('momentum');
             // Direction-aware inertia scaling: same-direction carry (app
@@ -305,7 +293,7 @@ export default class SpringEaseExtension extends Extension {
                 const isInt = typeName === 'gint' || typeName === 'guint';
 
                 let cand = null;
-                if ((continuityOn || springEngine) && simpleCase) {
+                if (continuityOn && simpleCase) {
                     const state = motionState(target, prop);
                     if (state) {
                         const remaining = newTarget - state.value;
@@ -368,23 +356,16 @@ export default class SpringEaseExtension extends Extension {
                 }
                 if (cand) {
                     candidates.push(cand);
-                } else if (isActor && simpleCase && prop !== 'opacity' &&
-                        (springEngine ||
-                            (applyCurve &&
-                                (c.kind === 'spline' || c.kind === 'spring')))) {
-                    // Two gaps share this branch, both about FRESH
-                    // animations (no previous animation left motion state):
-                    // 1. A custom spline/spring has no native Clutter
-                    //    mode, so it can only play through the JS driver;
-                    //    without a candidate here the user's curve only
-                    //    showed on interruptions, which reads as
-                    //    "does nothing".
-                    // 2. The spring engine is documented to run "every
-                    //    animated property"; letting only bridged props
-                    //    into simItems left first animations stock.
+                } else if (applyCurve && isActor && simpleCase &&
+                        prop !== 'opacity' &&
+                        (c.kind === 'spline' || c.kind === 'spring')) {
+                    // A custom spline/spring has no native Clutter mode, so
+                    // it can only play through the JS driver; without a
+                    // candidate here the user's curve only showed on
+                    // interruptions (fresh animations fell back to GNOME's
+                    // own curve), which reads as "does nothing".
                     // Minimal candidate: no bridge state, zero velocity;
-                    // the driver reads init/final from the transition, the
-                    // sim engine from the current value.
+                    // driveTransition takes init/final from the transition.
                     candidates.push({
                         prop, isInt, typeName,
                         gtype: pspec.value_type,
@@ -443,7 +424,7 @@ export default class SpringEaseExtension extends Extension {
                 const seed = sharedV0 === null && cand.fromValue === undefined
                     ? null
                     : {fromValue: cand.fromValue, v0: sharedV0 ?? 0};
-                if (isActor && simpleCase && !springEngine &&
+                if (isActor && simpleCase &&
                     (seed !== null ||
                         (applyCurve &&
                             (c.kind === 'spline' || c.kind === 'spring')))) {
@@ -470,29 +451,13 @@ export default class SpringEaseExtension extends Extension {
             // asked for keeps running underneath until our handler runs.
             hookDispose(target);
 
-            // Spring-simulation engine: actor properties are handed to
-            // persistent simulators instead of per-transition curves. The
-            // init value is read HERE, before the caller's reset, so the
-            // engine never even sees a teleport. Records are still noted
-            // (numericProps) so takeover velocity is available.
-            const simItems = springEngine && isActor && simpleCase
-                ? candidates.filter(cand => cand.prop !== 'opacity')
-                    .map(cand => ({
-                        prop: cand.prop,
-                        isInt: cand.isInt,
-                        typeName: cand.typeName,
-                        gtype: cand.gtype,
-                        initValue: target[cand.prop.replaceAll('-', '_')],
-                        velocity: cand.stateVelocity ?? 0,
-                    }))
-                : [];
             // Opacity stays native on purpose: GNOME fades windows out during
             // minimize and hard-resets opacity at map; carrying the fade
             // state across an interruption chain drained windows into ghosts
             // (opacity 12 -> 1 while still on screen) and the map reset
             // popped 47 -> 255. Native fades are short and reset cleanly.
 
-            return {curve: c, drivers, adjSeeds, simItems, numericProps,
+            return {curve: c, drivers, adjSeeds, numericProps,
                 animatedProps: animated.map(([p]) => p),
                 carryMomentum: continuityOn,
                 momentum, reversal};
@@ -503,99 +468,6 @@ export default class SpringEaseExtension extends Extension {
             if (!plan || disposedTargets.has(target))
                 return;
             try {
-                const attachSim = s => {
-                    // Hand the property to a persistent spring simulator.
-                    // The native transition underneath still owns completion
-                    // semantics; the sim owns the values, every frame.
-                    const tr = target.get_transition?.(s.prop);
-                    if (!tr)
-                        return;
-                    const iv = tr.get_interval?.();
-                    const final = iv?.peek_final_value?.();
-                    const dur = tr.get_duration();
-                    if (!Number.isFinite(final) || !(dur > 0))
-                        return;
-                    // Retarget and same-turn write ALWAYS: while the
-                    // transition may not be playing yet (window map
-                    // latency), the shell's reset is already on the actor;
-                    // deferring the retarget left the reset value painted
-                    // for frames (the full-size flash at an early
-                    // interrupt).
-                    const gv = new GObject.Value();
-                    gv.init(s.gtype);
-                    const set = GVALUE_SETTERS[s.typeName];
-                    const round = s.typeName === 'guint'
-                        ? (v => Math.max(0, Math.min(4294967295, Math.round(v))))
-                        : (s.isInt ? Math.round : (v => v));
-                    const write = v => {
-                        gv[set](round(v));
-                        target.set_final_state(s.prop, gv);
-                    };
-                    const {sim, fresh} = simRetarget(target, s.prop,
-                        s.initValue, final, dur, write);
-                    if (fresh && plan.carryMomentum)
-                        simSeed(target, s.prop, s.initValue, s.velocity);
-                    // The momentum/reversal knobs must steer the CARRIED
-                    // state too, not only fresh takeovers: an existing sim
-                    // keeps its velocity across a retarget, so rescale it
-                    // per direction here. The channel is chosen by whether
-                    // the carried velocity opposes the NEW travel (see the
-                    // plan-side comment), which is also what makes
-                    // "reversal = 0" a true off switch for the buffering,
-                    // and continuity OFF zeroes it entirely.
-                    if (!fresh && Number.isFinite(sim.vel)) {
-                        const opposing = (final - sim.pos) * sim.vel < 0;
-                        simSeed(target, s.prop, undefined, sim.vel *
-                            (opposing ? plan.reversal : plan.momentum));
-                    }
-                    if (!plan.carryMomentum)
-                        simSeed(target, s.prop, undefined, 0);
-                    // Rewrite the interval's initial to the sim's position:
-                    // the native class handler then interpolates FROM the
-                    // carried position, so its own writes can never restate
-                    // the caller's reset (the last full-size flash path).
-                    try {
-                        gv[set](round(sim.pos));
-                        iv.set_initial(gv);
-                        write(sim.pos);
-                    } catch {
-                        // interval or actor gone between plan and attach
-                        return;
-                    }
-                    // Integrate from the transition's own new-frame, AFTER
-                    // the native write (same ordering guarantee as the
-                    // bridge driver): the sim is the only effective writer,
-                    // so there is nothing to flicker against.
-                    let lastElapsed = 0;
-                    const fh = tr.connect_after('new-frame',
-                        (timeline, elapsed) => {
-                            if (elapsed >= dur) {
-                                simLand(target, s.prop, write);
-                                return;
-                            }
-                            if (simAdvance(target, s.prop,
-                                    elapsed - lastElapsed) === null) {
-                                tr.disconnect(fh);
-                                return;
-                            }
-                            lastElapsed = elapsed;
-                        });
-                    try {
-                        // same-turn write: kill any reset frame; for an
-                        // existing sim this is its carried position
-                        write(sim.pos);
-                    } catch {
-                        // actor gone between plan and post
-                        return;
-                    }
-                    tr.connect('stopped', () => {
-                        // land only if nothing newer has taken the slot
-                        if (target.get_transition?.(s.prop) === tr)
-                            simLand(target, s.prop, write);
-                    });
-                };
-                for (const s of plan.simItems)
-                    attachSim(s);
                 // Opacity is a function of POSITION, not time: the window
                 // fades in proportion to how far it has traveled along its
                 // minimize/restore path, so whatever the velocity profile
@@ -1067,6 +939,11 @@ export default class SpringEaseExtension extends Extension {
 
     // One-time: carry the legacy `mode` key into the curve library.
     _migrateSettings() {
+        // v10 removed the spring engine; anyone still selecting it lands
+        // back on the bridge engine (the only one left). Reads of values
+        // outside the schema choices still return the stored string.
+        if (this._settings.get_string('engine') === 'spring')
+            this._settings.set_string('engine', 'bridge');
         if (this._settings.get_int('schema-version') >= 2)
             return;
         const oldMode = this._settings.get_string('mode');
@@ -1152,7 +1029,6 @@ export default class SpringEaseExtension extends Extension {
         }
         this._removeOverviewPatch();
         this._removeWorkspacePatch();
-        simShutdown();
         bridgeShutdown();
         this._orig = null;
         this._settings = null;

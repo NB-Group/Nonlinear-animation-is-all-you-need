@@ -6,7 +6,6 @@ import * as Curves from '../curves.js';
 // continuity.js must also load under tests: a syntax error there once
 // shipped into the installed zip because no test imports it.
 import * as Continuity from '../continuity.js';
-import * as SimEngine from '../simengine.js';
 
 let failures = 0;
 function check(name, cond) {
@@ -213,19 +212,6 @@ for (const [nick, f] of Object.entries(MODE_FUNCS)) {
     check('continuity module exports', typeof Continuity.motionState === 'function' &&
         typeof Continuity.driveTransition === 'function');
     check('motionState null on unknown target', Continuity.motionState({}, 'x') === null);
-    check('simengine module exports',
-        typeof SimEngine.simRetarget === 'function' &&
-        typeof SimEngine.simLand === 'function');
-    {
-        // A sim at its target lands immediately (the gjs test runner has no
-        // main loop, so multi-tick glides cannot be observed here).
-        let written = [];
-        const fake = {};
-        SimEngine.simRetarget(fake, 'x', 100, 100, 50,
-            v => written.push(v));
-        SimEngine.simLand(fake, 'x', v => written.push(v), 300);
-        check('sim land writes target and retires', written.includes(100));
-    }
 }
 
 if (failures > 0) {

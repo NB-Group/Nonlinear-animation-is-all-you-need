@@ -10,5 +10,5 @@
     "settings-schema": "org.gnome.shell.extensions.nonlinear-animation",
     "gettext-domain": "nonlinear-animation",
     "url": "https://github.com/NB-Group/Nonlinear-animation-is-all-you-need",
-    "version": 9
+    "version": 10
 }

@@ -106,11 +106,10 @@
     <key name="engine" type="s">
       <choices>
         <choice value="bridge"/>
-        <choice value="spring"/>
       </choices>
       <default>"bridge"</default>
-      <summary>Continuity engine</summary>
-      <description>Bridge rebuilds motion state per interruption (stable, default). Spring runs every animated property as one persistent spring simulation: interrupting only changes the target, so any number of rapid interruptions stays perfectly smooth (experimental).</description>
+      <summary>Continuity engine (legacy)</summary>
+      <description>Legacy key from the curve-library versions. The experimental spring simulation engine was removed in v10; installs still on spring are moved back to bridge at startup.</description>
     </key>
     <key name="overview-patch" type="b">
       <default>true</default>

@@ -30,7 +30,7 @@ All settings are live: change one and the next animation already uses it, no rel
 - Workspace switching: eased like everything else, with a switch to turn it off on fractional-scale multi-monitor setups where it may flicker.
 - Spring fidelity: `Efficient` (analytic, default) or `Ultra` (frame integration).
 - Behavior: easing the magic-lamp minimize effect when compiz-alike-magic-lamp-effect is installed.
-- Advanced: continuity engine choice, threshold below which short animations are left alone, and the touchpad-gesture exception window.
+- Advanced: threshold below which short animations are left alone, and the touchpad-gesture exception window.
 
 Power users can also drive everything via `gsettings`:
 

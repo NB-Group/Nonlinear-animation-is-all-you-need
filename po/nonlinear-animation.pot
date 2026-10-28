@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: nonlinear-animation 9\n"
+"Project-Id-Version: nonlinear-animation 10\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 23:34+0800\n"
+"POT-Creation-Date: 2026-10-28 18:53+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -155,7 +155,7 @@ msgid "Toggles for the deeper interventions, and rarely-touched tuning."
 msgstr ""
 
 #: prefs.js:216
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:117
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:116
 msgid "Instant overview close"
 msgstr ""
 
@@ -166,115 +166,95 @@ msgid ""
 msgstr ""
 
 #: prefs.js:224
-msgid "Bridge (stable)"
-msgstr ""
-
-#: prefs.js:225
-msgid "Spring simulation (experimental)"
-msgstr ""
-
-#: prefs.js:227
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:112
-msgid "Continuity engine"
-msgstr ""
-
-#: prefs.js:228
-msgid ""
-"Bridge rebuilds motion state at each interruption. Spring runs every "
-"animated property as one persistent spring: an interruption only changes the "
-"target, so rapid chains stay perfectly smooth."
-msgstr ""
-
-#: prefs.js:241
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:80
 msgid "Threshold (ms)"
 msgstr ""
 
-#: prefs.js:242
+#: prefs.js:225
 msgid ""
 "Only animations ≥ this get eased (hovers ~100ms). Lower = more things eased."
 msgstr ""
 
-#: prefs.js:249
+#: prefs.js:232
 msgid "Gesture grace (ms)"
 msgstr ""
 
-#: prefs.js:250
+#: prefs.js:233
 msgid ""
 "After a 3-finger swipe/pinch, animations play native for this long. 0 = ease "
 "everything."
 msgstr ""
 
-#: prefs.js:257
+#: prefs.js:240
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:92
 msgid "Gesture duration scale"
 msgstr ""
 
-#: prefs.js:258
+#: prefs.js:241
 msgid ""
 "Stretches gesture commits (workspace switch, paging). The curve stays "
 "velocity-matched, so there is no jolt. 1.0 = native."
 msgstr ""
 
-#: prefs.js:325
+#: prefs.js:308
 msgid "New curve"
 msgstr ""
 
-#: prefs.js:331
+#: prefs.js:314
 msgid "Import"
 msgstr ""
 
-#: prefs.js:337
+#: prefs.js:320
 msgid "Export"
 msgstr ""
 
-#: prefs.js:343 prefs.js:520
+#: prefs.js:326 prefs.js:503
 msgid "Delete"
 msgstr ""
 
-#: prefs.js:390
+#: prefs.js:373
 msgid "Library full"
 msgstr ""
 
-#: prefs.js:391 prefs.js:441
+#: prefs.js:374 prefs.js:424
 #, javascript-format
 msgid "At most %d user curves can be stored."
 msgstr ""
 
-#: prefs.js:414
+#: prefs.js:397
 msgid "Import curves"
 msgstr ""
 
-#: prefs.js:429 prefs.js:435 prefs.js:440
+#: prefs.js:412 prefs.js:418 prefs.js:423
 msgid "Import failed"
 msgstr ""
 
-#: prefs.js:429
+#: prefs.js:412
 msgid "Could not read the file."
 msgstr ""
 
-#: prefs.js:468
+#: prefs.js:451
 msgid "Export curve"
 msgstr ""
 
-#: prefs.js:490
+#: prefs.js:473
 #, javascript-format
 msgid "Delete “%s”?"
 msgstr ""
 
-#: prefs.js:499
+#: prefs.js:482
 msgid "Nonlinear animation curves"
 msgstr ""
 
-#: prefs.js:510
+#: prefs.js:493
 msgid "OK"
 msgstr ""
 
-#: prefs.js:517
+#: prefs.js:500
 msgid "This cannot be undone."
 msgstr ""
 
-#: prefs.js:519 ui/curve-editor.js:62
+#: prefs.js:502 ui/curve-editor.js:62
 msgid "Cancel"
 msgstr ""
 
@@ -497,26 +477,29 @@ msgid ""
 "the Extensions manager instead."
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:113
-msgid ""
-"Bridge rebuilds motion state per interruption (stable, default). Spring runs "
-"every animated property as one persistent spring simulation: interrupting "
-"only changes the target, so any number of rapid interruptions stays "
-"perfectly smooth (experimental)."
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:111
+msgid "Continuity engine (legacy)"
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:118
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:112
+msgid ""
+"Legacy key from the curve-library versions. The experimental spring "
+"simulation engine was removed in v10; installs still on spring are moved "
+"back to bridge at startup."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:117
 msgid ""
 "Route a close requested while the overview is still animating through the "
 "gesture channel, so the drawer reverses immediately instead of finishing its "
 "opening first. Turn off if overview open/close misbehaves."
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:122
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:121
 msgid "Ease magic-lamp minimize/unminimize"
 msgstr ""
 
-#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:123
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:122
 msgid ""
 "If compiz-alike-magic-lamp-effect is installed, curve its minimize/"
 "unminimize timeline with EASE_OUT_CUBIC so the window decelerates into the "
