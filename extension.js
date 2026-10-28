@@ -67,7 +67,6 @@ const MODE_MAP = {
     'ease-in-out-quint': Clutter.AnimationMode.EASE_IN_OUT_QUINT,
     'ease-in-out-expo': Clutter.AnimationMode.EASE_IN_OUT_EXPO,
     'ease-out-back': Clutter.AnimationMode.EASE_OUT_BACK,
-    'ease-out-elastic': Clutter.AnimationMode.EASE_OUT_ELASTIC,
 };
 
 // Keys of the ease params object that control the animation rather than name
@@ -80,6 +79,17 @@ const CONTROL_KEYS = new Set([
 // GObject type names we can drive numerically. Anything else (booleans,
 // enums, boxed values, '@'-escaped sub-object properties) is left native.
 const NUMERIC_TYPES = new Set(['gfloat', 'gdouble', 'gint', 'guint']);
+
+// Diagnostic logging for the journal, greppable as "nla-debug". Deduped
+// per tag for the whole session: the logger itself can never become the
+// storm it is hunting.
+const dbgSeen = new Set();
+const dbg = tag => {
+    if (!dbgSeen.has(tag)) {
+        dbgSeen.add(tag);
+        console.log(`nla-debug: ${tag}`);
+    }
+};
 const GVALUE_SETTERS = {
     gfloat: 'set_float',
     gdouble: 'set_double',
@@ -283,6 +293,28 @@ export default class SpringEaseExtension extends Extension {
             // whether the caller reset the property for a replay.
             const candidates = [];
             const numericProps = [];
+            // Bounded pspecs: an overshooting curve (elastic, back, spring
+            // nod) pushing a FINITE-range property out of range makes GLib
+            // log an invalid-value warning on every single frame; at 60Hz
+            // the journal write storm starves the main loop and the shell
+            // stops responding (host freeze 2026-10-28: slide-x, [-0.02,
+            // 1.37] against a [0,1] pspec, warning flood until the shell
+            // died). Custom actor properties can be bounded (slide-x,
+            // progress), so this is not an adjustment-only concern; stock
+            // x/y/translation pspecs span G_MAXFLOAT and stay exempt.
+            let boundedProp = null;
+            const pspecBounds = pspec => {
+                try {
+                    const mn = pspec.minimum, mx = pspec.maximum;
+                    if (typeof mn === 'number' && typeof mx === 'number' &&
+                            Number.isFinite(mn) && Number.isFinite(mx) &&
+                            mx > mn && mx - mn < 1e9)
+                        return [mn, mx];
+                } catch {
+                    // introspection of range fields is best-effort
+                }
+                return null;
+            };
             for (const [prop, newTarget] of animated) {
                 const pspec = target.find_property?.(prop);
                 const typeName = pspec?.value_type?.name;
@@ -291,6 +323,9 @@ export default class SpringEaseExtension extends Extension {
                 if (typeof newTarget !== 'number' || !Number.isFinite(newTarget))
                     continue;
                 const isInt = typeName === 'gint' || typeName === 'guint';
+                const bounds = pspecBounds(pspec);
+                if (bounds && !boundedProp)
+                    boundedProp = prop;
 
                 let cand = null;
                 if (continuityOn && simpleCase) {
@@ -347,6 +382,7 @@ export default class SpringEaseExtension extends Extension {
                                 fromValue,
                                 stateValue: state.value,
                                 stateVelocity: carried,
+                                bounds,
                                 naturalV0: carried * props.duration /
                                     (newTarget - start),
                                 span: Math.abs(newTarget - start),
@@ -369,7 +405,7 @@ export default class SpringEaseExtension extends Extension {
                     candidates.push({
                         prop, isInt, typeName,
                         gtype: pspec.value_type,
-                        naturalV0: 0, span: 0,
+                        naturalV0: 0, span: 0, bounds,
                     });
                 } else {
                     numericProps.push(prop);
@@ -442,9 +478,24 @@ export default class SpringEaseExtension extends Extension {
             }
 
             if (applyCurve && c.kind === 'mode') {
-                const mode = MODE_MAP[c.mode];
-                if (mode !== undefined)
+                let mode = MODE_MAP[c.mode];
+                if (mode !== undefined) {
+                    // Overshooting modes must never run against a bounded
+                    // pspec (see the slide-x note above): the per-frame
+                    // range warning floods the journal and starves the
+                    // main loop. Adjustments are ALWAYS bounded semantics
+                    // ([0,1] control surfaces); actors only when their
+                    // pspec actually declares a finite range.
+                    if ((boundedProp || !isActor) &&
+                            (mode === Clutter.AnimationMode.EASE_OUT_BACK ||
+                             mode === Clutter.AnimationMode.EASE_OUT_ELASTIC)) {
+                        mode = Clutter.AnimationMode.EASE_IN_OUT_CUBIC;
+                        dbg(`clamp-mode ${c.mode} -> in-out-cubic ` +
+                            `prop=${boundedProp ?? '(adj)'} ` +
+                            `actor=${isActor}`);
+                    }
                     props.mode = mode;
+                }
             }
             // For custom curves the native mode under the driver is invisible
             // (we overwrite the value every frame); whatever mode the caller
@@ -563,8 +614,18 @@ export default class SpringEaseExtension extends Extension {
                             : (v => Math.max(-2147483648,
                                 Math.min(2147483647, Math.round(v)))))
                         : (v => v);
+                    // A bounded pspec also bounds the driver: overshooting
+                    // spline/spring curves would otherwise write out-of-range
+                    // values and trigger the same per-frame warning storm
+                    // the mode clamp above guards against.
+                    const clampB = d.bounds
+                        ? (v => Math.max(d.bounds[0], Math.min(d.bounds[1], v)))
+                        : (v => v);
+                    if (d.bounds)
+                        dbg(`clamp-driver prop=${d.prop} ` +
+                            `[${d.bounds[0]}, ${d.bounds[1]}]`);
                     const write = v => {
-                        gv[set](round(v));
+                        gv[set](round(clampB(v)));
                         target.set_final_state(d.prop, gv);
                     };
                     driveTransition(target, d.prop, plan.curve, write, d.seed);

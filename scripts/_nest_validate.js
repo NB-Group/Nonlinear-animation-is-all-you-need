@@ -33,8 +33,8 @@ if (!ext)
 if (ext.state !== EM.ExtensionState.ACTIVE)
     return fail(`extension state ${ext.state} ` +
         `(want ${EM.ExtensionState.ACTIVE} ACTIVE)`);
-if (ext.metadata?.version !== 9)
-    return fail(`version ${ext.metadata?.version}, expected 9`);
+if (ext.metadata?.version !== 10)
+    return fail(`version ${ext.metadata?.version}, expected 10`);
 if (Main.overview.visible)
     Main.overview.hide();
 

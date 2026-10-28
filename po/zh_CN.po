@@ -250,9 +250,6 @@ msgid "Overshoot"
 msgstr "回弹"
 
 #: curves.js:38
-msgid "Elastic"
-msgstr "弹性"
-
 #: ui/curve-editor.js:64
 msgid "Save"
 msgstr "保存"

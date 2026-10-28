@@ -34,9 +34,11 @@ const state = {
         'repeatCount', 'autoReverse', 'animationRequired', 'onComplete',
         'onStopped']),
     NUMERIC_TYPES: new Set(['gfloat', 'gdouble', 'gint', 'guint']),
-    MODE_MAP: {'ease-in-out-expo': 19},
+    MODE_MAP: {'ease-in-out-expo': 19, 'ease-out-back': 20},
     Main: {overview: {_overview: {controls: {_stateAdjustment: {}}}}},
-    Clutter: {AnimationMode: {EASE_OUT_CUBIC: 6}, Actor: function Actor() {}},
+    Clutter: {AnimationMode: {EASE_OUT_CUBIC: 6, EASE_IN_OUT_CUBIC: 3,
+        EASE_OUT_BACK: 20}, Actor: function Actor() {}},
+    dbg: () => {},
     // Stub for the accessibility gate: animations enabled, and the
     // reduced-motion enum absent exactly like GNOME 49/50.
     St: {
@@ -81,3 +83,31 @@ if (plan2.drivers.length !== 1 || plan2.drivers[0].prop !== 'x')
 if (plan2.numericProps.length !== 0)
     throw new Error('fresh spline prop left in numericProps');
 console.log('planEaseInner smoke: fresh spline driven');
+
+// Regression (shell freeze, 2026-10-28): overshooting modes against a
+// BOUNDED pspec flooded the journal with per-frame range warnings and
+// starved the main loop (slide-x [-0.02, 1.37] against [0,1]). Overshoot
+// must be clamped on adjustments and on bounded-pspec actors, kept on
+// unbounded actors.
+const backSettings = {...state, curve: {kind: 'mode', mode: 'ease-out-back'}};
+const backFn = new Function(...Object.keys(backSettings),
+    `${body}\nreturn planEaseInner;`)(...Object.values(backSettings));
+const adjTarget = {find_property: () => ({value_type: {name: 'gdouble'}})};
+const adjProps = {value: 1, duration: 400};
+const adjPlan = backFn(adjTarget, adjProps, null, null);
+if (adjProps.mode !== 3)
+    throw new Error(`adjustment overshoot not clamped (mode=${adjProps.mode})`);
+const boundedActor = new actorCtor();
+boundedActor.find_property = () =>
+    ({value_type: {name: 'gfloat'}, minimum: 0, maximum: 1});
+const bProps = {slide_x: 1, duration: 400};
+backFn(boundedActor, bProps, null, null);
+if (bProps.mode !== 3)
+    throw new Error(`bounded-pspec overshoot not clamped (mode=${bProps.mode})`);
+const freeActor = new actorCtor();
+freeActor.find_property = () => ({value_type: {name: 'gfloat'}});
+const fProps = {x: 100, duration: 400};
+backFn(freeActor, fProps, null, null);
+if (fProps.mode !== 20)
+    throw new Error(`unbounded actor must keep overshoot (mode=${fProps.mode})`);
+console.log('planEaseInner smoke: overshoot clamped on bounded, kept on free');

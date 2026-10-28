@@ -37,7 +37,6 @@ export const BUILTIN_CURVES = [
     {id: 'preset:ease-in-out-quart', builtin: true, name: N_('Smooth'), kind: 'mode', mode: 'ease-in-out-quart'},
     {id: 'preset:ease-in-out-quint', builtin: true, name: N_('Gliding'), kind: 'mode', mode: 'ease-in-out-quint'},
     {id: 'preset:ease-out-back', builtin: true, name: N_('Overshoot'), kind: 'mode', mode: 'ease-out-back'},
-    {id: 'preset:ease-out-elastic', builtin: true, name: N_('Elastic'), kind: 'mode', mode: 'ease-out-elastic'},
 ];
 
 // One-to-one: every legacy mode key maps to the preset of the SAME curve,
@@ -52,7 +51,9 @@ export const MIGRATION_MAP = {
     'ease-in-out-quint': 'preset:ease-in-out-quint',
     'ease-in-out-expo': 'preset:ease-in-out-expo',
     'ease-out-back': 'preset:ease-out-back',
-    'ease-out-elastic': 'preset:ease-out-elastic',
+    // Elastic is gone (see the gallery note); its closest surviving feel
+    // is the overshoot of ease-out-back.
+    'ease-out-elastic': 'preset:ease-out-back',
 };
 
 // --- validation -----------------------------------------------------------
@@ -65,10 +66,12 @@ export function validateCurve(curve) {
     if (curve.name.length > 64)
         return 'name too long';
     if (curve.kind === 'mode') {
+        // ease-out-elastic is deliberately absent: its long oscillating
+        // tail drives bounded pspecs out of range frame after frame and
+        // the warning flood froze users' shells (removed 2026-10-28).
         const valid = ['ease-out-cubic', 'ease-out-expo', 'ease-out-quart',
             'ease-out-quint', 'ease-in-out-cubic', 'ease-in-out-quart',
-            'ease-in-out-quint', 'ease-in-out-expo', 'ease-out-back',
-            'ease-out-elastic'];
+            'ease-in-out-quint', 'ease-in-out-expo', 'ease-out-back'];
         if (!valid.includes(curve.mode))
             return `unknown mode ${curve.mode}`;
         return null;
