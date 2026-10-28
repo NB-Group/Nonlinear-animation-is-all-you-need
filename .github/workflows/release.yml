@@ -14,17 +14,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Package and upload to extensions.gnome.org
-        id: pkg
-        uses: murar8/gnome-extensions-action@0.1.1
-        with:
-          username: NB-Group
-          password: ${{ secrets.GNOME_PASSWORD }}
-          accept-tos: true
+      - name: Build the extension zip
+        run: |
+          sudo apt-get update && sudo apt-get install -y libglib2.0-dev-bin gettext
+          ./build.sh
 
-      - name: Attach the zip to a GitHub Release
+      - name: Attach the zip to the tag's GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" "${{ steps.pkg.outputs.zip-file }}" \
-            --title "${GITHUB_REF_NAME}" --generate-notes
+          # GitHub side only. Uploading to extensions.gnome.org stays a
+          # manual, deliberate step for the maintainer; an expired EGO
+          # password must never fail a release, and no tag push should
+          # ever submit to EGO on its own.
+          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || \
+            gh release create "${GITHUB_REF_NAME}" \
+              --title "${GITHUB_REF_NAME}" --generate-notes
+          gh release upload "${GITHUB_REF_NAME}" \
+            nonlinear-animation@nbgroup.zip --clobber
