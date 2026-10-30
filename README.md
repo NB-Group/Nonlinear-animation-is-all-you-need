@@ -1,18 +1,43 @@
 # Nonlinear animation is all you need
 
+**Give every GNOME animation real acceleration. Curves you can draw, interruptions that keep their momentum, workspace switching that flows.**
+
+[![GNOME Shell](https://img.shields.io/badge/GNOME%20Shell-49%20%7C%2050%20%7C%2051-4a86cf)](https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/)
+[![Extension](https://img.shields.io/badge/EGO-10649-4a2fa5)](https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-green)](LICENSE)
+[![Downloads](https://img.shields.io/badge/downloads-800%2B-brightgreen)](https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/)
+
+<p align="center">
+  <img src="screenshots/curves.png" alt="The curve gallery: presets on top, your own curves below" width="640">
+</p>
+
+## Why
+
 GNOME animates its overview, workspaces and windows at a more or less constant velocity. Things in the real world don't move that way: they speed up, then slow down. Stripping out that acceleration and deceleration is what makes GNOME's motion feel off. It moves like a sliding door, not like something with mass.
 
 This extension puts the accel/decel back. It wraps the same ease methods gnome-shell already uses for its own animations (`Clutter.Actor.prototype.ease`, `ease_property`, `easeAsync`, and `St.Adjustment.prototype.ease`), so anything GNOME animates through them picks up the curve and speed you choose. Because it hooks the prototypes instead of each call site, it keeps working when GNOME renames things internally.
 
+## What people say
+
+> Smooth the Gnome animation today! Custom curves to match your taste. Animation speed and advance settings. A must have!
+>
+> Raik, extensions.gnome.org
+
+> I apologize for my previous comment and rating being a bit harsh. (...) The update fixed all the issues and I love the implementation of custom curves. Thanks! :)
+>
+> Trenton120, extensions.gnome.org
+
 ## What you get
 
-Seven presets covering the distinct feels (Balanced and Dramatic up front, plus settle, smooth and overshoot variants), and a gallery that fills up with whatever you draw or import. The editor is a canvas: drag control points, double-click to add one, right-click to remove, endpoints stay pinned. Values above 1 give you overshoot, and a replay button previews the motion. Curves import and export as small JSON files, so you can trade them like themes; the format is documented below.
-
-Interruption continuity is the headline feature. Flip two app-grid pages quickly, or click the dock while a window is still minimizing: instead of teleporting back to the start or re-accelerating from standstill, the interrupted animation keeps its position and momentum, carried over by a spring seeded with the measured velocity. Same idea as Apple's animation stack. On by default.
-
-Two aspects of it have separate switches. Interruption momentum keeps the speed of a same-direction interrupt; reversal buffering makes an opposite-direction interrupt decelerate and rebound instead of snapping. Both are recommended on, and each switch exists so you can isolate a misbehaving case; reversal also has a depth slider from hard to bouncy.
-
-Touchpad gestures stay native. Gesture-driven motion already tracks your finger; only its wrap-up is stretched slightly so the deceleration reads. English and Simplified Chinese ship in the box; other languages are one `.po` file away (see below).
+- **Seven presets with distinct feels** (Balanced and Dramatic up front, plus settle, smooth and overshoot variants) and a gallery that fills up with whatever you draw or import.
+- **A curve editor that is a canvas**: drag control points, double-click to add one, right-click to remove, endpoints stay pinned. Values above 1 give you overshoot, and a replay button previews the motion.
+- **Curves as files**: import and export small JSON bundles, trade them like themes. The format is documented below.
+- **Interruption continuity** (the headline): flip two app-grid pages quickly, or click the dock while a window is still minimizing. Instead of teleporting back to the start or re-accelerating from standstill, the interrupted animation keeps its position and momentum, carried over by a spring seeded with the measured velocity. Same idea as Apple's animation stack. On by default.
+- **Interruptible workspace switching**: your curve and duration apply to the switch, and interrupting a switch mid-flight turns the ongoing slide toward the new workspace instead of teleporting.
+- **Two separate continuity switches**: interruption momentum keeps the speed of a same-direction interrupt; reversal buffering makes an opposite-direction interrupt decelerate and rebound instead of snapping. Both recommended on; reversal has a depth slider from hard to bouncy.
+- **Touchpad gestures stay native**: gesture-driven motion already tracks your finger; only its wrap-up is stretched slightly so the deceleration reads.
+- **GNOME 49, 50 and 51**, with the system reduce-motion and disable-animations settings honored.
+- **English and Simplified Chinese** in the box; other languages are one `.po` file away (see Translations).
 
 ## Performance
 
@@ -24,13 +49,15 @@ Preset curves swap a single enum before the native Clutter call, which adds noth
 
 All settings are live: change one and the next animation already uses it, no relogin. You do need to log out and back in once after installing (or after editing `extension.js`), so the shell reloads the module.
 
-- Animation curve: pick from the gallery, create, import, export.
-- Animation duration: 1.0 = GNOME default, 1.8 ≈ macOS, higher is slower and more luxurious.
-- Interruption continuity: on by default, with the momentum and reversal-buffering switches under it.
-- Workspace switching: eased like everything else, with a switch to turn it off on fractional-scale multi-monitor setups where it may flicker.
-- Spring fidelity: `Efficient` (analytic, default) or `Ultra` (frame integration).
-- Behavior: easing the magic-lamp minimize effect when compiz-alike-magic-lamp-effect is installed.
-- Advanced: threshold below which short animations are left alone, and the touchpad-gesture exception window.
+| Setting | What it does |
+| --- | --- |
+| Animation curve | Pick from the gallery, create, import, export. |
+| Animation duration | 1.0 = GNOME default, 1.8 ≈ macOS, higher is slower and more luxurious. |
+| Interruption continuity | On by default, with momentum and reversal-buffering switches under it. |
+| Workspace switching | Eased like everything else, with an off switch for fractional-scale multi-monitor setups where it may flicker. |
+| Spring fidelity | `Efficient` (analytic, default) or `Ultra` (frame integration). |
+| Behavior | Easing the magic-lamp minimize effect when compiz-alike-magic-lamp-effect is installed. |
+| Advanced | Threshold below which short animations are left alone, and the touchpad-gesture exception window. |
 
 Power users can also drive everything via `gsettings`:
 
