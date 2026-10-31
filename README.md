@@ -9,7 +9,7 @@
 [![GNOME Shell](https://img.shields.io/badge/GNOME%20Shell-49%20%7C%2050%20%7C%2051-4a86cf)](https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/)
 [![Extension](https://img.shields.io/badge/EGO-10649-4a2fa5)](https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-green)](LICENSE)
-[![Downloads](https://img.shields.io/badge/downloads-990%2B-brightgreen)](https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/)
+[![Downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FNB-Group%2FNonlinear-animation-is-all-you-need%2Fmain%2Fdata%2Fbadge.json)](https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/)
 
 ## Why
 
