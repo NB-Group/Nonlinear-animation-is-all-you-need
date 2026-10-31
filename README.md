@@ -1,5 +1,9 @@
 # Nonlinear animation is all you need
 
+<p align="center">
+  <img src="brand/icon-256.png" alt="Nonlinear animation is all you need" width="128">
+</p>
+
 **Give every GNOME animation real acceleration. Curves you can draw, interruptions that keep their momentum, workspace switching that flows.**
 
 [![GNOME Shell](https://img.shields.io/badge/GNOME%20Shell-49%20%7C%2050%20%7C%2051-4a86cf)](https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/)
