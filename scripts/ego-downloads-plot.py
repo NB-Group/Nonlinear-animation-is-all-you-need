@@ -1,50 +1,83 @@
 #!/usr/bin/env python3
 """Plot the EGO download curve from data/downloads.csv.
 
+Two stacked panels sharing the time axis (never a dual y-axis):
+total downloads on top, gain per hour below. Stdlib csv only; no pandas.
+
 Usage: ~/micromamba/envs/physidit/bin/python scripts/ego-downloads-plot.py \
-           [output.png] [--rate]
---rate also draws the per-hour gain rate on a second axis.
+           [output.png]
 """
+import csv
 import sys
+from collections import defaultdict
 from datetime import datetime
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import pandas as pd
+import matplotlib.dates as mdates
 
 CSV = '/mnt/Code/Nonlinear-animation-is-all-you-need/data/downloads.csv'
 out = next((a for a in sys.argv[1:] if not a.startswith('--')),
-           '/tmp/nla/downloads.png')
-rate = '--rate' in sys.argv
+           '/mnt/Code/Nonlinear-animation-is-all-you-need/data/downloads.png')
 
-df = pd.read_csv(CSV, parse_dates=['timestamp'])
-df = df.drop_duplicates(subset='timestamp', keep='last')
-if len(df) < 2:
-    sys.exit('need at least two rows before plotting')
+INK, MUTED, GRID, ACCENT = '#24292f', '#57606a', '#d0d7de', '#3563e9'
+RATE = '#8b949e'
 
-fig, ax = plt.subplots(figsize=(11, 5))
-ax.plot(df.timestamp, df.downloads, lw=2)
-ax.set_title('Nonlinear animation is all you need - EGO downloads')
-ax.set_ylabel('downloads')
-ax.grid(alpha=0.3)
+rows = []
+with open(CSV) as f:
+    for r in csv.DictReader(f):
+        try:
+            rows.append((datetime.fromisoformat(r['timestamp']),
+                         int(r['downloads'])))
+        except (ValueError, KeyError):
+            continue
+rows.sort()
+if len(rows) < 3:
+    sys.exit('need at least three samples before plotting')
+times = [r[0] for r in rows]
+counts = [r[1] for r in rows]
 
-if rate:
-    per_hour = df.set_index('timestamp').downloads.resample('1h').max().diff()
-    ax2 = ax.twinx()
-    ax2.bar(per_hour.index, per_hour.fillna(0), alpha=0.25, color='tab:orange',
-            width=1 / 26)
-    ax2.set_ylabel('gain per hour', color='tab:orange')
-    ax2.grid(False)
+# hourly gain: max minus min within each clock hour
+hour_hi, hour_lo = defaultdict(int), defaultdict(lambda: 10 ** 9)
+for t, c in rows:
+    h = t.replace(minute=0, second=0, microsecond=0)
+    hour_hi[h] = max(hour_hi[h], c)
+    hour_lo[h] = min(hour_lo[h], c)
+hours = sorted(hour_hi)
+gains = [max(0, hour_hi[h] - hour_lo[h]) for h in hours]
 
-# annotate version changes if any are recorded
-for _, row in df.iterrows():
-    if row.get('version') and row.version != getattr(df, '_lastv', None):
-        ax.axvline(row.timestamp, color='red', alpha=0.3, lw=1)
-        setattr(df, '_lastv', row.version)
+fig, (ax, ax2) = plt.subplots(
+    2, 1, figsize=(10, 6), sharex=True,
+    gridspec_kw={'height_ratios': [3, 1.4], 'hspace': 0.12})
 
-fig.autofmt_xdate()
-fig.tight_layout()
-fig.savefig(out, dpi=140)
-print(f'wrote {out} ({len(df)} samples, '
-      f'{df.downloads.iloc[0]} -> {df.downloads.iloc[-1]})')
+ax.plot(times, counts, color=ACCENT, lw=2, solid_capstyle='round')
+ax.set_title('Nonlinear animation is all you need - EGO downloads',
+             loc='left', fontsize=13, color=INK, pad=12)
+ax.set_ylabel('downloads', color=MUTED, fontsize=9)
+ax.grid(True, color=GRID, lw=0.8, alpha=0.6)
+ax.set_axisbelow(True)
+for s in ax.spines.values():
+    s.set_visible(False)
+ax.tick_params(colors=MUTED, labelsize=9, length=0)
+ax.annotate(f'{counts[-1]}', xy=(times[-1], counts[-1]),
+            xytext=(6, 2), textcoords='offset points',
+            color=INK, fontsize=11, fontweight='bold')
+ymin, ymax = min(counts) - 10, max(counts) + (max(counts) - min(counts)) * 0.15 + 5
+ax.set_ylim(ymin, ymax)
+
+ax2.bar(hours, gains, width=1 / 30, color=RATE)
+ax2.set_ylabel('per hour', color=MUTED, fontsize=9)
+ax2.grid(True, axis='y', color=GRID, lw=0.8, alpha=0.6)
+ax2.set_axisbelow(True)
+for s in ax2.spines.values():
+    s.set_visible(False)
+ax2.tick_params(colors=MUTED, labelsize=9, length=0)
+ax2.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
+
+fig.autofmt_xdate(rotation=0, ha='center')
+for label in ax2.get_xticklabels():
+    label.set_color(MUTED)
+fig.patch.set_facecolor('white')
+fig.savefig(out, dpi=140, bbox_inches='tight', facecolor='white')
+print(f'wrote {out} ({len(rows)} samples, {counts[0]} -> {counts[-1]})')

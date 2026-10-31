@@ -5,7 +5,7 @@
 [![GNOME Shell](https://img.shields.io/badge/GNOME%20Shell-49%20%7C%2050%20%7C%2051-4a86cf)](https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/)
 [![Extension](https://img.shields.io/badge/EGO-10649-4a2fa5)](https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-green)](LICENSE)
-[![Downloads](https://img.shields.io/badge/downloads-800%2B-brightgreen)](https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/)
+[![Downloads](https://img.shields.io/badge/downloads-990%2B-brightgreen)](https://extensions.gnome.org/extension/10649/nonlinear-animation-is-all-you-need/)
 
 <p align="center">
   <img src="screenshots/curves.png" alt="The curve gallery: presets on top, your own curves below" width="640">
@@ -16,16 +16,6 @@
 GNOME animates its overview, workspaces and windows at a more or less constant velocity. Things in the real world don't move that way: they speed up, then slow down. Stripping out that acceleration and deceleration is what makes GNOME's motion feel off. It moves like a sliding door, not like something with mass.
 
 This extension puts the accel/decel back. It wraps the same ease methods gnome-shell already uses for its own animations (`Clutter.Actor.prototype.ease`, `ease_property`, `easeAsync`, and `St.Adjustment.prototype.ease`), so anything GNOME animates through them picks up the curve and speed you choose. Because it hooks the prototypes instead of each call site, it keeps working when GNOME renames things internally.
-
-## What people say
-
-> Smooth the Gnome animation today! Custom curves to match your taste. Animation speed and advance settings. A must have!
->
-> Raik, extensions.gnome.org
-
-> I apologize for my previous comment and rating being a bit harsh. (...) The update fixed all the issues and I love the implementation of custom curves. Thanks! :)
->
-> Trenton120, extensions.gnome.org
 
 ## What you get
 

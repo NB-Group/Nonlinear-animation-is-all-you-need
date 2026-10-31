@@ -1,7 +1,7 @@
 {
     "uuid": "nonlinear-animation@nbgroup",
     "name": "Nonlinear animation is all you need",
-    "description": "Make every GNOME animation smooth and nonlinear!\n\nCustom curves, interruptible animations, and interruption buffering, all in one extension. Some of GNOME's default animations are linear, counterintuitive, and plain: they never speed up or slow down; when interrupted, they either snap back to the start or re-accelerate from a standstill, and some actions don't support interruption at all.\n\nIf you feel the same way, this extension is exactly what you need.",
+    "description": "Make every GNOME animation smooth and nonlinear!\n\nCustom curves, interruptible animations, and interruption buffering—all in one extension. Some of GNOME’s default animations are linear, counterintuitive, and plain: they never speed up or slow down; when interrupted, they either snap back to the start or re-accelerate from a standstill, and some actions don’t support interruption at all.\n\nIf you feel the same way, this extension is exactly what you need.",
     "shell-version": [
         "49",
         "50",
