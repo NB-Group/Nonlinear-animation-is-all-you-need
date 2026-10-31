@@ -13,7 +13,7 @@
 
 ## Why
 
-GNOME animates its overview, workspaces and windows at a more or less constant velocity. Things in the real world don't move that way: they speed up, then slow down. Stripping out that acceleration and deceleration is what makes GNOME's motion feel off. It moves like a sliding door, not like something with mass.
+GNOME animates its overview, workspaces and windows at a more or less constant velocity. Things in the real world don't move that way: they speed up, then slow down. Stripping out that acceleration and deceleration is what makes GNOME's motion feel off. It moves like a scanner's light bar, not like something you would push with your own hand.
 
 This extension puts the accel/decel back. It wraps the same ease methods gnome-shell already uses for its own animations (`Clutter.Actor.prototype.ease`, `ease_property`, `easeAsync`, and `St.Adjustment.prototype.ease`), so anything GNOME animates through them picks up the curve and speed you choose. Because it hooks the prototypes instead of each call site, it keeps working when GNOME renames things internally.
 
