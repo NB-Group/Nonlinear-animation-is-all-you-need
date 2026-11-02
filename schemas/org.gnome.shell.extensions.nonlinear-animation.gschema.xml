@@ -121,5 +121,11 @@
       <summary>Ease magic-lamp minimize/unminimize</summary>
       <description>If compiz-alike-magic-lamp-effect is installed, curve its minimize/unminimize timeline with EASE_OUT_CUBIC so the window decelerates into the dock instead of stopping dead. No-op if magic-lamp isn't installed.</description>
     </key>
+    <key name="magic-lamp-duration-ms" type="i">
+      <default>700</default>
+      <range min="1" max="5000"/>
+      <summary>Magic-lamp duration (ms)</summary>
+      <description>Duration in milliseconds for both minimize and restore when magic-lamp easing is enabled. Applied to the next animation; has no effect when easing is disabled or magic-lamp is not installed.</description>
+    </key>
   </schema>
 </schemalist>
