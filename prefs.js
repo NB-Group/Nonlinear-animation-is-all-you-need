@@ -239,7 +239,7 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         const gestureScaleRow = new Adw.SpinRow({
             title: _('Gesture duration scale'),
             subtitle: _('Stretches gesture commits (workspace switch, paging). The curve stays velocity-matched, so there is no jolt. 1.0 = native.'),
-            adjustment: Gtk.Adjustment.new(1.3, 1.0, 3.0, 0.1, 0.5, 2),
+            adjustment: Gtk.Adjustment.new(1.3, 1.0, 3.0, 0.1, 0.5, 0),
             digits: 2,
         });
         settings.bind('gesture-duration-scale', gestureScaleRow, 'value', Gio.SettingsBindFlags.DEFAULT);
