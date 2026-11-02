@@ -4,3 +4,7 @@
 schemas/.fuse_hidden*
 schemas/gschemas.compiled
 locale/
+
+# local agent tooling: third-party skill clones and session state
+.claude/skills/reddit-skills/
+.claude/settings.local.json
