@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nonlinear-animation 6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-28 19:50+0800\n"
+"POT-Creation-Date: 2026-11-02 20:36+0800\n"
 "PO-Revision-Date: 2026-09-24 21:30+0800\n"
 "Last-Translator: NB-Group <NB_group@qq.com>\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -152,20 +152,29 @@ msgstr ""
 "若安装了 compiz-alike-magic-lamp-effect，其最小化/还原动画会减速收尾。未安装"
 "则无任何影响。"
 
-#: prefs.js:211
+#: prefs.js:208
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:127
+msgid "Magic-lamp duration (ms)"
+msgstr "Magic-lamp 时长（毫秒）"
+
+#: prefs.js:209
+msgid "Minimize and restore duration when magic-lamp easing is enabled."
+msgstr ""
+
+#: prefs.js:223
 msgid "Advanced"
 msgstr "高级"
 
-#: prefs.js:212
+#: prefs.js:224
 msgid "Toggles for the deeper interventions, and rarely-touched tuning."
 msgstr "较深层干预的开关，以及很少动的调节项。"
 
-#: prefs.js:216
+#: prefs.js:228
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:116
 msgid "Instant overview close"
 msgstr "Overview 即时关闭"
 
-#: prefs.js:217
+#: prefs.js:229
 msgid ""
 "A close requested mid-animation reverses the overview immediately instead of "
 "finishing its opening first. Turn off if overview open/close misbehaves."
@@ -173,34 +182,34 @@ msgstr ""
 "动画进行中请求关闭时，立即反向收回，而不是先放完打开动画。若 overview 开合行"
 "为异常请关闭。"
 
-#: prefs.js:224
+#: prefs.js:236
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:80
 msgid "Threshold (ms)"
 msgstr "阈值（毫秒）"
 
-#: prefs.js:225
+#: prefs.js:237
 msgid ""
 "Only animations ≥ this get eased (hovers ~100ms). Lower = more things eased."
 msgstr ""
 "只有不低于该时长的动画才被缓动（悬停约 100ms）。调低 = 更多动画被缓动。"
 
-#: prefs.js:232
+#: prefs.js:244
 msgid "Gesture grace (ms)"
 msgstr "手势宽限（毫秒）"
 
-#: prefs.js:233
+#: prefs.js:245
 msgid ""
 "After a 3-finger swipe/pinch, animations play native for this long. 0 = ease "
 "everything."
 msgstr ""
 "三指滑动/捏合之后的一段宽限时间内，动画按 GNOME 原生速度播放。0 = 全部缓动。"
 
-#: prefs.js:240
+#: prefs.js:252
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:92
 msgid "Gesture duration scale"
 msgstr "手势时长倍数"
 
-#: prefs.js:241
+#: prefs.js:253
 msgid ""
 "Stretches gesture commits (workspace switch, paging). The curve stays "
 "velocity-matched, so there is no jolt. 1.0 = native."
@@ -208,65 +217,65 @@ msgstr ""
 "拉长手势收尾动画（工作区切换、翻页），曲线保持速度匹配所以不顿挫。1.0 = 原"
 "生。"
 
-#: prefs.js:308
+#: prefs.js:320
 msgid "New curve"
 msgstr "新建曲线"
 
-#: prefs.js:314
+#: prefs.js:326
 msgid "Import"
 msgstr "导入"
 
-#: prefs.js:320
+#: prefs.js:332
 msgid "Export"
 msgstr "导出"
 
-#: prefs.js:326 prefs.js:503
+#: prefs.js:338 prefs.js:515
 msgid "Delete"
 msgstr "删除"
 
-#: prefs.js:373
+#: prefs.js:385
 msgid "Library full"
 msgstr "曲线库已满"
 
-#: prefs.js:374 prefs.js:424
+#: prefs.js:386 prefs.js:436
 #, javascript-format
 msgid "At most %d user curves can be stored."
 msgstr "最多只能保存 %d 条自定义曲线。"
 
-#: prefs.js:397
+#: prefs.js:409
 msgid "Import curves"
 msgstr "导入曲线"
 
-#: prefs.js:412 prefs.js:418 prefs.js:423
+#: prefs.js:424 prefs.js:430 prefs.js:435
 msgid "Import failed"
 msgstr "导入失败"
 
-#: prefs.js:412
+#: prefs.js:424
 msgid "Could not read the file."
 msgstr "无法读取该文件。"
 
-#: prefs.js:451
+#: prefs.js:463
 msgid "Export curve"
 msgstr "导出曲线"
 
-#: prefs.js:473
+#: prefs.js:485
 #, javascript-format
 msgid "Delete “%s”?"
 msgstr "删除“%s”？"
 
-#: prefs.js:482
+#: prefs.js:494
 msgid "Nonlinear animation curves"
 msgstr "非线性动画曲线"
 
-#: prefs.js:493
+#: prefs.js:505
 msgid "OK"
 msgstr "确定"
 
-#: prefs.js:500
+#: prefs.js:512
 msgid "This cannot be undone."
 msgstr "此操作无法撤销。"
 
-#: prefs.js:502 ui/curve-editor.js:62
+#: prefs.js:514 ui/curve-editor.js:62
 msgid "Cancel"
 msgstr "取消"
 
@@ -287,18 +296,14 @@ msgid "Firm settle"
 msgstr "坚定收尾"
 
 #: curves.js:35
-
-#: curves.js:36
 msgid "Whip"
 msgstr "疾停"
 
-#: curves.js:37
+#: curves.js:36
 msgid "Smooth"
 msgstr "平顺"
 
-#: curves.js:38
-
-#: curves.js:39
+#: curves.js:37
 msgid "Overshoot"
 msgstr "回弹"
 
@@ -538,3 +543,10 @@ msgid ""
 msgstr ""
 "若安装了 compiz-alike-magic-lamp-effect，其最小化/还原时间线会改用 "
 "EASE_OUT_CUBIC，窗口减速滑入 Dock 而不是急停。未安装则无任何影响。"
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:128
+msgid ""
+"Duration in milliseconds for both minimize and restore when magic-lamp "
+"easing is enabled. Applied to the next animation; has no effect when easing "
+"is disabled or magic-lamp is not installed."
+msgstr ""

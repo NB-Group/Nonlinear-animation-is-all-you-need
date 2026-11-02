@@ -119,7 +119,7 @@ To add a language: copy `po/zh_CN.po` to `po/<lang>.po`, translate the strings, 
 
 ## Optional: easing the magic-lamp minimize effect
 
-If you use [compiz-alike-magic-lamp-effect], this extension can curve its minimize/unminimize timeline (EASE_OUT_CUBIC) so the window glides into the dock instead of stopping dead. Set **Magic-lamp duration (ms)** in Preferences, Behavior, to choose the duration for both directions (1–5000 ms, default 700 ms). Changes apply to the next animation and keep the easing curve. It's a no-op when magic-lamp isn't installed, and re-triggering it mid-flight continues from the current progress. Turn easing off if you prefer the raw effect and the duration configured in magic-lamp itself.
+If you use [compiz-alike-magic-lamp-effect], this extension can curve its minimize/unminimize timeline (EASE_OUT_CUBIC) so the window glides into the dock instead of stopping dead. Set the Magic-lamp duration in Preferences, Behavior, to choose the duration for both directions (1 to 5000 ms, default 700). Changes apply to the next animation and keep the easing curve. It's a no-op when magic-lamp isn't installed, and re-triggering it mid-flight continues from the current progress. Turn easing off if you prefer the raw effect and the duration configured in magic-lamp itself.
 
 ```sh
 gsettings --schemadir schemas set org.gnome.shell.extensions.nonlinear-animation \

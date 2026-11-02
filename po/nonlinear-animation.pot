@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: nonlinear-animation 10\n"
+"Project-Id-Version: nonlinear-animation 9\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-28 20:31+0800\n"
+"POT-Creation-Date: 2026-11-02 20:36+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -146,115 +146,124 @@ msgid ""
 "unminimize into the dock. No-op otherwise."
 msgstr ""
 
-#: prefs.js:211
+#: prefs.js:208
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:127
+msgid "Magic-lamp duration (ms)"
+msgstr ""
+
+#: prefs.js:209
+msgid "Minimize and restore duration when magic-lamp easing is enabled."
+msgstr ""
+
+#: prefs.js:223
 msgid "Advanced"
 msgstr ""
 
-#: prefs.js:212
+#: prefs.js:224
 msgid "Toggles for the deeper interventions, and rarely-touched tuning."
 msgstr ""
 
-#: prefs.js:216
+#: prefs.js:228
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:116
 msgid "Instant overview close"
 msgstr ""
 
-#: prefs.js:217
+#: prefs.js:229
 msgid ""
 "A close requested mid-animation reverses the overview immediately instead of "
 "finishing its opening first. Turn off if overview open/close misbehaves."
 msgstr ""
 
-#: prefs.js:224
+#: prefs.js:236
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:80
 msgid "Threshold (ms)"
 msgstr ""
 
-#: prefs.js:225
+#: prefs.js:237
 msgid ""
 "Only animations ≥ this get eased (hovers ~100ms). Lower = more things eased."
 msgstr ""
 
-#: prefs.js:232
+#: prefs.js:244
 msgid "Gesture grace (ms)"
 msgstr ""
 
-#: prefs.js:233
+#: prefs.js:245
 msgid ""
 "After a 3-finger swipe/pinch, animations play native for this long. 0 = ease "
 "everything."
 msgstr ""
 
-#: prefs.js:240
+#: prefs.js:252
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:92
 msgid "Gesture duration scale"
 msgstr ""
 
-#: prefs.js:241
+#: prefs.js:253
 msgid ""
 "Stretches gesture commits (workspace switch, paging). The curve stays "
 "velocity-matched, so there is no jolt. 1.0 = native."
 msgstr ""
 
-#: prefs.js:308
+#: prefs.js:320
 msgid "New curve"
 msgstr ""
 
-#: prefs.js:314
+#: prefs.js:326
 msgid "Import"
 msgstr ""
 
-#: prefs.js:320
+#: prefs.js:332
 msgid "Export"
 msgstr ""
 
-#: prefs.js:326 prefs.js:503
+#: prefs.js:338 prefs.js:515
 msgid "Delete"
 msgstr ""
 
-#: prefs.js:373
+#: prefs.js:385
 msgid "Library full"
 msgstr ""
 
-#: prefs.js:374 prefs.js:424
+#: prefs.js:386 prefs.js:436
 #, javascript-format
 msgid "At most %d user curves can be stored."
 msgstr ""
 
-#: prefs.js:397
+#: prefs.js:409
 msgid "Import curves"
 msgstr ""
 
-#: prefs.js:412 prefs.js:418 prefs.js:423
+#: prefs.js:424 prefs.js:430 prefs.js:435
 msgid "Import failed"
 msgstr ""
 
-#: prefs.js:412
+#: prefs.js:424
 msgid "Could not read the file."
 msgstr ""
 
-#: prefs.js:451
+#: prefs.js:463
 msgid "Export curve"
 msgstr ""
 
-#: prefs.js:473
+#: prefs.js:485
 #, javascript-format
 msgid "Delete “%s”?"
 msgstr ""
 
-#: prefs.js:482
+#: prefs.js:494
 msgid "Nonlinear animation curves"
 msgstr ""
 
-#: prefs.js:493
+#: prefs.js:505
 msgid "OK"
 msgstr ""
 
-#: prefs.js:500
+#: prefs.js:512
 msgid "This cannot be undone."
 msgstr ""
 
-#: prefs.js:502 ui/curve-editor.js:62
+#: prefs.js:514 ui/curve-editor.js:62
 msgid "Cancel"
 msgstr ""
 
@@ -492,4 +501,11 @@ msgid ""
 "If compiz-alike-magic-lamp-effect is installed, curve its minimize/"
 "unminimize timeline with EASE_OUT_CUBIC so the window decelerates into the "
 "dock instead of stopping dead. No-op if magic-lamp isn't installed."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:128
+msgid ""
+"Duration in milliseconds for both minimize and restore when magic-lamp "
+"easing is enabled. Applied to the next animation; has no effect when easing "
+"is disabled or magic-lamp is not installed."
 msgstr ""
