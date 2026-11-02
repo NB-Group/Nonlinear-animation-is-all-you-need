@@ -1047,23 +1047,26 @@ export default class SpringEaseExtension extends Extension {
             if (!this._magicLampTimers)
                 this._magicLampTimers = new WeakMap();
             const prev = this._magicLampTimers.get(actor);
+            const duration = this._settings.get_int('magic-lamp-duration-ms');
             for (const name of [MAGIC_LAMP_MINIMIZE, MAGIC_LAMP_UNMINIMIZE]) {
                 const effect = actor.get_effect(name);
                 const timeline = effect?.timerId;
                 if (timeline?.set_progress_mode) {
                     timeline.set_progress_mode(Clutter.AnimationMode.EASE_OUT_CUBIC);
-                    // Fixed duration for both minimize and unminimize so they
-                    // feel symmetric. 700ms = slow enough to read the
-                    // deceleration; tune here.
-                    timeline.set_duration(700);
+                    // Use one configurable duration for both directions so
+                    // they feel symmetric; the default preserves the old timing.
+                    timeline.set_duration(duration);
                     // Interruption: if the previous magic-lamp timeline for
                     // this window was still mid-flight, fast-forward the new
                     // one so the effect continues instead of teleporting back
                     // to the start of its deformation.
+                    const previousDuration = prev?.timeline?.get_duration?.() ?? duration;
                     const elapsed = prev?.timeline?.is_playing?.()
                         ? prev.timeline.get_elapsed_time() : 0;
-                    if (elapsed > 0 && elapsed < 700)
-                        timeline.advance(elapsed);
+                    if (previousDuration > 0 && elapsed > 0 && elapsed < previousDuration)
+                        // Keep the same progress if the duration changed since
+                        // the interrupted animation started.
+                        timeline.advance(Math.floor(elapsed * duration / previousDuration));
                     this._magicLampTimers.set(actor, {timeline});
                 }
             }

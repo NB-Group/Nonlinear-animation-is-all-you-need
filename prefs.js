@@ -203,6 +203,18 @@ export default class SpringEasePrefs extends ExtensionPreferences {
         });
         settings.bind('magic-lamp-easing', magicLampRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         switchGroup.add(magicLampRow);
+
+        const magicLampDurationRow = new Adw.SpinRow({
+            title: _('Magic-lamp duration (ms)'),
+            subtitle: _('Minimize and restore duration when magic-lamp easing is enabled.'),
+            adjustment: Gtk.Adjustment.new(700, 1, 5000, 25, 100, 0),
+            digits: 0,
+        });
+        settings.bind('magic-lamp-duration-ms', magicLampDurationRow, 'value',
+            Gio.SettingsBindFlags.DEFAULT);
+        settings.bind('magic-lamp-easing', magicLampDurationRow, 'sensitive',
+            Gio.SettingsBindFlags.GET);
+        switchGroup.add(magicLampDurationRow);
         page.add(switchGroup);
 
         // ---- Advanced ----
