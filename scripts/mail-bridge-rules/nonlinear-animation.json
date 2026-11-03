@@ -1,0 +1,8 @@
+{
+  "name": "nla-reddit-reply",
+  "from": "redditmail.com",
+  "subject_regex": "回复了|replied to|mentioned you|comment reply",
+  "repo_dir": "/mnt/Code/Nonlinear-animation-is-all-you-need",
+  "notify_session": "nonlinear-animation-v2",
+  "prompt": "New reddit reply event at {event_file}. Read it, then: ensure the CDP chrome (port 9224) is reachable; if not, relaunch it with the standard line from project memory (google-chrome-stable, user-data-dir /tmp/nla/cdp-test, proxy 7890). Fetch the thread via old.reddit and draft a reply per .claude/skills/reddit-voice/SKILL.md. Write the draft to {event_file}.draft.md. DO NOT post it; posting is review-gated."
+}

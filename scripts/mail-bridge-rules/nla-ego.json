@@ -1,0 +1,7 @@
+{
+  "name": "nla-ego",
+  "from": "extensions.gnome.org",
+  "repo_dir": "/mnt/Code/Nonlinear-animation-is-all-you-need",
+  "notify_session": "nonlinear-animation-v2",
+  "prompt": "EGO notification event at {event_file}. Read it; if it says a version was approved or rejected, check the live EGO API (curl via proxy 127.0.0.1:7890, extension uuid nonlinear-animation@nbgroup) and summarize the current hosted state in the summary message."
+}
