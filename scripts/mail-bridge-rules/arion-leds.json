@@ -1,0 +1,8 @@
+{
+  "name": "arion-leds-mail",
+  "from": "kernel.org",
+  "subject_regex": "asus-aura",
+  "repo_dir": "/home/nbgroup/arion-rgb-re",
+  "notify_session": "nbgroup-fd",
+  "prompt": "Kernel mail about the asus-aura-scsi LED driver arrived. Read {event_file} and SendMessage the session named nbgroup-fd a single line: sender, subject, time. Do nothing else; do not reply to, process, or draft anything for this mail. The notified session pulls the full original itself."
+}

@@ -159,7 +159,7 @@ msgstr "Magic-lamp 时长（毫秒）"
 
 #: prefs.js:209
 msgid "Minimize and restore duration when magic-lamp easing is enabled."
-msgstr ""
+msgstr "开启 magic-lamp 缓动时，最小化与还原动画的时长。"
 
 #: prefs.js:223
 msgid "Advanced"
@@ -500,16 +500,14 @@ msgstr ""
 "括手势在内全部缓动）。"
 
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:103
-#, fuzzy
-#| msgid "Easing curve (legacy)"
 msgid "Enabled (legacy)"
-msgstr "缓动曲线（旧版）"
+msgstr "启用（旧版）"
 
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:104
 msgid ""
 "Legacy key from earlier versions, no longer read. Pause the extension from "
 "the Extensions manager instead."
-msgstr ""
+msgstr "早期版本的旧键，已不再读取。请改用扩展管理器暂停本扩展。"
 
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:111
 msgid "Continuity engine (legacy)"
@@ -520,7 +518,7 @@ msgid ""
 "Legacy key from the curve-library versions. The experimental spring "
 "simulation engine was removed in v10; installs still on spring are moved "
 "back to bridge at startup."
-msgstr ""
+msgstr "曲线库版本的旧键。实验性弹簧仿真引擎已在 v10 移除；仍选择 spring 的安装会在启动时切回 bridge。"
 
 #: schemas/org.gnome.shell.extensions.nonlinear-animation.gschema.xml:117
 msgid ""
@@ -549,4 +547,4 @@ msgid ""
 "Duration in milliseconds for both minimize and restore when magic-lamp "
 "easing is enabled. Applied to the next animation; has no effect when easing "
 "is disabled or magic-lamp is not installed."
-msgstr ""
+msgstr "开启 magic-lamp 缓动时最小化与还原的时长（毫秒）。对下一个动画生效；缓动关闭或未安装 magic-lamp 时无效。"

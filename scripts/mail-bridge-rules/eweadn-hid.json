@@ -1,0 +1,8 @@
+{
+  "name": "eweadn-hid-mail",
+  "from": "kernel.org",
+  "subject_regex": "EWEADN|YJX-CHIP|hid-eweadn|ALWAYS_POLL",
+  "repo_dir": "/home/nbgroup/src/hid-eweadn",
+  "notify_session": "nbgroup-fd",
+  "prompt": "Kernel mail about the EWEADN HID patches arrived. Read {event_file} and SendMessage the session named nbgroup-fd a single line: sender, subject, time. Do nothing else; do not reply to, process, or draft anything for this mail. The notified session pulls the full original itself."
+}

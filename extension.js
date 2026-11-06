@@ -1000,6 +1000,19 @@ export default class SpringEaseExtension extends Extension {
 
     // One-time: carry the legacy `mode` key into the curve library.
     _migrateSettings() {
+        // v9 removed two duplicate presets from the gallery (quint next
+        // to quart, in-out-quint identical to in-out-expo). Anyone whose
+        // selection still points at the removed ids would silently fall
+        // back to Balanced on every lookup; remap once to the nearest
+        // kept preset instead.
+        const sel = this._settings.get_string('selected-curve');
+        if (sel === 'preset:ease-out-quint') {
+            this._settings.set_string('selected-curve',
+                'preset:ease-out-quart');
+        } else if (sel === 'preset:ease-in-out-quint') {
+            this._settings.set_string('selected-curve',
+                'preset:ease-in-out-expo');
+        }
         // v10 removed the spring engine; anyone still selecting it lands
         // back on the bridge engine (the only one left). Reads of values
         // outside the schema choices still return the stored string.
