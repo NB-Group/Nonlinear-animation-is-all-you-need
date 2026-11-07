@@ -7,9 +7,17 @@
 - 附件（视频）：brand/demo-compare.mp4
 - 发布时段：北京 21:00-23:00
 
-## 首评正文（发完帖子立刻发，整段复制）
+## 帖子正文（Title 下面那一栏，粘贴这段）
 
 The video shows the same window minimize and restore with interruptions, ours first, stock second. The capture drops frames here and there; that's the recording, not the extension. Day to day it runs smooth.
+
+GNOME eases its window animations with one fixed curve, and everything else runs on curves that were picked per area and never touched again: expo for windows, sine for the overview, cubic for pages, a couple of spots plain linear. Nothing keeps momentum, so an interrupted animation starts over from zero speed, and an interrupted workspace switch gets torn down and teleports.
+
+This extension puts one curve, yours, behind all of it, and the interrupted animations keep their velocity through the redirect. Details, the source audit behind those claims, and install links are in the first comment.
+
+## 首评正文（发完帖子立刻发，整段复制）
+
+Full details, and the source audit behind the claims in the post.
 
 GNOME does ease its window animations, but each area grew its own curve and stuck with it: expo for windows, sine for the overview, cubic for pages, and a few spots, like icons spawning into the overview, just run linear. Six curves across the shell, no shared motion language, and none of it keeps momentum: interrupt an animation and the replacement starts at zero speed, while an interrupted workspace switch gets torn down and teleports.
 
